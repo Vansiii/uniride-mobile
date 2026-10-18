@@ -2,5 +2,43 @@
   "aplicacion": {
     "nombre": "UniRide",
     "eslogan": "Viajes compartidos verificados para tu comunidad"
+  },
+  "comun": {
+    "estados": {
+      "cargando": "Cargando…"
+    },
+    "errores": {
+      "sin_conexion": "No hay conexión. Revisa tu internet e inténtalo de nuevo.",
+      "desconocido": "Algo salió mal. Inténtalo de nuevo en unos minutos."
+    }
+  },
+  "autenticacion": {
+    "sesion": {
+      "titulo": "Iniciar sesión",
+      "correo": "Correo",
+      "correo_ejemplo": "nombre@uagrm.edu.bo",
+      "contrasena": "Contraseña",
+      "mostrar_contrasena": "Mostrar contraseña",
+      "ocultar_contrasena": "Ocultar contraseña",
+      "entrar": "Entrar",
+      "entrando": "Entrando…",
+      "salir": "Cerrar sesión",
+      "bienvenida": "Hola, {nombre}.",
+      "correo_invalido": "Escribe un correo válido, por ejemplo nombre@uagrm.edu.bo.",
+      "contrasena_requerida": "Escribe tu contraseña.",
+      "credenciales_invalidas": "Correo o contraseña incorrectos. Revísalos e inténtalo de nuevo.",
+      "bloqueada": "Demasiados intentos. Podrás intentarlo de nuevo a las {hora}.",
+      "subtitulo": "Usa el correo y la contraseña de tu cuenta."
+    }
+  },
+  "membresias": {
+    "estado": {
+      "pendiente": "Pendiente de aprobación",
+      "rechazada": "Rechazada",
+      "titulo_pendiente": "Tu solicitud está en revisión",
+      "titulo_rechazada": "No aprobaron tu solicitud",
+      "explicacion_pendiente": "El administrador de tu organización debe aprobarte. Podrás usar UniRide apenas lo haga.",
+      "explicacion_rechazada": "El administrador de tu organización no aprobó tu ingreso. Consulta con él si crees que es un error."
+    }
   }
 }
