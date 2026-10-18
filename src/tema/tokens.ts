@@ -31,6 +31,7 @@ export const radio = { s: 8, m: 12, l: 16, completo: 999 } as const;
 export const tamano = { altoControl: 48 } as const;
 
 export const tipografia = {
+  pantalla: { fontSize: 28, lineHeight: 36, fontWeight: '700' },
   titulo: { fontSize: 22, lineHeight: 28, fontWeight: '600' },
   cuerpo: { fontSize: 16, lineHeight: 24, fontWeight: '400' },
   cuerpoEnfasis: { fontSize: 16, lineHeight: 24, fontWeight: '600' },

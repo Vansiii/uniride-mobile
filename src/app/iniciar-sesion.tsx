@@ -1,6 +1,7 @@
 import { Redirect } from 'expo-router';
 import { useState } from 'react';
 import {
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -79,8 +80,19 @@ export default function IniciarSesion() {
         contentContainerStyle={estilos.contenido}
         keyboardShouldPersistTaps="handled"
       >
+        <View style={estilos.marca}>
+          <Image
+            source={require('../../assets/images/icon.png')}
+            style={estilos.icono}
+            accessibilityLabel={t('aplicacion.nombre')}
+          />
+          <Text style={estilos.eslogan}>{t('aplicacion.eslogan')}</Text>
+        </View>
         <Text style={estilos.titulo} accessibilityRole="header">
           {t('autenticacion.sesion.titulo')}
+        </Text>
+        <Text style={estilos.subtitulo}>
+          {t('autenticacion.sesion.subtitulo')}
         </Text>
         {falla && (
           <View style={estilos.falla} accessibilityRole="alert">
@@ -134,7 +146,26 @@ export default function IniciarSesion() {
 const estilos = StyleSheet.create({
   raiz: { flex: 1, backgroundColor: colores.fondo },
   contenido: { padding: 16, gap: 16, flexGrow: 1, justifyContent: 'center' },
-  titulo: { ...tipografia.titulo, color: colores.texto },
+  marca: {
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    borderRadius: radio.l,
+    backgroundColor: colores.primario,
+  },
+  icono: { width: 72, height: 72, borderRadius: 16 },
+  eslogan: {
+    ...tipografia.cuerpoEnfasis,
+    color: colores.sobrePrimario,
+    textAlign: 'center',
+  },
+  subtitulo: {
+    ...tipografia.secundario,
+    color: colores.textoSecundario,
+    marginTop: -8,
+  },
+  titulo: { ...tipografia.pantalla, color: colores.texto },
   falla: {
     padding: 12,
     borderRadius: radio.m,

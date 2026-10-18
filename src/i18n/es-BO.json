@@ -27,7 +27,8 @@
       "correo_invalido": "Escribe un correo válido, por ejemplo nombre@uagrm.edu.bo.",
       "contrasena_requerida": "Escribe tu contraseña.",
       "credenciales_invalidas": "Correo o contraseña incorrectos. Revísalos e inténtalo de nuevo.",
-      "bloqueada": "Demasiados intentos. Podrás intentarlo de nuevo a las {hora}."
+      "bloqueada": "Demasiados intentos. Podrás intentarlo de nuevo a las {hora}.",
+      "subtitulo": "Usa el correo y la contraseña de tu cuenta."
     }
   },
   "membresias": {
