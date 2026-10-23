@@ -20,6 +20,10 @@ jest.mock('expo-router', () => {
     ),
   };
 });
+jest.mock(
+  'react-native-safe-area-context',
+  () => jest.requireActual('react-native-safe-area-context/jest/mock').default,
+);
 jest.mock('@/api/cliente', () => ({
   ...jest.requireActual('@/api/cliente'),
   renovarSesion: jest.fn(),
@@ -66,6 +70,22 @@ describe('Pantalla Iniciar sesión', () => {
     expect(await screen.findByText(/correo válido/)).toBeTruthy();
     expect(screen.getByText('Escribe tu contraseña.')).toBeTruthy();
     expect(api.iniciarSesion).not.toHaveBeenCalled();
+  });
+
+  it('el error de un campo se borra al corregirlo y la contraseña se puede mostrar', async () => {
+    await conSesion(<IniciarSesion />);
+    await fireEvent.press(
+      await screen.findByRole('button', { name: 'Entrar' }),
+    );
+    expect(await screen.findByText('Escribe tu contraseña.')).toBeTruthy();
+    await fireEvent.changeText(screen.getByLabelText('Contraseña'), 'x');
+    expect(screen.queryByText('Escribe tu contraseña.')).toBeNull();
+    await fireEvent.press(
+      screen.getByRole('button', { name: 'Mostrar contraseña' }),
+    );
+    expect(
+      screen.getByRole('button', { name: 'Ocultar contraseña' }),
+    ).toBeTruthy();
   });
 
   it('CA-1: con credenciales correctas inicia sesión y sale de la pantalla', async () => {

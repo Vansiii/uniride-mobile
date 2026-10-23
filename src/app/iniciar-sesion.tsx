@@ -1,7 +1,7 @@
+import { Image } from 'expo-image';
 import { Redirect } from 'expo-router';
 import { useState } from 'react';
 import {
-  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -13,25 +13,40 @@ import { ErrorApi } from '@/api/cliente';
 import { useSesion } from '@/contexto/sesion';
 import { Boton } from '@/componentes/Boton';
 import { Campo } from '@/componentes/Campo';
+import { BandaMarca, ZonaAccion } from '@/componentes/Estructura';
+import { Aviso } from '@/componentes/Mensajes';
 import { t } from '@/i18n';
-import { colores, radio, tipografia } from '@/tema/tokens';
+import { colores, espacio, tipografia } from '@/tema/tokens';
+
+interface Falla {
+  texto: string;
+  bloqueada?: boolean;
+}
 
 /** Traduce el `codigo` de la API; nunca muestra códigos técnicos (DESIGN_SYSTEM §13.4). */
-function mensajeDe(error: unknown): string {
-  if (!(error instanceof ErrorApi)) return t('comun.errores.desconocido');
+function fallaDe(error: unknown): Falla {
+  if (!(error instanceof ErrorApi))
+    return { texto: t('comun.errores.desconocido') };
   switch (error.codigo) {
     case 'CREDENCIALES_INVALIDAS':
-      return t('autenticacion.sesion.credenciales_invalidas');
+      return { texto: t('autenticacion.sesion.credenciales_invalidas') };
     case 'SESION_BLOQUEADA': {
       const hora = new Date(
         String(error.datos.reintentarEn),
-      ).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' });
-      return t('autenticacion.sesion.bloqueada').replace('{hora}', hora);
+      ).toLocaleTimeString('es-BO', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+      });
+      return {
+        texto: t('autenticacion.sesion.bloqueada').replace('{hora}', hora),
+        bloqueada: true,
+      };
     }
     case 'SIN_CONEXION':
-      return t('comun.errores.sin_conexion');
+      return { texto: t('comun.errores.sin_conexion') };
     default:
-      return t('comun.errores.desconocido');
+      return { texto: t('comun.errores.desconocido') };
   }
 }
 
@@ -39,12 +54,11 @@ export default function IniciarSesion() {
   const { usuario, iniciar } = useSesion();
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
-  const [verContrasena, setVerContrasena] = useState(false);
   const [errores, setErrores] = useState<{
     correo?: string;
     contrasena?: string;
   }>({});
-  const [falla, setFalla] = useState<string | null>(null);
+  const [falla, setFalla] = useState<Falla | null>(null);
   const [enviando, setEnviando] = useState(false);
 
   if (usuario) return <Redirect href="/" />;
@@ -65,7 +79,7 @@ export default function IniciarSesion() {
     try {
       await iniciar(correo.trim(), contrasena);
     } catch (error) {
-      setFalla(mensajeDe(error));
+      setFalla(fallaDe(error));
     } finally {
       setEnviando(false);
     }
@@ -77,57 +91,71 @@ export default function IniciarSesion() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
-        contentContainerStyle={estilos.contenido}
+        contentContainerStyle={estilos.desplazable}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={estilos.marca}>
+        <BandaMarca>
           <Image
-            source={require('../../assets/images/icon.png')}
-            style={estilos.icono}
+            source={require('../../assets/marca/logotipo-blanco.svg')}
+            style={estilos.logo}
+            contentFit="contain"
             accessibilityLabel={t('aplicacion.nombre')}
           />
           <Text style={estilos.eslogan}>{t('aplicacion.eslogan')}</Text>
-        </View>
-        <Text style={estilos.titulo} accessibilityRole="header">
-          {t('autenticacion.sesion.titulo')}
-        </Text>
-        <Text style={estilos.subtitulo}>
-          {t('autenticacion.sesion.subtitulo')}
-        </Text>
-        {falla && (
-          <View style={estilos.falla} accessibilityRole="alert">
-            <Text style={estilos.textoFalla}>{falla}</Text>
+        </BandaMarca>
+        <View style={estilos.contenido}>
+          <View style={estilos.encabezado}>
+            <Text style={estilos.titulo} accessibilityRole="header">
+              {t('autenticacion.sesion.titulo')}
+            </Text>
+            <Text style={estilos.subtitulo}>
+              {t('autenticacion.sesion.subtitulo')}
+            </Text>
           </View>
-        )}
-        <Campo
-          etiqueta={t('autenticacion.sesion.correo')}
-          placeholder={t('autenticacion.sesion.correo_ejemplo')}
-          keyboardType="email-address"
-          autoComplete="email"
-          autoCapitalize="none"
-          autoCorrect={false}
-          value={correo}
-          onChangeText={setCorreo}
-          error={errores.correo}
-        />
-        <Campo
-          etiqueta={t('autenticacion.sesion.contrasena')}
-          secureTextEntry={!verContrasena}
-          autoComplete="current-password"
-          autoCapitalize="none"
-          value={contrasena}
-          onChangeText={setContrasena}
-          error={errores.contrasena}
-        />
-        <Boton
-          variante="texto"
-          etiqueta={t(
-            verContrasena
-              ? 'autenticacion.sesion.ocultar_contrasena'
-              : 'autenticacion.sesion.mostrar_contrasena',
+          {falla && (
+            <Aviso
+              tono={falla.bloqueada ? 'aviso' : 'peligro'}
+              titulo={
+                falla.bloqueada
+                  ? t('autenticacion.sesion.bloqueada_titulo')
+                  : undefined
+              }
+            >
+              {falla.texto}
+            </Aviso>
           )}
-          alPresionar={() => setVerContrasena(!verContrasena)}
-        />
+          <Campo
+            etiqueta={t('autenticacion.sesion.correo')}
+            placeholder={t('autenticacion.sesion.correo_ejemplo')}
+            keyboardType="email-address"
+            autoComplete="email"
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="next"
+            value={correo}
+            onChangeText={(v) => {
+              setCorreo(v);
+              setErrores((e) => ({ ...e, correo: undefined }));
+            }}
+            error={errores.correo}
+          />
+          <Campo
+            etiqueta={t('autenticacion.sesion.contrasena')}
+            secureTextEntry
+            autoComplete="current-password"
+            autoCapitalize="none"
+            returnKeyType="go"
+            onSubmitEditing={enviar}
+            value={contrasena}
+            onChangeText={(v) => {
+              setContrasena(v);
+              setErrores((e) => ({ ...e, contrasena: undefined }));
+            }}
+            error={errores.contrasena}
+          />
+        </View>
+      </ScrollView>
+      <ZonaAccion>
         <Boton
           anchoCompleto
           cargando={enviando}
@@ -138,38 +166,27 @@ export default function IniciarSesion() {
           )}
           alPresionar={enviar}
         />
-      </ScrollView>
+      </ZonaAccion>
     </KeyboardAvoidingView>
   );
 }
 
 const estilos = StyleSheet.create({
   raiz: { flex: 1, backgroundColor: colores.fondo },
-  contenido: { padding: 16, gap: 16, flexGrow: 1, justifyContent: 'center' },
-  marca: {
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-    borderRadius: radio.l,
-    backgroundColor: colores.primario,
-  },
-  icono: { width: 72, height: 72, borderRadius: 16 },
+  desplazable: { flexGrow: 1 },
+  logo: { width: 128, height: 31, marginBottom: espacio(2) },
   eslogan: {
-    ...tipografia.cuerpoEnfasis,
-    color: colores.sobrePrimario,
-    textAlign: 'center',
+    ...tipografia.titulo,
+    fontWeight: '700',
+    color: colores.sobreMarca,
+    maxWidth: 280,
   },
-  subtitulo: {
-    ...tipografia.secundario,
-    color: colores.textoSecundario,
-    marginTop: -8,
+  contenido: {
+    padding: espacio(4),
+    paddingTop: espacio(6),
+    gap: espacio(4),
   },
+  encabezado: { gap: espacio(1) },
   titulo: { ...tipografia.pantalla, color: colores.texto },
-  falla: {
-    padding: 12,
-    borderRadius: radio.m,
-    backgroundColor: colores.peligroSuave,
-  },
-  textoFalla: { ...tipografia.secundario, color: colores.peligroTexto },
+  subtitulo: { ...tipografia.secundario, color: colores.textoSecundario },
 });
