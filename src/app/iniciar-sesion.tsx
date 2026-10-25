@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { Redirect } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -165,6 +165,12 @@ export default function IniciarSesion() {
               : 'autenticacion.sesion.entrar',
           )}
           alPresionar={enviar}
+        />
+        <Boton
+          variante="secundario"
+          anchoCompleto
+          etiqueta={t('autenticacion.sesion.crear_cuenta')}
+          alPresionar={() => router.push('/registro')}
         />
       </ZonaAccion>
     </KeyboardAvoidingView>

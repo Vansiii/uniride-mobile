@@ -12,6 +12,8 @@ interface Sesion {
   cargando: boolean;
   usuario: api.Usuario | null;
   iniciar: (correo: string, contrasena: string) => Promise<void>;
+  /** Confirma el código del registro: crea la cuenta e inicia la sesión. */
+  confirmarCodigo: (correo: string, codigo: string) => Promise<void>;
   cerrar: () => Promise<void>;
 }
 
@@ -41,13 +43,17 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
     await api.iniciarSesion(correo, contrasena);
     setUsuario(await api.consultarYo());
   };
+  const confirmarCodigo = async (correo: string, codigo: string) => {
+    await api.verificarOtp(correo, codigo);
+    setUsuario(await api.consultarYo());
+  };
   const cerrar = async () => {
     await api.cerrarSesion().catch(() => undefined);
     setUsuario(null);
   };
 
   return (
-    <Contexto value={{ cargando, usuario, iniciar, cerrar }}>
+    <Contexto value={{ cargando, usuario, iniciar, confirmarCodigo, cerrar }}>
       {children}
     </Contexto>
   );

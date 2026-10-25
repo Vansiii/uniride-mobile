@@ -127,6 +127,45 @@ export async function iniciarSesion(
   await guardarSesion(r);
 }
 
+/** Desde cuándo se puede pedir otro código (ISO 8601). */
+export interface EnvioCodigo {
+  reenviarEn: string;
+}
+
+export interface DatosRegistro {
+  nombreCompleto: string;
+  correo: string;
+  contrasena: string;
+  aceptaTratamientoDatos: boolean;
+}
+
+/** La organización la decide el servidor por el dominio del correo; el cliente no la envía (A-13). */
+export async function registrar(datos: DatosRegistro): Promise<EnvioCodigo> {
+  return leer<EnvioCodigo>(
+    await enviar('/autenticacion/registro', 'POST', datos),
+  );
+}
+
+export async function reenviarCodigo(correo: string): Promise<EnvioCodigo> {
+  return leer<EnvioCodigo>(
+    await enviar('/autenticacion/reenviar-codigo', 'POST', {
+      correo,
+      proposito: 'registro',
+    }),
+  );
+}
+
+/** Con el código correcto la cuenta queda creada y la sesión iniciada. */
+export async function verificarOtp(
+  correo: string,
+  codigo: string,
+): Promise<void> {
+  const r = await leer<{ tokenAcceso: string; tokenRefresco: string }>(
+    await enviar('/autenticacion/verificar-otp', 'POST', { correo, codigo }),
+  );
+  await guardarSesion(r);
+}
+
 export async function cerrarSesion(): Promise<void> {
   try {
     const tokenRefresco = await AlmacenSeguro.getItemAsync(CLAVE_REFRESCO);

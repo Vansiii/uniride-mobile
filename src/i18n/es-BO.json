@@ -4,6 +4,9 @@
     "eslogan": "Viajes compartidos verificados para tu comunidad"
   },
   "comun": {
+    "acciones": {
+      "volver": "Volver"
+    },
     "estados": {
       "cargando": "Cargando…"
     },
@@ -29,7 +32,42 @@
       "credenciales_invalidas": "Correo o contraseña incorrectos. Revísalos e inténtalo de nuevo.",
       "bloqueada_titulo": "Inicio de sesión en pausa",
       "bloqueada": "Demasiados intentos. Podrás intentarlo de nuevo a las {hora}.",
-      "subtitulo": "Usa el correo y la contraseña de tu cuenta."
+      "subtitulo": "Usa el correo y la contraseña de tu cuenta.",
+      "crear_cuenta": "Crear cuenta"
+    },
+    "registro": {
+      "titulo": "Crear cuenta",
+      "subtitulo": "Con el correo de tu universidad o empresa. Así sabremos a qué comunidad perteneces.",
+      "nombre": "Nombre completo",
+      "nombre_requerido": "Escribe tu nombre completo.",
+      "correo": "Correo institucional",
+      "contrasena": "Contraseña",
+      "contrasena_ayuda": "Mínimo 8 caracteres, con al menos una letra y un número.",
+      "contrasena_debil": "Necesita al menos 8 caracteres, una letra y un número.",
+      "consentimiento": "Acepto el tratamiento de mis datos personales para usar UniRide.",
+      "consentimiento_requerido": "Necesitamos tu consentimiento para crear la cuenta.",
+      "organizacion_no_afiliada": "Tu organización todavía no está afiliada a UniRide. Usa el correo que te dio tu universidad o empresa.",
+      "correo_no_disponible": "No pudimos enviarte el código. Inténtalo de nuevo más tarde.",
+      "codigo_reciente": "Ya te enviamos un código a ese correo. Podrás pedir otro a las {hora}.",
+      "ingresar_codigo": "Ingresar el código",
+      "crear": "Crear cuenta",
+      "creando": "Creando…",
+      "ya_tengo_cuenta": "Ya tengo cuenta"
+    },
+    "otp": {
+      "titulo": "Confirma tu correo",
+      "instruccion": "Te enviamos un código de 6 dígitos a",
+      "vigencia": "Vence en 10 minutos. Se envía solo al completar el sexto dígito.",
+      "etiqueta": "Código de 6 dígitos",
+      "invalido": "El código no es correcto.",
+      "vencido": "El código venció. Pide uno nuevo para continuar.",
+      "bloqueado_titulo": "Registro en pausa",
+      "bloqueado": "Por seguridad, espera hasta las {hora} para volver a intentar con este correo.",
+      "reenviar_en": "Reenviar código en {segundos} s",
+      "reenviar": "Reenviar código",
+      "enviar_nuevo": "Enviar código nuevo",
+      "reenviado": "Te enviamos un código nuevo.",
+      "confirmando": "Confirmando…"
     }
   },
   "inicio": {
