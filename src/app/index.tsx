@@ -71,6 +71,12 @@ export default function Inicio() {
             etiqueta={t('membresias.lista.ver')}
             alPresionar={() => router.push('/organizaciones')}
           />
+          <Boton
+            variante="texto"
+            icono="directions_car"
+            etiqueta={t('vehiculos.registro.ver')}
+            alPresionar={() => router.push('/vehiculo')}
+          />
         </View>
       </ScrollView>
       <ZonaAccion>

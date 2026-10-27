@@ -280,6 +280,90 @@ export const recuperacionReal = {
   restablecida: ok(204, null),
 };
 
+// HU-11: capturadas de un backend real (PostgreSQL local, MinIO), con multipart real; la foto nunca viene en las respuestas.
+export const vehiculosReales = {
+  /** POST /vehiculos con "1234-abc" → 201, placa ya normalizada */
+  registrado: ok(201, {
+    id: '55d90330-1195-45ee-a8bf-7bc48ff0617c',
+    placa: '1234ABC',
+    marca: 'Toyota',
+    modelo: 'Corolla',
+    color: 'Blanco',
+    capacidad: 4,
+  }),
+  /** GET /vehiculos/mio con vehículo → 200 */
+  mio: ok(200, {
+    id: '55d90330-1195-45ee-a8bf-7bc48ff0617c',
+    placa: '1234ABC',
+    marca: 'Toyota',
+    modelo: 'Corolla',
+    color: 'Blanco',
+    capacidad: 4,
+  }),
+  /** GET /vehiculos/mio sin vehículo → 404 */
+  sinVehiculo: ok(404, {
+    codigo: 'NO_ENCONTRADO',
+    mensaje: 'No se encontró lo que buscas.',
+  }),
+  placaDuplicada: ok(409, {
+    codigo: 'VEHICULO_PLACA_DUPLICADA',
+    mensaje: 'Esa placa ya está registrada en UniRide.',
+  }),
+  yaRegistrado: ok(409, {
+    codigo: 'VEHICULO_YA_REGISTRADO',
+    mensaje: 'Ya tienes un vehículo registrado.',
+  }),
+  placaInvalida: ok(400, {
+    codigo: 'VEHICULO_DATO_INVALIDO',
+    mensaje:
+      'Revisa el dato marcado: la placa lleva 3 o 4 números y 3 letras (por ejemplo, 1234ABC) y la capacidad va de 1 a 6 asientos para pasajeros.',
+    campo: 'placa',
+  }),
+  capacidadInvalida: ok(400, {
+    codigo: 'VEHICULO_DATO_INVALIDO',
+    mensaje:
+      'Revisa el dato marcado: la placa lleva 3 o 4 números y 3 letras (por ejemplo, 1234ABC) y la capacidad va de 1 a 6 asientos para pasajeros.',
+    campo: 'capacidad',
+  }),
+  fotoInvalida: ok(400, {
+    codigo: 'VEHICULO_FOTO_INVALIDA',
+    mensaje: 'La foto debe ser JPEG o PNG y pesar como máximo 5 MB.',
+    maximoBytes: 5242880,
+    tipos: ['image/jpeg', 'image/png'],
+  }),
+  consentimientoRequerido: ok(400, {
+    codigo: 'CONSENTIMIENTO_REQUERIDO',
+    mensaje: 'Debes aceptar el uso de la foto de tu vehículo para registrarlo.',
+  }),
+  /** Membresía pendiente o rechazada (CA-8) → 403 */
+  noAutorizado: ok(403, {
+    codigo: 'NO_AUTORIZADO',
+    mensaje: 'No tienes permiso para realizar esta acción.',
+  }),
+  /** S3 inalcanzable → 503, sin nada registrado */
+  almacenamientoNoDisponible: ok(503, {
+    codigo: 'ALMACENAMIENTO_NO_DISPONIBLE',
+    mensaje: 'No pudimos guardar la foto. Inténtalo de nuevo más tarde.',
+  }),
+};
+
+/** Cuerpo enviado: JSON ya leído o, si fue multipart, un objeto con cada parte (los archivos como `{ archivo: true, ... }`). */
+function leerCuerpo(cuerpo: unknown): unknown {
+  if (!cuerpo) return undefined;
+  if (typeof cuerpo === 'string') return JSON.parse(cuerpo);
+  const partes: [string, unknown][] =
+    'getParts' in (cuerpo as object)
+      ? (
+          cuerpo as {
+            getParts(): { fieldName: string; string?: string }[];
+          }
+        )
+          .getParts()
+          .map((p) => [p.fieldName, p.string ?? { archivo: true, ...p }])
+      : [...(cuerpo as FormData).entries()];
+  return Object.fromEntries(partes);
+}
+
 /** `fetch` falso que responde según "MÉTODO /ruta"; lo que no está en `rutas` falla como una caída de red. */
 export function simularFetch(
   rutas: Record<string, RespuestaSimulada | RespuestaSimulada[]>,
@@ -290,10 +374,7 @@ export function simularFetch(
   );
   const falso = jest.fn(async (url: string, init?: RequestInit) => {
     const ruta = `${init?.method ?? 'GET'} ${new URL(url).pathname.replace('/api/v1', '')}`;
-    llamadas.push({
-      ruta,
-      cuerpo: init?.body ? JSON.parse(String(init.body)) : undefined,
-    });
+    llamadas.push({ ruta, cuerpo: leerCuerpo(init?.body) });
     const cola = pendientes[ruta];
     if (!cola?.length) throw new TypeError('Network request failed');
     // La última respuesta se repite, como un servidor que responde igual.

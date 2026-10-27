@@ -6,7 +6,8 @@
   "comun": {
     "acciones": {
       "volver": "Volver",
-      "cerrar": "Cerrar"
+      "cerrar": "Cerrar",
+      "reintentar": "Reintentar"
     },
     "estados": {
       "cargando": "Cargando…"
@@ -136,6 +137,48 @@
       "titulo_rechazada": "No aprobaron tu solicitud",
       "explicacion_pendiente": "El administrador de tu organización debe aprobarte. Podrás usar UniRide apenas lo haga.",
       "explicacion_rechazada": "El administrador de tu organización no aprobó tu ingreso. Consulta con él si crees que es un error."
+    }
+  },
+  "vehiculos": {
+    "registro": {
+      "titulo": "Mi vehículo",
+      "explicacion": "Registra el vehículo con el que ofrecerás viajes. Los pasajeros verán la placa, la marca, el modelo y el color.",
+      "ver": "Mi vehículo",
+      "placa": "Placa",
+      "placa_ayuda": "3 o 4 números y 3 letras, por ejemplo 1234-ABC.",
+      "marca": "Marca",
+      "modelo": "Modelo",
+      "color": "Color",
+      "capacidad": "Asientos para pasajeros",
+      "capacidad_ayuda": "Sin contar al conductor, de 1 a 6.",
+      "foto": "Foto del vehículo",
+      "foto_previa": "Foto elegida del vehículo",
+      "tomar_foto": "Tomar foto",
+      "elegir_foto": "Elegir de la galería",
+      "cambiar_foto": "Cambiar foto",
+      "consentimiento": "Acepto que UniRide guarde la foto de mi vehículo cifrada y la use solo para verificación. Los pasajeros no la verán.",
+      "registrar": "Registrar vehículo",
+      "registrando": "Registrando…",
+      "registrado": "Tu vehículo quedó registrado.",
+      "privacidad": "La foto se guarda cifrada y nadie más la ve. Los pasajeros solo ven la placa, la marca, el modelo y el color.",
+      "asientos": "{cantidad} asientos para pasajeros",
+      "asiento": "1 asiento para pasajeros",
+      "placa_requerida": "Escribe la placa.",
+      "placa_invalida": "La placa lleva 3 o 4 números y 3 letras, por ejemplo 1234-ABC.",
+      "marca_requerida": "Escribe la marca.",
+      "modelo_requerido": "Escribe el modelo.",
+      "color_requerido": "Escribe el color.",
+      "texto_largo": "Usa 40 caracteres como máximo.",
+      "capacidad_invalida": "Escribe un número de asientos entre 1 y 6.",
+      "foto_requerida": "Agrega una foto del vehículo.",
+      "consentimiento_requerido": "Necesitamos tu consentimiento para guardar la foto.",
+      "placa_duplicada": "Esa placa ya está registrada en UniRide.",
+      "ya_registrado": "Ya tenías un vehículo registrado.",
+      "dato_invalido": "Revisa el dato marcado e inténtalo de nuevo.",
+      "foto_invalida": "La foto debe ser JPEG o PNG y pesar como máximo 5 MB.",
+      "no_disponible": "No pudimos guardar la foto, así que no se registró nada. Inténtalo de nuevo más tarde.",
+      "sin_permiso_camara": "Para tomar la foto necesitamos permiso de la cámara. También puedes elegirla de la galería.",
+      "sin_membresia": "Necesitas ser miembro aprobado de una organización para registrar un vehículo."
     }
   }
 }

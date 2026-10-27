@@ -47,14 +47,21 @@ async function enviar(
   metodo: string,
   cuerpo?: unknown,
 ): Promise<Response> {
+  // Un formulario multipart lleva su propio Content-Type, con el límite entre partes.
+  const formulario = cuerpo instanceof FormData;
   try {
     return await fetch(`${BASE}${ruta}`, {
       method: metodo,
       headers: {
-        'Content-Type': 'application/json',
+        ...(formulario ? {} : { 'Content-Type': 'application/json' }),
         ...(tokenAcceso ? { Authorization: `Bearer ${tokenAcceso}` } : {}),
       },
-      body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
+      body:
+        cuerpo === undefined
+          ? undefined
+          : formulario
+            ? cuerpo
+            : JSON.stringify(cuerpo),
     });
   } catch {
     throw new ErrorApi(0, 'SIN_CONEXION');
@@ -234,4 +241,64 @@ export async function cambiarOrganizacionActiva(
     { organizacionId },
   );
   tokenAcceso = r.tokenAcceso;
+}
+
+/** Lo que ve el dueño de su vehículo: nunca trae la foto ni su clave (D-20). */
+export interface Vehiculo {
+  id: string;
+  placa: string;
+  marca: string;
+  modelo: string;
+  color: string;
+  capacidad: number;
+}
+
+/** Foto elegida; solo existe en memoria hasta el envío (dato sensible, RN-5). */
+export interface FotoVehiculo {
+  uri: string;
+  /** Tipo que informa el selector; el servidor lo comprueba por los bytes. */
+  tipo: string;
+  /** En web, el archivo mismo: allí un `uri` no se puede enviar como parte del formulario. */
+  archivo?: Blob;
+}
+
+export interface DatosVehiculo {
+  placa: string;
+  marca: string;
+  modelo: string;
+  color: string;
+  capacidad: number;
+  aceptaUsoFoto: boolean;
+  foto: FotoVehiculo;
+}
+
+/** La placa se normaliza en el servidor (CA-3): se envía como la escribió la persona. */
+export function registrarVehiculo(datos: DatosVehiculo): Promise<Vehiculo> {
+  const formulario = new FormData();
+  formulario.append('placa', datos.placa);
+  formulario.append('marca', datos.marca);
+  formulario.append('modelo', datos.modelo);
+  formulario.append('color', datos.color);
+  formulario.append('capacidad', String(datos.capacidad));
+  formulario.append('aceptaUsoFoto', String(datos.aceptaUsoFoto));
+  formulario.append(
+    'foto',
+    datos.foto.archivo ??
+      ({
+        uri: datos.foto.uri,
+        name: 'foto',
+        type: datos.foto.tipo,
+      } as unknown as Blob),
+  );
+  return solicitar<Vehiculo>('/vehiculos', 'POST', formulario);
+}
+
+/** `null` si todavía no registró un vehículo (404). */
+export async function consultarMiVehiculo(): Promise<Vehiculo | null> {
+  try {
+    return await solicitar<Vehiculo>('/vehiculos/mio', 'GET');
+  } catch (error) {
+    if (error instanceof ErrorApi && error.estado === 404) return null;
+    throw error;
+  }
 }

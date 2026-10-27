@@ -34,7 +34,15 @@
           "imageWidth": 76
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "UniRide usa la cámara para tomar la foto de tu vehículo.",
+          "photosPermission": "UniRide usa tus fotos para que elijas la foto de tu vehículo.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
