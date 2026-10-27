@@ -1,4 +1,4 @@
-import { Redirect } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import {
   ActivityIndicator,
   ScrollView,
@@ -57,6 +57,20 @@ export default function Inicio() {
             <Text style={estilos.etiqueta}>{t('inicio.correo')}</Text>
             <Text style={estilos.valor}>{usuario.correo}</Text>
           </View>
+          <View style={estilos.dato}>
+            <Text style={estilos.etiqueta}>{t('inicio.organizacion')}</Text>
+            <Text style={estilos.valor}>
+              {usuario.membresias.find(
+                (m) => m.organizacionId === usuario.organizacionActiva,
+              )?.organizacion ?? '—'}
+            </Text>
+          </View>
+          <Boton
+            variante="texto"
+            icono="corporate_fare"
+            etiqueta={t('membresias.lista.ver')}
+            alPresionar={() => router.push('/organizaciones')}
+          />
         </View>
       </ScrollView>
       <ZonaAccion>

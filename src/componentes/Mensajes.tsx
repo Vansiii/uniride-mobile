@@ -70,6 +70,8 @@ const estados: Record<string, [Tono, NombreIcono]> = {
   'membresia.pendiente': ['aviso', 'hourglass_top'],
   'membresia.aprobada': ['exito', 'check_circle'],
   'membresia.rechazada': ['peligro', 'cancel'],
+  // La organización con la que se ven los viajes (HU-07).
+  'membresia.activa': ['info', 'radio_button_checked'],
 };
 
 export function EtiquetaEstado({

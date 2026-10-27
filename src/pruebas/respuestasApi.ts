@@ -91,6 +91,153 @@ export const respuestasReales = {
   }),
 };
 
+// HU-07: capturadas de un backend real (PostgreSQL local, correo en consola). Una persona con
+// A activa, B aprobada, C pendiente y D rechazada; los tokens van con valores de prueba.
+export const organizacionesReales = {
+  idA: 'ad8107ae-4c8a-4548-af52-1dabe84ccae6',
+  idB: '2153001b-3c2f-4db3-a51e-12ff88f9a267',
+  idC: '979d2776-b518-4f23-b02d-27c4a09847a6',
+  idD: '5c503e8d-c8f1-4b69-9763-608a6d51ebce',
+  /** GET /yo con una sola organización (A activa) */
+  yoSoloA: ok(200, {
+    id: '8221f194-48cd-46e2-9557-0df896aa194f',
+    nombreCompleto: 'Ana Real',
+    correo: 'ana@pa.p7mob.test',
+    rolPlataforma: null,
+    organizacionActiva: 'ad8107ae-4c8a-4548-af52-1dabe84ccae6',
+    membresias: [
+      {
+        organizacionId: 'ad8107ae-4c8a-4548-af52-1dabe84ccae6',
+        organizacion: 'P7MOB A',
+        rol: 'miembro',
+        estado: 'aprobada',
+      },
+    ],
+  }),
+  /** GET /yo con A activa, B aprobada, C pendiente y D rechazada */
+  yoVarias: ok(200, {
+    id: '8221f194-48cd-46e2-9557-0df896aa194f',
+    nombreCompleto: 'Ana Real',
+    correo: 'ana@pa.p7mob.test',
+    rolPlataforma: null,
+    organizacionActiva: 'ad8107ae-4c8a-4548-af52-1dabe84ccae6',
+    membresias: [
+      {
+        organizacionId: 'ad8107ae-4c8a-4548-af52-1dabe84ccae6',
+        organizacion: 'P7MOB A',
+        rol: 'miembro',
+        estado: 'aprobada',
+      },
+      {
+        organizacionId: '2153001b-3c2f-4db3-a51e-12ff88f9a267',
+        organizacion: 'P7MOB B',
+        rol: 'miembro',
+        estado: 'aprobada',
+      },
+      {
+        organizacionId: '979d2776-b518-4f23-b02d-27c4a09847a6',
+        organizacion: 'P7MOB C',
+        rol: 'miembro',
+        estado: 'pendiente',
+      },
+      {
+        organizacionId: '5c503e8d-c8f1-4b69-9763-608a6d51ebce',
+        organizacion: 'P7MOB D',
+        rol: 'miembro',
+        estado: 'rechazada',
+      },
+    ],
+  }),
+  /** GET /yo tras PUT /yo/organizacion-activa a B */
+  yoActivaB: ok(200, {
+    id: '8221f194-48cd-46e2-9557-0df896aa194f',
+    nombreCompleto: 'Ana Real',
+    correo: 'ana@pa.p7mob.test',
+    rolPlataforma: null,
+    organizacionActiva: '2153001b-3c2f-4db3-a51e-12ff88f9a267',
+    membresias: [
+      {
+        organizacionId: 'ad8107ae-4c8a-4548-af52-1dabe84ccae6',
+        organizacion: 'P7MOB A',
+        rol: 'miembro',
+        estado: 'aprobada',
+      },
+      {
+        organizacionId: '2153001b-3c2f-4db3-a51e-12ff88f9a267',
+        organizacion: 'P7MOB B',
+        rol: 'miembro',
+        estado: 'aprobada',
+      },
+      {
+        organizacionId: '979d2776-b518-4f23-b02d-27c4a09847a6',
+        organizacion: 'P7MOB C',
+        rol: 'miembro',
+        estado: 'pendiente',
+      },
+      {
+        organizacionId: '5c503e8d-c8f1-4b69-9763-608a6d51ebce',
+        organizacion: 'P7MOB D',
+        rol: 'miembro',
+        estado: 'rechazada',
+      },
+    ],
+  }),
+  /** POST /membresias → 202 */
+  codigoEnviado: ok(202, { reenviarEn: '2026-10-27T02:59:56.135Z' }),
+  /** POST /membresias, antes del minuto → 429 */
+  reenvioLimitado: ok(429, {
+    codigo: 'OTP_LIMITE_REENVIO',
+    mensaje: 'Ya te enviamos un código. Espera un momento antes de pedir otro.',
+    reenviarEn: '2026-10-27T02:59:56.135Z',
+  }),
+  /** POST /autenticacion/reenviar-codigo con propósito `agregar_organizacion` → 202 */
+  reenvioAgregar: ok(202, { reenviarEn: '2026-10-27T02:59:56.439Z' }),
+  organizacionNoAfiliada: ok(422, {
+    codigo: 'ORGANIZACION_NO_AFILIADA',
+    mensaje: 'Tu organización no está afiliada a UniRide.',
+  }),
+  yaEsMiembro: ok(409, {
+    codigo: 'YA_ES_MIEMBRO',
+    mensaje:
+      'Ya eres miembro de esta organización o tu solicitud está pendiente.',
+  }),
+  membresiaRechazada: ok(409, {
+    codigo: 'MEMBRESIA_RECHAZADA',
+    mensaje:
+      'Tu solicitud para esta organización fue rechazada. Si crees que es un error, comunícate con su administrador.',
+  }),
+  correoEnUso: ok(409, {
+    codigo: 'CORREO_EN_USO',
+    mensaje: 'Ese correo ya está en uso en otra cuenta.',
+  }),
+  /** POST /membresias/confirmar → 200, organización de aprobación automática */
+  confirmadaAprobada: ok(200, {
+    membresia: {
+      organizacionId: '2153001b-3c2f-4db3-a51e-12ff88f9a267',
+      organizacion: 'P7MOB B',
+      rol: 'miembro',
+      estado: 'aprobada',
+    },
+  }),
+  /** POST /membresias/confirmar → 200, organización de aprobación manual */
+  confirmadaPendiente: ok(200, {
+    membresia: {
+      organizacionId: '979d2776-b518-4f23-b02d-27c4a09847a6',
+      organizacion: 'P7MOB C',
+      rol: 'miembro',
+      estado: 'pendiente',
+    },
+  }),
+  /** PUT /yo/organizacion-activa → 200 */
+  activaCambiada: ok(200, { tokenAcceso: 'acceso-nuevo-de-prueba' }),
+  /** PUT /yo/organizacion-activa a una pendiente o rechazada → 403 */
+  activaNoAprobada: ok(403, {
+    codigo: 'MEMBRESIA_NO_APROBADA',
+    mensaje:
+      'Solo puedes elegir una organización donde tu membresía esté aprobada.',
+  }),
+};
+
 /** `fetch` falso que responde según "MÉTODO /ruta"; lo que no está en `rutas` falla como una caída de red. */
 export function simularFetch(
   rutas: Record<string, RespuestaSimulada | RespuestaSimulada[]>,

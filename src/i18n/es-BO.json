@@ -5,7 +5,8 @@
   },
   "comun": {
     "acciones": {
-      "volver": "Volver"
+      "volver": "Volver",
+      "cerrar": "Cerrar"
     },
     "estados": {
       "cargando": "Cargando…"
@@ -73,9 +74,41 @@
   "inicio": {
     "cuenta": "Tu cuenta",
     "nombre": "Nombre",
-    "correo": "Correo"
+    "correo": "Correo",
+    "organizacion": "Organización activa"
   },
   "membresias": {
+    "lista": {
+      "titulo": "Mis organizaciones",
+      "explicacion": "Ves los viajes de la organización activa. Toca otra aprobada para cambiar.",
+      "activa": "Activa",
+      "aprobada": "Aprobada",
+      "pendiente": "Pendiente",
+      "rechazada": "Rechazada",
+      "no_activable": "Aún no puedes activarla",
+      "cambiar_a": "Cambiar a {organizacion}",
+      "agregar": "Agregar organización",
+      "ver": "Mis organizaciones",
+      "agregar_otra": "Agregar otra organización"
+    },
+    "activa": {
+      "cambiada": "Ahora ves los viajes de {organizacion}.",
+      "no_aprobada": "Esa organización todavía no te aprobó, así que no puedes activarla."
+    },
+    "agregar": {
+      "titulo": "Agregar organización",
+      "explicacion": "Para unirte a otra organización, confirma un correo de esa organización. Te enviaremos un código.",
+      "correo": "Correo de la otra organización",
+      "correo_ayuda": "Por ejemplo, el correo de tu trabajo.",
+      "enviar": "Enviar código",
+      "enviando": "Enviando…",
+      "ya_es_miembro": "Ya eres miembro de esa organización.",
+      "membresia_rechazada": "Esa organización rechazó tu solicitud antes. Consulta con su administrador.",
+      "correo_en_uso": "Ese correo ya está en uso en otra cuenta. Usa el tuyo.",
+      "bloqueado_titulo": "Confirmación en pausa",
+      "aprobada": "Ya eres parte de {organizacion}.",
+      "pendiente": "Tu solicitud a {organizacion} está en revisión. Podrás activarla cuando el administrador te apruebe."
+    },
     "estado": {
       "pendiente": "Pendiente de aprobación",
       "rechazada": "Rechazada",

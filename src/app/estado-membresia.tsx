@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { Redirect } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSesion } from '@/contexto/sesion';
@@ -16,6 +16,10 @@ export default function EstadoMembresia() {
   const { top } = useSafeAreaInsets();
   if (cargando) return null;
   if (!usuario) return <Redirect href="/iniciar-sesion" />;
+  // Si agregó otra organización y quedó aprobada, ya no está solo a la espera.
+  if (usuario.membresias.some((m) => m.estado === 'aprobada')) {
+    return <Redirect href="/" />;
+  }
   const rechazada = usuario.membresias.every((m) => m.estado === 'rechazada');
   return (
     <View style={estilos.raiz}>
@@ -61,6 +65,13 @@ export default function EstadoMembresia() {
       <ZonaAccion>
         <Boton
           variante="secundario"
+          icono="add"
+          anchoCompleto
+          etiqueta={t('membresias.lista.agregar_otra')}
+          alPresionar={() => router.push('/agregar-organizacion')}
+        />
+        <Boton
+          variante="texto"
           icono="logout"
           anchoCompleto
           etiqueta={t('autenticacion.sesion.salir')}

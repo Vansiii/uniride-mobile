@@ -23,6 +23,9 @@ export class ErrorApi extends Error {
 
 export interface Membresia {
   organizacionId: string;
+  /** Nombre de la organización, tal como lo devuelve `GET /yo`. */
+  organizacion: string;
+  rol: string;
   estado: 'pendiente' | 'aprobada' | 'rechazada';
 }
 
@@ -146,11 +149,17 @@ export async function registrar(datos: DatosRegistro): Promise<EnvioCodigo> {
   );
 }
 
-export async function reenviarCodigo(correo: string): Promise<EnvioCodigo> {
+/** Para qué se pidió el código: crear la cuenta o sumar otra organización (HU-07). */
+export type PropositoCodigo = 'registro' | 'agregar_organizacion';
+
+export async function reenviarCodigo(
+  correo: string,
+  proposito: PropositoCodigo = 'registro',
+): Promise<EnvioCodigo> {
   return leer<EnvioCodigo>(
     await enviar('/autenticacion/reenviar-codigo', 'POST', {
       correo,
-      proposito: 'registro',
+      proposito,
     }),
   );
 }
@@ -179,3 +188,26 @@ export async function cerrarSesion(): Promise<void> {
 }
 
 export const consultarYo = () => solicitar<Usuario>('/yo', 'GET');
+
+/** Pide el código al correo de la otra organización; la organización la decide el servidor por el dominio (A-13). */
+export const solicitarOrganizacion = (correo: string) =>
+  solicitar<EnvioCodigo>('/membresias', 'POST', { correo });
+
+/** Con el código correcto se crea la membresía: aprobada o pendiente según la organización. */
+export const confirmarOrganizacion = (correo: string, codigo: string) =>
+  solicitar<{ membresia: Membresia }>('/membresias/confirmar', 'POST', {
+    correo,
+    codigo,
+  });
+
+/** Cambia la organización activa y guarda el token de acceso nuevo; el de refresco no cambia. */
+export async function cambiarOrganizacionActiva(
+  organizacionId: string,
+): Promise<void> {
+  const r = await solicitar<{ tokenAcceso: string }>(
+    '/yo/organizacion-activa',
+    'PUT',
+    { organizacionId },
+  );
+  tokenAcceso = r.tokenAcceso;
+}
