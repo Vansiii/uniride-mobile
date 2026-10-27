@@ -238,6 +238,48 @@ export const organizacionesReales = {
   }),
 };
 
+// HU-34: capturadas de un backend real (PostgreSQL local, correo en consola) con una cuenta y un correo sin cuenta.
+export const recuperacionReal = {
+  /** POST /autenticacion/recuperar-contrasena con un correo que tiene cuenta → 202 */
+  solicitudConCuenta: ok(202, { reenviarEn: '2026-10-27T03:47:45.276Z' }),
+  /** Lo mismo con un correo sin cuenta → 202 con la misma forma (CA-2) */
+  solicitudSinCuenta: ok(202, { reenviarEn: '2026-10-27T03:47:45.526Z' }),
+  /** Segunda petición antes del minuto, con cuenta → 429 */
+  limitadoConCuenta: ok(429, {
+    codigo: 'OTP_LIMITE_REENVIO',
+    mensaje: 'Ya te enviamos un código. Espera un momento antes de pedir otro.',
+    reenviarEn: '2026-10-27T03:47:45.276Z',
+  }),
+  /** Lo mismo sin cuenta → 429 idéntico */
+  limitadoSinCuenta: ok(429, {
+    codigo: 'OTP_LIMITE_REENVIO',
+    mensaje: 'Ya te enviamos un código. Espera un momento antes de pedir otro.',
+    reenviarEn: '2026-10-27T03:47:45.526Z',
+  }),
+  /** POST /autenticacion/restablecer-contrasena: código incorrecto, ya usado o de un correo sin cuenta → 400 */
+  codigoInvalido: ok(400, {
+    codigo: 'OTP_INVALIDO',
+    mensaje: 'El código no es correcto.',
+  }),
+  contrasenaDebil: ok(400, {
+    codigo: 'CONTRASENA_DEBIL',
+    mensaje:
+      'La contraseña debe tener al menos 8 caracteres, con letras y números.',
+  }),
+  vencido: ok(410, {
+    codigo: 'OTP_VENCIDO',
+    mensaje: 'El código venció. Pide uno nuevo.',
+  }),
+  /** Al quinto error seguido, y en los intentos siguientes → 429 */
+  bloqueado: ok(429, {
+    codigo: 'OTP_BLOQUEADO',
+    mensaje: 'Demasiados intentos. Vuelve a intentarlo más tarde.',
+    reintentarEn: '2026-10-27T04:03:52.533Z',
+  }),
+  /** Contraseña cambiada y todas las sesiones cerradas → 204 sin cuerpo */
+  restablecida: ok(204, null),
+};
+
 /** `fetch` falso que responde según "MÉTODO /ruta"; lo que no está en `rutas` falla como una caída de red. */
 export function simularFetch(
   rutas: Record<string, RespuestaSimulada | RespuestaSimulada[]>,

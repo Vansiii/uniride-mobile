@@ -153,6 +153,13 @@ export default function IniciarSesion() {
             }}
             error={errores.contrasena}
           />
+          <View style={estilos.enlace}>
+            <Boton
+              variante="texto"
+              etiqueta={t('autenticacion.sesion.olvide_contrasena')}
+              alPresionar={() => router.push('/recuperar')}
+            />
+          </View>
         </View>
       </ScrollView>
       <ZonaAccion>
@@ -193,6 +200,7 @@ const estilos = StyleSheet.create({
     gap: espacio(4),
   },
   encabezado: { gap: espacio(1) },
+  enlace: { alignSelf: 'flex-start' },
   titulo: { ...tipografia.pantalla, color: colores.texto },
   subtitulo: { ...tipografia.secundario, color: colores.textoSecundario },
 });

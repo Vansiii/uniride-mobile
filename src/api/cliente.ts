@@ -175,6 +175,30 @@ export async function verificarOtp(
   await guardarSesion(r);
 }
 
+/** Siempre responde igual, tenga o no cuenta el correo (HU-34 CA-2); no se puede saber cuál fue el caso. */
+export async function solicitarRecuperacion(
+  correo: string,
+): Promise<EnvioCodigo> {
+  return leer<EnvioCodigo>(
+    await enviar('/autenticacion/recuperar-contrasena', 'POST', { correo }),
+  );
+}
+
+/** Con el código correcto cambia la contraseña y el servidor cierra todas las sesiones; no inicia sesión. */
+export async function restablecerContrasena(
+  correo: string,
+  codigo: string,
+  contrasenaNueva: string,
+): Promise<void> {
+  return leer<void>(
+    await enviar('/autenticacion/restablecer-contrasena', 'POST', {
+      correo,
+      codigo,
+      contrasenaNueva,
+    }),
+  );
+}
+
 export async function cerrarSesion(): Promise<void> {
   try {
     const tokenRefresco = await AlmacenSeguro.getItemAsync(CLAVE_REFRESCO);

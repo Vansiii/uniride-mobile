@@ -34,7 +34,27 @@
       "bloqueada_titulo": "Inicio de sesión en pausa",
       "bloqueada": "Demasiados intentos. Podrás intentarlo de nuevo a las {hora}.",
       "subtitulo": "Usa el correo y la contraseña de tu cuenta.",
-      "crear_cuenta": "Crear cuenta"
+      "crear_cuenta": "Crear cuenta",
+      "olvide_contrasena": "Olvidé mi contraseña"
+    },
+    "recuperacion": {
+      "titulo": "Recuperar contraseña",
+      "explicacion": "Escribe el correo con el que te registraste. Si tiene una cuenta, te enviaremos un código para crear una contraseña nueva.",
+      "enviar_codigo": "Enviar código",
+      "enviando": "Enviando…",
+      "solicitud_enviada": "Si {correo} tiene una cuenta, te llegará un código en unos minutos.",
+      "titulo_nueva": "Nueva contraseña",
+      "codigo": "Código de 6 dígitos",
+      "vigencia": "Vence en 10 minutos y sirve una sola vez.",
+      "contrasena_nueva": "Contraseña nueva",
+      "sesiones": "Al cambiarla se cerrará tu sesión en todos tus dispositivos.",
+      "cambiar": "Cambiar contraseña",
+      "cambiando": "Cambiando…",
+      "codigo_requerido": "Escribe el código de 6 dígitos.",
+      "bloqueado_titulo": "Recuperación en pausa",
+      "listo_titulo": "Contraseña cambiada",
+      "listo": "Ya puedes iniciar sesión con tu contraseña nueva. Te enviamos un aviso por correo.",
+      "iniciar_sesion": "Iniciar sesión"
     },
     "registro": {
       "titulo": "Crear cuenta",
