@@ -23,6 +23,9 @@ export class ErrorApi extends Error {
 
 export interface Membresia {
   organizacionId: string;
+  /** Nombre de la organización, tal como lo devuelve `GET /yo`. */
+  organizacion: string;
+  rol: string;
   estado: 'pendiente' | 'aprobada' | 'rechazada';
 }
 
@@ -44,14 +47,21 @@ async function enviar(
   metodo: string,
   cuerpo?: unknown,
 ): Promise<Response> {
+  // Un formulario multipart lleva su propio Content-Type, con el límite entre partes.
+  const formulario = cuerpo instanceof FormData;
   try {
     return await fetch(`${BASE}${ruta}`, {
       method: metodo,
       headers: {
-        'Content-Type': 'application/json',
+        ...(formulario ? {} : { 'Content-Type': 'application/json' }),
         ...(tokenAcceso ? { Authorization: `Bearer ${tokenAcceso}` } : {}),
       },
-      body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
+      body:
+        cuerpo === undefined
+          ? undefined
+          : formulario
+            ? cuerpo
+            : JSON.stringify(cuerpo),
     });
   } catch {
     throw new ErrorApi(0, 'SIN_CONEXION');
@@ -127,6 +137,75 @@ export async function iniciarSesion(
   await guardarSesion(r);
 }
 
+/** Desde cuándo se puede pedir otro código (ISO 8601). */
+export interface EnvioCodigo {
+  reenviarEn: string;
+}
+
+export interface DatosRegistro {
+  nombreCompleto: string;
+  correo: string;
+  contrasena: string;
+  aceptaTratamientoDatos: boolean;
+}
+
+/** La organización la decide el servidor por el dominio del correo; el cliente no la envía (A-13). */
+export async function registrar(datos: DatosRegistro): Promise<EnvioCodigo> {
+  return leer<EnvioCodigo>(
+    await enviar('/autenticacion/registro', 'POST', datos),
+  );
+}
+
+/** Para qué se pidió el código: crear la cuenta o sumar otra organización (HU-07). */
+export type PropositoCodigo = 'registro' | 'agregar_organizacion';
+
+export async function reenviarCodigo(
+  correo: string,
+  proposito: PropositoCodigo = 'registro',
+): Promise<EnvioCodigo> {
+  return leer<EnvioCodigo>(
+    await enviar('/autenticacion/reenviar-codigo', 'POST', {
+      correo,
+      proposito,
+    }),
+  );
+}
+
+/** Con el código correcto la cuenta queda creada y la sesión iniciada. */
+export async function verificarOtp(
+  correo: string,
+  codigo: string,
+): Promise<void> {
+  const r = await leer<{ tokenAcceso: string; tokenRefresco: string }>(
+    await enviar('/autenticacion/verificar-otp', 'POST', { correo, codigo }),
+  );
+  await guardarSesion(r);
+}
+
+/** Siempre responde igual, tenga o no cuenta el correo (HU-34 CA-2); no se puede saber cuál fue el caso. */
+export async function solicitarRecuperacion(
+  correo: string,
+): Promise<EnvioCodigo> {
+  return leer<EnvioCodigo>(
+    await enviar('/autenticacion/recuperar-contrasena', 'POST', { correo }),
+  );
+}
+
+/** Con el código correcto cambia la contraseña y el servidor cierra todas las sesiones; no inicia sesión. */
+export async function restablecerContrasena(
+  correo: string,
+  codigo: string,
+  contrasenaNueva: string,
+): Promise<void> {
+  return leer<void>(
+    await enviar('/autenticacion/restablecer-contrasena', 'POST', {
+      correo,
+      codigo,
+      contrasenaNueva,
+    }),
+  );
+}
+
 export async function cerrarSesion(): Promise<void> {
   try {
     const tokenRefresco = await AlmacenSeguro.getItemAsync(CLAVE_REFRESCO);
@@ -140,3 +219,86 @@ export async function cerrarSesion(): Promise<void> {
 }
 
 export const consultarYo = () => solicitar<Usuario>('/yo', 'GET');
+
+/** Pide el código al correo de la otra organización; la organización la decide el servidor por el dominio (A-13). */
+export const solicitarOrganizacion = (correo: string) =>
+  solicitar<EnvioCodigo>('/membresias', 'POST', { correo });
+
+/** Con el código correcto se crea la membresía: aprobada o pendiente según la organización. */
+export const confirmarOrganizacion = (correo: string, codigo: string) =>
+  solicitar<{ membresia: Membresia }>('/membresias/confirmar', 'POST', {
+    correo,
+    codigo,
+  });
+
+/** Cambia la organización activa y guarda el token de acceso nuevo; el de refresco no cambia. */
+export async function cambiarOrganizacionActiva(
+  organizacionId: string,
+): Promise<void> {
+  const r = await solicitar<{ tokenAcceso: string }>(
+    '/yo/organizacion-activa',
+    'PUT',
+    { organizacionId },
+  );
+  tokenAcceso = r.tokenAcceso;
+}
+
+/** Lo que ve el dueño de su vehículo: nunca trae la foto ni su clave (D-20). */
+export interface Vehiculo {
+  id: string;
+  placa: string;
+  marca: string;
+  modelo: string;
+  color: string;
+  capacidad: number;
+}
+
+/** Foto elegida; solo existe en memoria hasta el envío (dato sensible, RN-5). */
+export interface FotoVehiculo {
+  uri: string;
+  /** Tipo que informa el selector; el servidor lo comprueba por los bytes. */
+  tipo: string;
+  /** En web, el archivo mismo: allí un `uri` no se puede enviar como parte del formulario. */
+  archivo?: Blob;
+}
+
+export interface DatosVehiculo {
+  placa: string;
+  marca: string;
+  modelo: string;
+  color: string;
+  capacidad: number;
+  aceptaUsoFoto: boolean;
+  foto: FotoVehiculo;
+}
+
+/** La placa se normaliza en el servidor (CA-3): se envía como la escribió la persona. */
+export function registrarVehiculo(datos: DatosVehiculo): Promise<Vehiculo> {
+  const formulario = new FormData();
+  formulario.append('placa', datos.placa);
+  formulario.append('marca', datos.marca);
+  formulario.append('modelo', datos.modelo);
+  formulario.append('color', datos.color);
+  formulario.append('capacidad', String(datos.capacidad));
+  formulario.append('aceptaUsoFoto', String(datos.aceptaUsoFoto));
+  formulario.append(
+    'foto',
+    datos.foto.archivo ??
+      ({
+        uri: datos.foto.uri,
+        name: 'foto',
+        type: datos.foto.tipo,
+      } as unknown as Blob),
+  );
+  return solicitar<Vehiculo>('/vehiculos', 'POST', formulario);
+}
+
+/** `null` si todavía no registró un vehículo (404). */
+export async function consultarMiVehiculo(): Promise<Vehiculo | null> {
+  try {
+    return await solicitar<Vehiculo>('/vehiculos/mio', 'GET');
+  } catch (error) {
+    if (error instanceof ErrorApi && error.estado === 404) return null;
+    throw error;
+  }
+}

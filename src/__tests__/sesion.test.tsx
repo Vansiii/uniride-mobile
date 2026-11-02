@@ -152,19 +152,46 @@ describe('Inicio según la sesión y la membresía', () => {
   });
 
   it('CA-7: con membresía pendiente solo ve el estado de su solicitud', async () => {
-    conSesionDe(usuario([{ organizacionId: 'o1', estado: 'pendiente' }]));
+    conSesionDe(
+      usuario([
+        {
+          organizacionId: 'o1',
+          organizacion: 'UAGRM',
+          rol: 'miembro',
+          estado: 'pendiente',
+        },
+      ]),
+    );
     await conSesion(<Inicio />);
     expect(await screen.findByText('redirige:/estado-membresia')).toBeTruthy();
   });
 
   it('con membresía aprobada entra a la app', async () => {
-    conSesionDe(usuario([{ organizacionId: 'o1', estado: 'aprobada' }]));
+    conSesionDe(
+      usuario([
+        {
+          organizacionId: 'o1',
+          organizacion: 'UAGRM',
+          rol: 'miembro',
+          estado: 'aprobada',
+        },
+      ]),
+    );
     await conSesion(<Inicio />);
     expect(await screen.findByText('Hola, Ana Pérez.')).toBeTruthy();
   });
 
   it('cerrar sesión devuelve a iniciar sesión', async () => {
-    conSesionDe(usuario([{ organizacionId: 'o1', estado: 'aprobada' }]));
+    conSesionDe(
+      usuario([
+        {
+          organizacionId: 'o1',
+          organizacion: 'UAGRM',
+          rol: 'miembro',
+          estado: 'aprobada',
+        },
+      ]),
+    );
     await conSesion(<Inicio />);
     await fireEvent.press(
       await screen.findByRole('button', { name: 'Cerrar sesión' }),
@@ -177,22 +204,32 @@ describe('Inicio según la sesión y la membresía', () => {
 describe('Pantalla Estado de membresía', () => {
   it('pendiente explica que falta la aprobación del administrador', async () => {
     jest.mocked(api.renovarSesion).mockResolvedValue(true);
-    jest
-      .mocked(api.consultarYo)
-      .mockResolvedValue(
-        usuario([{ organizacionId: 'o1', estado: 'pendiente' }]),
-      );
+    jest.mocked(api.consultarYo).mockResolvedValue(
+      usuario([
+        {
+          organizacionId: 'o1',
+          organizacion: 'UAGRM',
+          rol: 'miembro',
+          estado: 'pendiente',
+        },
+      ]),
+    );
     await conSesion(<EstadoMembresia />);
     expect(await screen.findByText('Pendiente de aprobación')).toBeTruthy();
   });
 
   it('rechazada lo dice con claridad', async () => {
     jest.mocked(api.renovarSesion).mockResolvedValue(true);
-    jest
-      .mocked(api.consultarYo)
-      .mockResolvedValue(
-        usuario([{ organizacionId: 'o1', estado: 'rechazada' }]),
-      );
+    jest.mocked(api.consultarYo).mockResolvedValue(
+      usuario([
+        {
+          organizacionId: 'o1',
+          organizacion: 'UAGRM',
+          rol: 'miembro',
+          estado: 'rechazada',
+        },
+      ]),
+    );
     await conSesion(<EstadoMembresia />);
     expect(await screen.findByText('No aprobaron tu solicitud')).toBeTruthy();
   });

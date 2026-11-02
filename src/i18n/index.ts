@@ -12,3 +12,12 @@ export function t(clave: string): string {
     );
   return typeof valor === 'string' ? valor : clave;
 }
+
+/** Hora local en 24 h ("07:46") de una fecha ISO, para decir cuándo se puede reintentar. */
+export function formatearHora(iso: unknown): string {
+  return new Date(String(iso)).toLocaleTimeString('es-BO', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  });
+}

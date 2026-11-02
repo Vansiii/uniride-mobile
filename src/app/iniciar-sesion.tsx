@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { Redirect } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -153,6 +153,13 @@ export default function IniciarSesion() {
             }}
             error={errores.contrasena}
           />
+          <View style={estilos.enlace}>
+            <Boton
+              variante="texto"
+              etiqueta={t('autenticacion.sesion.olvide_contrasena')}
+              alPresionar={() => router.push('/recuperar')}
+            />
+          </View>
         </View>
       </ScrollView>
       <ZonaAccion>
@@ -165,6 +172,12 @@ export default function IniciarSesion() {
               : 'autenticacion.sesion.entrar',
           )}
           alPresionar={enviar}
+        />
+        <Boton
+          variante="secundario"
+          anchoCompleto
+          etiqueta={t('autenticacion.sesion.crear_cuenta')}
+          alPresionar={() => router.push('/registro')}
         />
       </ZonaAccion>
     </KeyboardAvoidingView>
@@ -187,6 +200,7 @@ const estilos = StyleSheet.create({
     gap: espacio(4),
   },
   encabezado: { gap: espacio(1) },
+  enlace: { alignSelf: 'flex-start' },
   titulo: { ...tipografia.pantalla, color: colores.texto },
   subtitulo: { ...tipografia.secundario, color: colores.textoSecundario },
 });
