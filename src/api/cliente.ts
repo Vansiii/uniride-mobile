@@ -302,3 +302,54 @@ export async function consultarMiVehiculo(): Promise<Vehiculo | null> {
     throw error;
   }
 }
+
+export type EstadoIdentidad =
+  | 'no_verificada'
+  | 'en_revision'
+  | 'verificada'
+  | 'rechazada'
+  | 'bloqueada_temporal';
+
+/** Único dato de identidad que sale de la API: nunca la foto, el documento ni su hash (HU-08 CA-8). */
+export interface EstadoVerificacion {
+  estado: EstadoIdentidad;
+  verificadoEn: string | null;
+  bloqueadoHasta: string | null;
+}
+
+/** Carnet tomado en vivo; solo existe en memoria hasta el envío (dato sensible). */
+export interface FotoCarnet {
+  uri: string;
+  tipo: string;
+  /** En web, el archivo mismo: allí un `uri` no se puede enviar como parte del formulario. */
+  archivo?: Blob;
+}
+
+export const consultarEstadoIdentidad = () =>
+  solicitar<EstadoVerificacion>('/identidad/estado', 'GET');
+
+/** Abre la sesión de Face Liveness que la app ejecutará antes de enviar la verificación. */
+export const crearSesionLiveness = () =>
+  solicitar<{ sesionId: string }>('/identidad/liveness-sesion', 'POST');
+
+export function verificarIdentidad(datos: {
+  numeroDocumento: string;
+  aceptaConsentimiento: boolean;
+  sesionId: string;
+  fotoCarnet: FotoCarnet;
+}): Promise<{ estado: EstadoIdentidad; verificadoEn: string }> {
+  const formulario = new FormData();
+  formulario.append('numeroDocumento', datos.numeroDocumento);
+  formulario.append('aceptaConsentimiento', String(datos.aceptaConsentimiento));
+  formulario.append('sesionId', datos.sesionId);
+  formulario.append(
+    'fotoCarnet',
+    datos.fotoCarnet.archivo ??
+      ({
+        uri: datos.fotoCarnet.uri,
+        name: 'carnet',
+        type: datos.fotoCarnet.tipo,
+      } as unknown as Blob),
+  );
+  return solicitar('/identidad/verificar', 'POST', formulario);
+}

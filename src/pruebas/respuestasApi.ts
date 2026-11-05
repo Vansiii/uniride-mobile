@@ -364,6 +364,43 @@ function leerCuerpo(cuerpo: unknown): unknown {
   return Object.fromEntries(partes);
 }
 
+// HU-08: formas según el contrato del backend (DTOs de `identidad`); el motor facial real no se probó.
+export const identidadReal = {
+  sinVerificar: ok(200, {
+    estado: 'no_verificada',
+    verificadoEn: null,
+    bloqueadoHasta: null,
+  }),
+  verificada: ok(200, {
+    estado: 'verificada',
+    verificadoEn: '2026-11-04T15:00:00.000Z',
+    bloqueadoHasta: null,
+  }),
+  bloqueada: ok(200, {
+    estado: 'bloqueada_temporal',
+    verificadoEn: null,
+    bloqueadoHasta: '2026-11-05T15:00:00.000Z',
+  }),
+  sesion: ok(201, { sesionId: 'sim-3f2b8c1e-5a4d-4e6f-9b7a-1c2d3e4f5a6b' }),
+  exito: ok(200, {
+    estado: 'verificada',
+    verificadoEn: '2026-11-04T15:00:00.000Z',
+  }),
+  rostroNoCoincide: ok(422, {
+    codigo: 'ROSTRO_NO_COINCIDE',
+    mensaje: 'Tu rostro no coincide con la foto del carnet.',
+  }),
+  documentoDuplicado: ok(409, {
+    codigo: 'DOCUMENTO_DUPLICADO',
+    mensaje: 'Ese carnet ya está registrado.',
+  }),
+  intentosAgotados: ok(429, {
+    codigo: 'INTENTOS_AGOTADOS',
+    mensaje: 'Superaste los intentos de verificación.',
+    bloqueadoHasta: '2026-11-05T15:00:00.000Z',
+  }),
+};
+
 /** `fetch` falso que responde según "MÉTODO /ruta"; lo que no está en `rutas` falla como una caída de red. */
 export function simularFetch(
   rutas: Record<string, RespuestaSimulada | RespuestaSimulada[]>,

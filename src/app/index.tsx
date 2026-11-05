@@ -77,6 +77,12 @@ export default function Inicio() {
             etiqueta={t('vehiculos.registro.ver')}
             alPresionar={() => router.push('/vehiculo')}
           />
+          <Boton
+            variante="texto"
+            icono="verified_user"
+            etiqueta={t('identidad.verificacion.ver')}
+            alPresionar={() => router.push('/identidad')}
+          />
         </View>
       </ScrollView>
       <ZonaAccion>
