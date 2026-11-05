@@ -2,5 +2,183 @@
   "aplicacion": {
     "nombre": "UniRide",
     "eslogan": "Viajes compartidos verificados para tu comunidad"
+  },
+  "comun": {
+    "acciones": {
+      "volver": "Volver",
+      "cerrar": "Cerrar",
+      "reintentar": "Reintentar"
+    },
+    "estados": {
+      "cargando": "Cargando…"
+    },
+    "errores": {
+      "sin_conexion": "No hay conexión. Revisa tu internet e inténtalo de nuevo.",
+      "desconocido": "Algo salió mal. Inténtalo de nuevo en unos minutos."
+    }
+  },
+  "autenticacion": {
+    "sesion": {
+      "titulo": "Iniciar sesión",
+      "correo": "Correo",
+      "correo_ejemplo": "nombre@uagrm.edu.bo",
+      "contrasena": "Contraseña",
+      "mostrar_contrasena": "Mostrar contraseña",
+      "ocultar_contrasena": "Ocultar contraseña",
+      "entrar": "Entrar",
+      "entrando": "Entrando…",
+      "salir": "Cerrar sesión",
+      "bienvenida": "Hola, {nombre}.",
+      "correo_invalido": "Escribe un correo válido, por ejemplo nombre@uagrm.edu.bo.",
+      "contrasena_requerida": "Escribe tu contraseña.",
+      "credenciales_invalidas": "Correo o contraseña incorrectos. Revísalos e inténtalo de nuevo.",
+      "bloqueada_titulo": "Inicio de sesión en pausa",
+      "bloqueada": "Demasiados intentos. Podrás intentarlo de nuevo a las {hora}.",
+      "subtitulo": "Usa el correo y la contraseña de tu cuenta.",
+      "crear_cuenta": "Crear cuenta",
+      "olvide_contrasena": "Olvidé mi contraseña"
+    },
+    "recuperacion": {
+      "titulo": "Recuperar contraseña",
+      "explicacion": "Escribe el correo con el que te registraste. Si tiene una cuenta, te enviaremos un código para crear una contraseña nueva.",
+      "enviar_codigo": "Enviar código",
+      "enviando": "Enviando…",
+      "solicitud_enviada": "Si {correo} tiene una cuenta, te llegará un código en unos minutos.",
+      "titulo_nueva": "Nueva contraseña",
+      "codigo": "Código de 6 dígitos",
+      "vigencia": "Vence en 10 minutos y sirve una sola vez.",
+      "contrasena_nueva": "Contraseña nueva",
+      "sesiones": "Al cambiarla se cerrará tu sesión en todos tus dispositivos.",
+      "cambiar": "Cambiar contraseña",
+      "cambiando": "Cambiando…",
+      "codigo_requerido": "Escribe el código de 6 dígitos.",
+      "bloqueado_titulo": "Recuperación en pausa",
+      "listo_titulo": "Contraseña cambiada",
+      "listo": "Ya puedes iniciar sesión con tu contraseña nueva. Te enviamos un aviso por correo.",
+      "iniciar_sesion": "Iniciar sesión"
+    },
+    "registro": {
+      "titulo": "Crear cuenta",
+      "subtitulo": "Con el correo de tu universidad o empresa. Así sabremos a qué comunidad perteneces.",
+      "nombre": "Nombre completo",
+      "nombre_requerido": "Escribe tu nombre completo.",
+      "correo": "Correo institucional",
+      "contrasena": "Contraseña",
+      "contrasena_ayuda": "Mínimo 8 caracteres, con al menos una letra y un número.",
+      "contrasena_debil": "Necesita al menos 8 caracteres, una letra y un número.",
+      "consentimiento": "Acepto el tratamiento de mis datos personales para usar UniRide.",
+      "consentimiento_requerido": "Necesitamos tu consentimiento para crear la cuenta.",
+      "organizacion_no_afiliada": "Tu organización todavía no está afiliada a UniRide. Usa el correo que te dio tu universidad o empresa.",
+      "correo_no_disponible": "No pudimos enviarte el código. Inténtalo de nuevo más tarde.",
+      "codigo_reciente": "Ya te enviamos un código a ese correo. Podrás pedir otro a las {hora}.",
+      "ingresar_codigo": "Ingresar el código",
+      "crear": "Crear cuenta",
+      "creando": "Creando…",
+      "ya_tengo_cuenta": "Ya tengo cuenta"
+    },
+    "otp": {
+      "titulo": "Confirma tu correo",
+      "instruccion": "Te enviamos un código de 6 dígitos a",
+      "vigencia": "Vence en 10 minutos. Se envía solo al completar el sexto dígito.",
+      "etiqueta": "Código de 6 dígitos",
+      "invalido": "El código no es correcto.",
+      "vencido": "El código venció. Pide uno nuevo para continuar.",
+      "bloqueado_titulo": "Registro en pausa",
+      "bloqueado": "Por seguridad, espera hasta las {hora} para volver a intentar con este correo.",
+      "reenviar_en": "Reenviar código en {segundos} s",
+      "reenviar": "Reenviar código",
+      "enviar_nuevo": "Enviar código nuevo",
+      "reenviado": "Te enviamos un código nuevo.",
+      "confirmando": "Confirmando…"
+    }
+  },
+  "inicio": {
+    "cuenta": "Tu cuenta",
+    "nombre": "Nombre",
+    "correo": "Correo",
+    "organizacion": "Organización activa"
+  },
+  "membresias": {
+    "lista": {
+      "titulo": "Mis organizaciones",
+      "explicacion": "Ves los viajes de la organización activa. Toca otra aprobada para cambiar.",
+      "activa": "Activa",
+      "aprobada": "Aprobada",
+      "pendiente": "Pendiente",
+      "rechazada": "Rechazada",
+      "no_activable": "Aún no puedes activarla",
+      "cambiar_a": "Cambiar a {organizacion}",
+      "agregar": "Agregar organización",
+      "ver": "Mis organizaciones",
+      "agregar_otra": "Agregar otra organización"
+    },
+    "activa": {
+      "cambiada": "Ahora ves los viajes de {organizacion}.",
+      "no_aprobada": "Esa organización todavía no te aprobó, así que no puedes activarla."
+    },
+    "agregar": {
+      "titulo": "Agregar organización",
+      "explicacion": "Para unirte a otra organización, confirma un correo de esa organización. Te enviaremos un código.",
+      "correo": "Correo de la otra organización",
+      "correo_ayuda": "Por ejemplo, el correo de tu trabajo.",
+      "enviar": "Enviar código",
+      "enviando": "Enviando…",
+      "ya_es_miembro": "Ya eres miembro de esa organización.",
+      "membresia_rechazada": "Esa organización rechazó tu solicitud antes. Consulta con su administrador.",
+      "correo_en_uso": "Ese correo ya está en uso en otra cuenta. Usa el tuyo.",
+      "bloqueado_titulo": "Confirmación en pausa",
+      "aprobada": "Ya eres parte de {organizacion}.",
+      "pendiente": "Tu solicitud a {organizacion} está en revisión. Podrás activarla cuando el administrador te apruebe."
+    },
+    "estado": {
+      "pendiente": "Pendiente de aprobación",
+      "rechazada": "Rechazada",
+      "titulo_pendiente": "Tu solicitud está en revisión",
+      "titulo_rechazada": "No aprobaron tu solicitud",
+      "explicacion_pendiente": "El administrador de tu organización debe aprobarte. Podrás usar UniRide apenas lo haga.",
+      "explicacion_rechazada": "El administrador de tu organización no aprobó tu ingreso. Consulta con él si crees que es un error."
+    }
+  },
+  "vehiculos": {
+    "registro": {
+      "titulo": "Mi vehículo",
+      "explicacion": "Registra el vehículo con el que ofrecerás viajes. Los pasajeros verán la placa, la marca, el modelo y el color.",
+      "ver": "Mi vehículo",
+      "placa": "Placa",
+      "placa_ayuda": "3 o 4 números y 3 letras, por ejemplo 1234-ABC.",
+      "marca": "Marca",
+      "modelo": "Modelo",
+      "color": "Color",
+      "capacidad": "Asientos para pasajeros",
+      "capacidad_ayuda": "Sin contar al conductor, de 1 a 6.",
+      "foto": "Foto del vehículo",
+      "foto_previa": "Foto elegida del vehículo",
+      "tomar_foto": "Tomar foto",
+      "elegir_foto": "Elegir de la galería",
+      "cambiar_foto": "Cambiar foto",
+      "consentimiento": "Acepto que UniRide guarde la foto de mi vehículo cifrada y la use solo para verificación. Los pasajeros no la verán.",
+      "registrar": "Registrar vehículo",
+      "registrando": "Registrando…",
+      "registrado": "Tu vehículo quedó registrado.",
+      "privacidad": "La foto se guarda cifrada y nadie más la ve. Los pasajeros solo ven la placa, la marca, el modelo y el color.",
+      "asientos": "{cantidad} asientos para pasajeros",
+      "asiento": "1 asiento para pasajeros",
+      "placa_requerida": "Escribe la placa.",
+      "placa_invalida": "La placa lleva 3 o 4 números y 3 letras, por ejemplo 1234-ABC.",
+      "marca_requerida": "Escribe la marca.",
+      "modelo_requerido": "Escribe el modelo.",
+      "color_requerido": "Escribe el color.",
+      "texto_largo": "Usa 40 caracteres como máximo.",
+      "capacidad_invalida": "Escribe un número de asientos entre 1 y 6.",
+      "foto_requerida": "Agrega una foto del vehículo.",
+      "consentimiento_requerido": "Necesitamos tu consentimiento para guardar la foto.",
+      "placa_duplicada": "Esa placa ya está registrada en UniRide.",
+      "ya_registrado": "Ya tenías un vehículo registrado.",
+      "dato_invalido": "Revisa el dato marcado e inténtalo de nuevo.",
+      "foto_invalida": "La foto debe ser JPEG o PNG y pesar como máximo 5 MB.",
+      "no_disponible": "No pudimos guardar la foto, así que no se registró nada. Inténtalo de nuevo más tarde.",
+      "sin_permiso_camara": "Para tomar la foto necesitamos permiso de la cámara. También puedes elegirla de la galería.",
+      "sin_membresia": "Necesitas ser miembro aprobado de una organización para registrar un vehículo."
+    }
   }
 }
