@@ -77,6 +77,12 @@ export default function Inicio() {
             etiqueta={t('vehiculos.registro.ver')}
             alPresionar={() => router.push('/vehiculo')}
           />
+          <Boton
+            variante="texto"
+            icono="smartphone"
+            etiqueta={t('dispositivo.vinculacion.ver')}
+            alPresionar={() => router.push('/dispositivo')}
+          />
         </View>
       </ScrollView>
       <ZonaAccion>

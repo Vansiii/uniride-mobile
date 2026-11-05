@@ -1,4 +1,5 @@
 import * as AlmacenSeguro from 'expo-secure-store';
+import { cabecerasFirma } from '@/dispositivo/firma';
 
 const BASE = process.env.EXPO_PUBLIC_API_URL ?? 'http://10.0.2.2:3000/api/v1';
 const CLAVE_REFRESCO = 'uniride.refresco';
@@ -41,11 +42,14 @@ export interface Usuario {
 // El token de acceso vive solo en memoria; el de refresco, en el almacenamiento seguro del sistema.
 let tokenAcceso: string | null = null;
 let renovando: Promise<boolean> | null = null;
+// Dispositivo de la cuenta con sesión; se olvida al cerrarla para no firmar con el de otra persona.
+let dispositivoId: string | null = null;
 
 async function enviar(
   ruta: string,
   metodo: string,
   cuerpo?: unknown,
+  cabeceras: Record<string, string> = {},
 ): Promise<Response> {
   // Un formulario multipart lleva su propio Content-Type, con el límite entre partes.
   const formulario = cuerpo instanceof FormData;
@@ -55,6 +59,7 @@ async function enviar(
       headers: {
         ...(formulario ? {} : { 'Content-Type': 'application/json' }),
         ...(tokenAcceso ? { Authorization: `Bearer ${tokenAcceso}` } : {}),
+        ...cabeceras,
       },
       body:
         cuerpo === undefined
@@ -214,6 +219,7 @@ export async function cerrarSesion(): Promise<void> {
     });
   } finally {
     tokenAcceso = null;
+    dispositivoId = null;
     await AlmacenSeguro.deleteItemAsync(CLAVE_REFRESCO);
   }
 }
@@ -301,4 +307,72 @@ export async function consultarMiVehiculo(): Promise<Vehiculo | null> {
     if (error instanceof ErrorApi && error.estado === 404) return null;
     throw error;
   }
+}
+
+export interface MiDispositivo {
+  id: string;
+  modelo: string;
+  vinculadoEn: string;
+  activo: boolean;
+}
+
+/** Valor de un solo uso con el que la app pide el token de Play Integrity. */
+export const pedirDesafioAtestacion = () =>
+  solicitar<{ desafio: string; expiraEn: string }>(
+    '/dispositivos/desafio-atestacion',
+    'POST',
+  );
+
+/** El servidor valida la atestación y guarda solo la llave PÚBLICA; la privada nunca sale del Keystore. */
+export async function vincularDispositivo(datos: {
+  desafio: string;
+  tokenIntegridad: string;
+  llavePublicaPem: string;
+  modelo: string;
+}): Promise<{ id: string; estado: 'vinculado' }> {
+  const r = await solicitar<{ id: string; estado: 'vinculado' }>(
+    '/dispositivos/vincular',
+    'POST',
+    datos,
+  );
+  dispositivoId = r.id;
+  return r;
+}
+
+/** `null` si todavía no vinculó un teléfono (404). */
+export async function consultarMiDispositivo(): Promise<MiDispositivo | null> {
+  try {
+    const d = await solicitar<MiDispositivo>('/dispositivos/mi-dispositivo', 'GET');
+    dispositivoId = d.id;
+    return d;
+  } catch (error) {
+    if (error instanceof ErrorApi && error.estado === 404) return null;
+    throw error;
+  }
+}
+
+/**
+ * Petición sensible (billetera, publicar viaje, reservar, handshakes): lleva la firma del dispositivo (A-08).
+ * Cada intento se firma de nuevo: el nonce es de un solo uso y la ventana es de 30 s.
+ */
+export async function solicitarFirmado<T>(
+  ruta: string,
+  metodo: string,
+  cuerpo?: unknown,
+): Promise<T> {
+  const id = dispositivoId ?? (await consultarMiDispositivo())?.id;
+  if (!id) throw new ErrorApi(0, 'DISPOSITIVO_NO_VINCULADO');
+  const url = new URL(`${BASE}${ruta}`);
+  const texto = cuerpo === undefined ? '' : JSON.stringify(cuerpo);
+  const intentar = async () =>
+    enviar(
+      ruta,
+      metodo,
+      cuerpo,
+      await cabecerasFirma(id, metodo, url.pathname + url.search, texto),
+    );
+  let respuesta = await intentar();
+  if (respuesta.status === 401 && tokenAcceso && (await renovarSesion()))
+    respuesta = await intentar();
+  return leer<T>(respuesta);
 }

@@ -364,6 +364,36 @@ function leerCuerpo(cuerpo: unknown): unknown {
   return Object.fromEntries(partes);
 }
 
+// HU-09: formas según el contrato del backend (DTOs de `dispositivos`); Play Integrity real no se probó.
+export const dispositivoReal = {
+  sinDispositivo: ok(404, {
+    codigo: 'NO_ENCONTRADO',
+    mensaje: 'No se encontró lo que buscas.',
+  }),
+  vinculado: ok(200, {
+    id: '0b6f1d3a-7c2e-4a55-9d21-5f8e3b9c4a10',
+    modelo: 'Pixel 8',
+    vinculadoEn: '2026-11-04T15:00:00.000Z',
+    activo: true,
+  }),
+  desafio: ok(201, {
+    desafio: 'ZGVzYWZpby1kZS1wcnVlYmE',
+    expiraEn: '2026-11-04T15:05:00.000Z',
+  }),
+  vinculadoOk: ok(200, {
+    id: '0b6f1d3a-7c2e-4a55-9d21-5f8e3b9c4a10',
+    estado: 'vinculado',
+  }),
+  noIntegro: ok(422, {
+    codigo: 'DISPOSITIVO_NO_INTEGRO',
+    mensaje: 'No pudimos comprobar tu teléfono.',
+  }),
+  yaVinculado: ok(400, {
+    codigo: 'DISPOSITIVO_YA_VINCULADO',
+    mensaje: 'Ya tienes un dispositivo vinculado.',
+  }),
+};
+
 /** `fetch` falso que responde según "MÉTODO /ruta"; lo que no está en `rutas` falla como una caída de red. */
 export function simularFetch(
   rutas: Record<string, RespuestaSimulada | RespuestaSimulada[]>,
