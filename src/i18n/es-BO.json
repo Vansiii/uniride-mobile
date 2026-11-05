@@ -181,6 +181,28 @@
       "sin_membresia": "Necesitas ser miembro aprobado de una organización para registrar un vehículo."
     }
   },
+  "dispositivo": {
+    "vinculacion": {
+      "titulo": "Mi teléfono",
+      "ver": "Vincular mi teléfono",
+      "explicacion": "Para operar tu cuenta con seguridad, UniRide la ata a tu teléfono. Solo un teléfono por cuenta.",
+      "privacidad": "Se crea una llave dentro del teléfono que nadie puede copiar y que pide tu huella o rostro cada vez que se usa.",
+      "vincular": "Vincular este teléfono",
+      "vinculando": "Vinculando…",
+      "vinculado": "Tu teléfono quedó vinculado.",
+      "modelo": "Teléfono",
+      "vinculado_desde": "Vinculado el",
+      "no_integro": "No pudimos comprobar que este teléfono es original. Usa un teléfono sin root y la app oficial.",
+      "ya_vinculado": "Tu cuenta ya tiene un teléfono vinculado.",
+      "desafio_invalido": "La comprobación venció. Inténtalo de nuevo.",
+      "llave_invalida": "No pudimos registrar la llave de seguridad de tu teléfono.",
+      "servicio_no_disponible": "No pudimos comprobar tu teléfono por un problema del servicio. No se guardó nada; inténtalo más tarde.",
+      "keystore_no_disponible": "Esta versión de la app todavía no puede vincular el teléfono. Actualiza la app e inténtalo de nuevo."
+    },
+    "autenticacion": {
+      "cancelada": "Cancelaste la verificación biométrica, así que no se hizo la acción."
+    }
+  },
   "identidad": {
     "verificacion": {
       "titulo": "Verifica tu identidad",
