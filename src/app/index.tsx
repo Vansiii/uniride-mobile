@@ -83,6 +83,12 @@ export default function Inicio() {
             etiqueta={t('dispositivo.vinculacion.ver')}
             alPresionar={() => router.push('/dispositivo')}
           />
+          <Boton
+            variante="texto"
+            icono="verified_user"
+            etiqueta={t('identidad.verificacion.ver')}
+            alPresionar={() => router.push('/identidad')}
+          />
         </View>
       </ScrollView>
       <ZonaAccion>

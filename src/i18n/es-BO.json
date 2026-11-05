@@ -202,5 +202,46 @@
     "autenticacion": {
       "cancelada": "Cancelaste la verificación biométrica, así que no se hizo la acción."
     }
+  },
+  "identidad": {
+    "verificacion": {
+      "titulo": "Verifica tu identidad",
+      "ver": "Verificar identidad",
+      "explicacion": "Para ofrecer o reservar viajes necesitamos comprobar que eres tú. Es un paso único, en tres pasos cortos.",
+      "paso": "Paso {actual} de 3",
+      "paso1": "Consentimiento y carnet",
+      "paso2": "Foto del carnet",
+      "paso3": "Prueba de vida",
+      "numero": "Número de carnet",
+      "numero_ayuda": "Solo lo usamos para evitar cuentas duplicadas; no guardamos el número.",
+      "consentimiento": "Acepto que UniRide trate mis datos biométricos (rostro y carnet) solo para verificar mi identidad, de forma cifrada.",
+      "siguiente": "Siguiente",
+      "tomar_carnet": "Tomar foto del carnet",
+      "cambiar_carnet": "Tomar otra foto",
+      "carnet_ayuda": "Encuadra el anverso del carnet con buena luz, sin brillos ni reflejos.",
+      "carnet_previa": "Foto del carnet tomada",
+      "iniciar_prueba": "Iniciar prueba de vida",
+      "prueba_ayuda": "Mira a la cámara con buena luz, sin fotos ni pantallas. Seguirás las indicaciones en pantalla.",
+      "verificando": "Verificando…",
+      "verificada": "Tu identidad está verificada.",
+      "verificada_desde": "Verificada el {fecha}",
+      "bloqueada": "La verificación está bloqueada hasta las {hora}. Podrás intentarlo de nuevo después.",
+      "rechazada": "No pudimos verificar tu identidad. Puedes intentarlo de nuevo.",
+      "privacidad": "La foto de tu carnet se guarda cifrada y nadie más la ve.",
+      "numero_requerido": "Escribe el número de tu carnet.",
+      "numero_invalido": "Revisa el número: usa solo letras, números y guiones.",
+      "consentimiento_requerido": "Necesitamos tu consentimiento para verificarte.",
+      "carnet_requerido": "Toma la foto del carnet.",
+      "sin_permiso_camara": "Para tomar la foto necesitamos permiso de la cámara.",
+      "prueba_vida_fallida": "No pudimos confirmar que eres una persona real. Repite la prueba con buena luz, sin fotos ni pantallas.",
+      "rostro_no_coincide": "Tu rostro no coincide con la foto del carnet. Revisa que el carnet sea tuyo y vuelve a intentarlo.",
+      "documento_duplicado": "Ese carnet ya está registrado en otra cuenta de UniRide.",
+      "rostro_duplicado": "Tu rostro ya está registrado en otra cuenta de UniRide.",
+      "imagen_ilegible": "No pudimos leer la foto del carnet. Debe ser nítida, sin brillos y con tu rostro visible.",
+      "intentos_agotados": "Superaste los intentos de verificación. Podrás intentarlo de nuevo a las {hora}.",
+      "servicio_no_disponible": "No pudimos completar la verificación por un problema del servicio. Inténtalo de nuevo más tarde.",
+      "liveness_no_disponible": "Esta versión de la app todavía no puede hacer la prueba de vida. Actualiza la app e inténtalo de nuevo.",
+      "ya_verificada": "Tu identidad ya estaba verificada."
+    }
   }
 }
