@@ -431,6 +431,69 @@ export const identidadReal = {
   }),
 };
 
+// HU-12: respuestas capturadas de un backend propio (PostgreSQL local, nodo Hardhat de compose, firma real de
+// dispositivo, 06/11/2026). `exploradorUrl` es `null` porque Hardhat no tiene explorador; la forma con URL sigue el
+// contrato (`https://amoy.polygonscan.com/address/<direccion>`) y Polygon Amoy nunca se tocó.
+const DIRECCION_BILLETERA = '0x3021f987aaE8Fb0be0C809E13A05F79b04706805';
+export const billeteraReal = {
+  direccion: DIRECCION_BILLETERA,
+  /** GET /billetera/mia, tras acuñar 12.349 URC en Hardhat (la API trunca a 2 decimales). */
+  conSaldo: ok(200, {
+    id: 'd0c05fca-d161-447f-92c4-0791765882b3',
+    direccion: DIRECCION_BILLETERA,
+    saldoUrc: '12.34',
+    exploradorUrl: null,
+  }),
+  /** GET /billetera/mia recién creada. */
+  sinSaldo: ok(200, {
+    id: 'd0c05fca-d161-447f-92c4-0791765882b3',
+    direccion: DIRECCION_BILLETERA,
+    saldoUrc: '0.00',
+    exploradorUrl: null,
+  }),
+  /** POST /billetera cuando la crea. */
+  creada: ok(201, {
+    id: 'd0c05fca-d161-447f-92c4-0791765882b3',
+    direccion: DIRECCION_BILLETERA,
+    saldoUrc: '0.00',
+    exploradorUrl: null,
+  }),
+  /** Forma del contrato en Polygon Amoy (no capturada: Amoy nunca se tocó). */
+  enAmoy: ok(200, {
+    id: 'd0c05fca-d161-447f-92c4-0791765882b3',
+    direccion: DIRECCION_BILLETERA,
+    saldoUrc: '12.30',
+    exploradorUrl: `https://amoy.polygonscan.com/address/${DIRECCION_BILLETERA}`,
+  }),
+  /** GET /billetera/mia sin billetera todavía → 404. */
+  noEncontrada: ok(404, {
+    codigo: 'BILLETERA_NO_ENCONTRADA',
+    mensaje: 'Todavía no tienes una billetera.',
+  }),
+  identidadNoVerificada: ok(403, {
+    codigo: 'IDENTIDAD_NO_VERIFICADA',
+    mensaje: 'Debes verificar tu identidad para realizar esta acción.',
+  }),
+  firmaInvalida: ok(401, {
+    codigo: 'FIRMA_DISPOSITIVO_INVALIDA',
+    mensaje:
+      'No pudimos comprobar que la petición viene de tu teléfono vinculado.',
+  }),
+  peticionExpirada: ok(401, {
+    codigo: 'PETICION_EXPIRADA',
+    mensaje: 'La petición expiró o ya fue usada. Inténtalo de nuevo.',
+  }),
+  cuentaSuspendida: ok(403, {
+    codigo: 'CUENTA_SUSPENDIDA',
+    mensaje: 'Tu cuenta está suspendida. No puedes usar la billetera.',
+  }),
+  /** Con el nodo Hardhat apagado. */
+  cadenaCaida: ok(503, {
+    codigo: 'SERVICIO_BLOCKCHAIN_NO_DISPONIBLE',
+    mensaje:
+      'No pudimos conectar con la red de tu billetera. Inténtalo de nuevo en unos minutos.',
+  }),
+};
 /** `fetch` falso que responde según "MÉTODO /ruta"; lo que no está en `rutas` falla como una caída de red. */
 export function simularFetch(
   rutas: Record<string, RespuestaSimulada | RespuestaSimulada[]>,

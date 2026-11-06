@@ -430,3 +430,27 @@ export function verificarIdentidad(datos: {
   );
   return solicitar('/identidad/verificar', 'POST', formulario);
 }
+
+/** Billetera de la persona (HU-12): el saldo es texto tal cual lo envía la API; nunca se convierte a número. */
+export interface Billetera {
+  id: string;
+  direccion: string;
+  saldoUrc: string;
+  /** `null` fuera de Polygon Amoy (nodo local): no hay enlace que mostrar. */
+  exploradorUrl: string | null;
+}
+
+/** Lectura firmada: pide la huella. `null` si todavía no tiene billetera (404). */
+export async function consultarMiBilletera(): Promise<Billetera | null> {
+  try {
+    return await solicitarFirmado<Billetera>('/billetera/mia', 'GET');
+  } catch (error) {
+    if (error instanceof ErrorApi && error.codigo === 'BILLETERA_NO_ENCONTRADA')
+      return null;
+    throw error;
+  }
+}
+
+/** Reintento de la creación automática; idempotente: si ya existía devuelve la misma billetera. */
+export const crearBilletera = () =>
+  solicitarFirmado<Billetera>('/billetera', 'POST');

@@ -5,7 +5,7 @@ import {
   waitFor,
 } from '@testing-library/react-native';
 import * as SelectorImagen from 'expo-image-picker';
-import Inicio from '@/app/index';
+import Inicio from '@/app/(pestanas)/index';
 import VehiculoPantalla from '@/app/vehiculo';
 import { ProveedorSesion } from '@/contexto/sesion';
 import {

@@ -7,7 +7,7 @@ import {
 import AgregarOrganizacion from '@/app/agregar-organizacion';
 import Codigo from '@/app/codigo';
 import EstadoMembresia from '@/app/estado-membresia';
-import Inicio from '@/app/index';
+import Inicio from '@/app/(pestanas)/index';
 import Organizaciones from '@/app/organizaciones';
 import { ProveedorSesion } from '@/contexto/sesion';
 import {
