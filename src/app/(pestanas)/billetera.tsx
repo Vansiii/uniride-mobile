@@ -88,6 +88,12 @@ const acortar = (direccion: string) =>
 
 /** Billetera (HU-12): saldo URC, dirección pública y enlace al explorador. Lee una vez al entrar y al pulsar actualizar. */
 export default function BilleteraPantalla() {
+  const { usuario } = useSesion();
+  // Otra persona en la misma pestaña nunca ve lo que quedó en memoria de la anterior: se monta de cero.
+  return <Contenido key={usuario?.id} />;
+}
+
+function Contenido() {
   const { cargando, usuario } = useSesion();
   const [vista, setVista] = useState<Vista>({ tipo: 'cargando' });
   const [copia, setCopia] = useState<'ok' | 'fallo' | null>(null);
