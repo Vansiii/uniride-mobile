@@ -42,7 +42,12 @@ export const espacio = (n: number) => n * 4;
 
 export const radio = { s: 8, m: 12, l: 16, xl: 24, completo: 999 } as const;
 
-export const tamano = { altoControl: 48, tactilMinimo: 48 } as const;
+export const tamano = {
+  altoControl: 48,
+  tactilMinimo: 48,
+  /** Barra de pestañas (6.1): 64 + el área segura inferior. */
+  altoBarraPestanas: 64,
+} as const;
 
 /** Duraciones en ms (4.7); pasan a 0 si el sistema pide reducir el movimiento. */
 export const duracion = { corta: 100, media: 200, larga: 300 } as const;

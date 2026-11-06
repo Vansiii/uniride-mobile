@@ -1,7 +1,8 @@
 import { Tabs } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icono } from '@/componentes/Icono';
 import { t } from '@/i18n';
-import { colores, tipografia } from '@/tema/tokens';
+import { colores, espacio, tamano, tipografia } from '@/tema/tokens';
 
 /**
  * Barra de pestañas (DESIGN_SYSTEM §6.1): ícono y etiqueta siempre. Solo están las pestañas que ya existen; Buscar,
@@ -9,6 +10,7 @@ import { colores, tipografia } from '@/tema/tokens';
  * queda montada: cambiar de pestaña no vuelve a cargar nada (en Billetera cada lectura pide la huella).
  */
 export default function Pestanas() {
+  const { bottom } = useSafeAreaInsets();
   return (
     <Tabs
       screenOptions={{
@@ -16,7 +18,13 @@ export default function Pestanas() {
         tabBarActiveTintColor: colores.primario,
         tabBarInactiveTintColor: colores.textoSecundario,
         tabBarLabelStyle: tipografia.pequeno,
-        tabBarStyle: { backgroundColor: colores.fondo },
+        // 64 + área segura, con aire arriba y abajo para que ícono y etiqueta no se peguen al borde.
+        tabBarStyle: {
+          backgroundColor: colores.fondo,
+          height: tamano.altoBarraPestanas + bottom,
+          paddingTop: espacio(2),
+          paddingBottom: bottom + espacio(2),
+        },
       }}
     >
       <Tabs.Screen

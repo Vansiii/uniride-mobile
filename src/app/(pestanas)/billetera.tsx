@@ -1,5 +1,5 @@
 import * as Portapapeles from 'expo-clipboard';
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -24,6 +24,7 @@ import { Ilustracion } from '@/componentes/Ilustracion';
 import { Aviso } from '@/componentes/Mensajes';
 import { useSesion } from '@/contexto/sesion';
 import { ErrorKeystore } from '@/dispositivo/keystore';
+import { formatearMonto } from '@/formato';
 import { t } from '@/i18n';
 import { colores, espacio, radio, tipografia } from '@/tema/tokens';
 
@@ -125,6 +126,22 @@ function Contenido() {
     void leer().then((v) => v && setVista(v));
   }, [cargando, personaId, leer]);
 
+  // Quien verifica su identidad en /identidad y vuelve no debe seguir viendo "Verificar identidad": esa vista no tiene
+  // botón de actualizar, así que al recuperar el foco (y solo en ella) se lee otra vez. `leer` consulta primero
+  // /identidad/estado sin firma: no pide huella mientras la identidad siga sin verificar. Las demás vistas no releen
+  // por foco (cada lectura firmada pide huella). El tipo va en un ref para que el callback no cambie y el foco no
+  // dispare la lectura de nuevo.
+  const tipoVista = useRef(vista.tipo);
+  useEffect(() => {
+    tipoVista.current = vista.tipo;
+  }, [vista.tipo]);
+  useFocusEffect(
+    useCallback(() => {
+      if (tipoVista.current !== 'sin_billetera') return;
+      void leer().then((v) => v && setVista(v));
+    }, [leer]),
+  );
+
   const actualizar = () => {
     if (enCurso.current) return;
     setVista({ tipo: 'cargando' });
@@ -153,6 +170,8 @@ function Contenido() {
   };
 
   const billetera = vista.tipo === 'lista' ? vista.billetera : null;
+  // Es-BO sobre el texto de la API, nunca vía Number (DESIGN_SYSTEM §13).
+  const saldo = billetera ? formatearMonto(billetera.saldoUrc) : '';
   return (
     <View style={estilos.raiz}>
       <ScrollView contentContainerStyle={estilos.desplazable}>
@@ -177,9 +196,9 @@ function Contenido() {
               </Text>
               <Text
                 style={estilos.cifra}
-                accessibilityLabel={`${billetera.saldoUrc} ${t('billetera.pantalla.unidad')}`}
+                accessibilityLabel={`${saldo} ${t('billetera.pantalla.unidad')}`}
               >
-                {billetera.saldoUrc}
+                {saldo}
                 <Text style={estilos.unidad}>
                   {' '}
                   {t('billetera.pantalla.unidad')}
@@ -255,16 +274,7 @@ function Contenido() {
         )}
 
         {billetera && (
-          <View style={estilos.bloque}>
-            {copia && (
-              <Aviso tono={copia === 'ok' ? 'exito' : 'peligro'}>
-                {t(
-                  copia === 'ok'
-                    ? 'billetera.pantalla.copiada'
-                    : 'billetera.pantalla.copia_fallida',
-                )}
-              </Aviso>
-            )}
+          <View style={[estilos.bloque, estilos.sobreBanda]}>
             <View style={estilos.tarjeta}>
               <View style={estilos.fila}>
                 <View style={estilos.icono}>
@@ -308,6 +318,15 @@ function Contenido() {
                 </Pressable>
               )}
             </View>
+            {copia && (
+              <Aviso tono={copia === 'ok' ? 'exito' : 'peligro'}>
+                {t(
+                  copia === 'ok'
+                    ? 'billetera.pantalla.copiada'
+                    : 'billetera.pantalla.copia_fallida',
+                )}
+              </Aviso>
+            )}
           </View>
         )}
       </ScrollView>
@@ -364,6 +383,8 @@ const estilos = StyleSheet.create({
     marginTop: espacio(4),
     marginHorizontal: espacio(4),
   },
+  // Sobre-banda (DESIGN_SYSTEM §4.6, nivel 0,5): la tarjeta se superpone 24 dp al borde inferior de la banda.
+  sobreBanda: { marginTop: -24 },
   tarjeta: {
     gap: espacio(2),
     padding: espacio(3),

@@ -27,8 +27,15 @@ jest.mock('expo-router', () => {
       <Texto>{`redirige:${href}`}</Texto>
     ),
     router: { push: jest.fn(), back: jest.fn() },
+    // Como el real: corre el callback al montar y lo deja a mano para simular "volver a la pestaña".
+    useFocusEffect: (alEnfocar: () => void) => {
+      const { useEffect } = jest.requireActual('react');
+      mockFoco.alEnfocar = alEnfocar;
+      useEffect(() => alEnfocar(), [alEnfocar]);
+    },
   };
 });
+const mockFoco: { alEnfocar: (() => void) | null } = { alEnfocar: null };
 jest.mock(
   'react-native-safe-area-context',
   () => jest.requireActual('react-native-safe-area-context/jest/mock').default,
@@ -85,7 +92,7 @@ describe('Billetera · CA-5: saldo, dirección y enlace', () => {
   it('muestra el saldo tal cual lo envía la API y la dirección acortada, con una sola huella', async () => {
     const { llamadas } = await abrir({ 'GET /billetera/mia': b.conSaldo });
     expect(await screen.findByText('Saldo disponible')).toBeTruthy();
-    expect(screen.getByText(/12\.34/)).toBeTruthy();
+    expect(screen.getByText(/12,34/)).toBeTruthy();
     expect(screen.getByText('0x3021…6805')).toBeTruthy();
     // La dirección completa no se muestra, solo se copia.
     expect(screen.queryByText(b.direccion)).toBeNull();
@@ -94,10 +101,26 @@ describe('Billetera · CA-5: saldo, dirección y enlace', () => {
     expect(firma).toHaveBeenCalledTimes(1);
   });
 
-  it('el saldo es texto: no se convierte a número ("12.30" no pasa a "12.3")', async () => {
+  it('el saldo se formatea como texto, en es-BO: "12.30" no pasa a "12,3"', async () => {
     await abrir({ 'GET /billetera/mia': b.enAmoy });
-    expect(await screen.findByText(/12\.30/)).toBeTruthy();
-    expect(screen.queryByText(/12\.3(?!0)/)).toBeNull();
+    expect(await screen.findByText(/12,30/)).toBeTruthy();
+    expect(screen.queryByText(/12,3(?!0)/)).toBeNull();
+  });
+
+  it('saldo con separador de miles, también en el nombre accesible', async () => {
+    await abrir({
+      'GET /billetera/mia': {
+        estado: 200,
+        cuerpo: {
+          id: 'd0c05fca-d161-447f-92c4-0791765882b3',
+          direccion: b.direccion,
+          saldoUrc: '1234.50',
+          exploradorUrl: null,
+        },
+      },
+    });
+    expect(await screen.findByText(/1\.234,50/)).toBeTruthy();
+    expect(screen.getByLabelText('1.234,50 URC')).toBeTruthy();
   });
 
   it('la petición lleva la sesión y la firma del dispositivo (A-08)', async () => {
@@ -180,7 +203,7 @@ describe('Billetera · creación y lectura firmada', () => {
       'POST /billetera': b.creada,
     });
     expect(await screen.findByText('Saldo disponible')).toBeTruthy();
-    expect(screen.getByText(/0\.00/)).toBeTruthy();
+    expect(screen.getByText(/0,00/)).toBeTruthy();
     expect(llamadas.filter((l) => l.ruta === 'POST /billetera')).toHaveLength(
       1,
     );
@@ -244,6 +267,68 @@ describe('Billetera · estados', () => {
     expect(screen.queryByText('Saldo disponible')).toBeNull();
   });
 
+  it('sin billetera: al recuperar el foco con la identidad ya verificada pasa a la billetera sola', async () => {
+    await abrir({ 'GET /identidad/estado': i.sinVerificar });
+    await screen.findByText('Tu billetera se crea al verificar tu identidad');
+    expect(firma).not.toHaveBeenCalled();
+    // La persona verifica en /identidad y vuelve a la pestaña.
+    const { llamadas } = {
+      ...simularFetch({
+        ...CON_SESION,
+        'GET /identidad/estado': i.verificada,
+        'GET /billetera/mia': b.conSaldo,
+      }),
+    };
+    await act(async () => {
+      mockFoco.alEnfocar?.();
+    });
+    expect(await screen.findByText('Saldo disponible')).toBeTruthy();
+    expect(screen.getByText(/12,34/)).toBeTruthy();
+    expect(
+      screen.queryByText('Tu billetera se crea al verificar tu identidad'),
+    ).toBeNull();
+    expect(lecturas(llamadas)).toBe(1);
+  });
+
+  it('sin billetera: si al volver sigue sin verificar, relee sin gastar huella', async () => {
+    const { llamadas } = await abrir({
+      'GET /identidad/estado': i.sinVerificar,
+    });
+    await screen.findByText('Tu billetera se crea al verificar tu identidad');
+    const antes = llamadas.filter((l) => l.ruta === 'GET /identidad/estado');
+    await act(async () => {
+      mockFoco.alEnfocar?.();
+    });
+    await waitFor(() =>
+      expect(
+        llamadas.filter((l) => l.ruta === 'GET /identidad/estado'),
+      ).toHaveLength(antes.length + 1),
+    );
+    expect(
+      screen.getByText('Tu billetera se crea al verificar tu identidad'),
+    ).toBeTruthy();
+    expect(firma).not.toHaveBeenCalled();
+    expect(lecturas(llamadas)).toBe(0);
+  });
+
+  it('con otra vista (billetera cargada) recuperar el foco no relee', async () => {
+    const { llamadas } = await abrir({ 'GET /billetera/mia': b.conSaldo });
+    await screen.findByText('Saldo disponible');
+    const lecturasAntes = lecturas(llamadas);
+    const estadosAntes = llamadas.filter(
+      (l) => l.ruta === 'GET /identidad/estado',
+    ).length;
+    await act(async () => {
+      mockFoco.alEnfocar?.();
+      await new Promise((resolver) => setTimeout(resolver, 50));
+    });
+    expect(lecturas(llamadas)).toBe(lecturasAntes);
+    expect(
+      llamadas.filter((l) => l.ruta === 'GET /identidad/estado'),
+    ).toHaveLength(estadosAntes);
+    expect(firma).toHaveBeenCalledTimes(1);
+  });
+
   it('403 IDENTIDAD_NO_VERIFICADA del servidor: la misma vista sin billetera', async () => {
     await abrir({ 'GET /billetera/mia': b.identidadNoVerificada });
     expect(
@@ -287,7 +372,7 @@ describe('Billetera · estados', () => {
     expect(screen.queryByText('Saldo disponible')).toBeNull();
     await fireEvent.press(reintentar());
     expect(await screen.findByText('Saldo disponible')).toBeTruthy();
-    expect(screen.getByText(/12\.34/)).toBeTruthy();
+    expect(screen.getByText(/12,34/)).toBeTruthy();
     expect(lecturas(llamadas)).toBe(2);
   });
 
