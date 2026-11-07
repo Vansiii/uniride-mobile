@@ -5,6 +5,7 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react-native';
+import { ScrollView } from 'react-native';
 import PublicarPantalla from '@/app/(pestanas)/publicar';
 import { zoomParaVer } from '@/componentes/MapaRuta';
 import { ProveedorSesion } from '@/contexto/sesion';
@@ -256,6 +257,25 @@ describe('HU-17 · formulario', () => {
     expect(envios(llamadas)).toHaveLength(0);
   });
 
+  it('con varios errores avisa arriba; con uno lleva a ese campo y no al principio', async () => {
+    const irA = jest.spyOn(ScrollView.prototype, 'scrollTo');
+    await abrir();
+    await screen.findByLabelText('Punto de encuentro');
+    await publicar();
+    expect(screen.getByText('Revisa los campos marcados.')).toBeTruthy();
+
+    await llenar('20,01');
+    const campo = screen.getByLabelText('Precio por asiento (URC)');
+    await fireEvent(campo, 'layout', {
+      nativeEvent: { layout: { x: 0, y: 900, width: 300, height: 80 } },
+    });
+    irA.mockClear();
+    await publicar();
+    expect(screen.queryByText('Revisa los campos marcados.')).toBeNull();
+    expect(irA).toHaveBeenLastCalledWith({ y: 892 });
+    irA.mockRestore();
+  });
+
   it('hora mal escrita: lo dice, y el texto se arma con los dos puntos', async () => {
     await abrir();
     const hora = await screen.findByLabelText('Hora de salida');
@@ -405,8 +425,12 @@ describe('HU-17 · rechazos del servidor', () => {
   it('CA-2 con un solo asiento: en singular', async () => {
     await abrir({
       'POST /viajes': {
-        ...vj.cuposExceden,
-        cuerpo: { ...vj.cuposExceden.cuerpo, maximo: 1 },
+        estado: 400,
+        cuerpo: {
+          codigo: 'CUPOS_EXCEDEN_CAPACIDAD',
+          mensaje: 'viajes.publicar.cupos_exceden_capacidad',
+          maximo: 1,
+        },
       },
     });
     await llenar();

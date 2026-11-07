@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Ref, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -16,6 +16,8 @@ interface Props extends TextInputProps {
   etiqueta: string;
   ayuda?: string;
   error?: string;
+  /** Para llevar el foco a este campo cuando el formulario falla (DESIGN_SYSTEM §9.2). */
+  refEntrada?: Ref<TextInput>;
 }
 
 /** Campo de texto (8.4). Con `secureTextEntry` agrega el botón Mostrar/Ocultar contraseña. */
@@ -26,6 +28,7 @@ export function Campo({
   secureTextEntry,
   onFocus,
   onBlur,
+  refEntrada,
   ...resto
 }: Props) {
   const [foco, setFoco] = useState(false);
@@ -41,6 +44,7 @@ export function Campo({
         ]}
       >
         <TextInput
+          ref={refEntrada}
           accessibilityLabel={etiqueta}
           placeholderTextColor={colores.textoPlaceholder}
           {...resto}

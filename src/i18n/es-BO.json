@@ -377,6 +377,7 @@
       "busqueda_sin_resultados": "No encontramos ese lugar. Prueba con otro nombre.",
       "busqueda_fallida": "No pudimos buscar el lugar. Revisa tu conexión e inténtalo de nuevo.",
       "lugar_requerido": "Busca el lugar y elige una opción de la lista.",
+      "varios_errores": "Revisa los campos marcados.",
       "intercambiar": "Intercambiar origen y destino",
       "atribucion_mapa": "© OpenStreetMap",
       "fecha": "Fecha",

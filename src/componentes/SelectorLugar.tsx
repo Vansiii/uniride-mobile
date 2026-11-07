@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ref, useState } from 'react';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Boton } from '@/componentes/Boton';
 import { Campo } from '@/componentes/Campo';
 import { Icono } from '@/componentes/Icono';
@@ -14,10 +14,17 @@ interface Props {
   lugar: Lugar | null;
   alElegir: (lugar: Lugar | null) => void;
   error?: string;
+  refEntrada?: Ref<TextInput>;
 }
 
 /** Busca al pedirlo la persona (política de Nominatim) y solo vale un lugar elegido de la lista: trae sus coordenadas (RN-4). */
-export function SelectorLugar({ etiqueta, lugar, alElegir, error }: Props) {
+export function SelectorLugar({
+  etiqueta,
+  lugar,
+  alElegir,
+  error,
+  refEntrada,
+}: Props) {
   const [texto, setTexto] = useState('');
   const [resultados, setResultados] = useState<Lugar[] | null>(null);
   const [buscando, setBuscando] = useState(false);
@@ -45,6 +52,7 @@ export function SelectorLugar({ etiqueta, lugar, alElegir, error }: Props) {
   return (
     <View style={estilos.raiz}>
       <Campo
+        refEntrada={refEntrada}
         etiqueta={etiqueta}
         ayuda={lugar ? undefined : t('viajes.publicar.busqueda_ayuda')}
         returnKeyType="search"

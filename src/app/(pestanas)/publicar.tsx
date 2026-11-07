@@ -3,11 +3,13 @@ import { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
+  LayoutChangeEvent,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -51,9 +53,16 @@ interface Requisitos {
   limites: LimitesViaje;
 }
 
-type Errores = Partial<
-  Record<'origen' | 'destino' | 'hora' | 'precio', string>
->;
+/** En el orden de la pantalla: el primero con error es adonde se lleva a la persona. */
+const CAMPOS = ['origen', 'destino', 'hora', 'precio'] as const;
+type CampoFormulario = (typeof CAMPOS)[number];
+type Errores = Partial<Record<CampoFormulario, string>>;
+const MAXIMO_ERRORES_SIN_AVISO = 2;
+/** El rechazo del servidor que se señala en un campo; los demás van en un aviso arriba. */
+const CAMPO_DEL_ERROR: Record<string, CampoFormulario> = {
+  HORARIO_INVALIDO: 'hora',
+  PRECIO_FUERA_DE_RANGO: 'precio',
+};
 
 interface Falla {
   titulo?: string;
@@ -189,6 +198,11 @@ function Contenido() {
   const [enviando, setEnviando] = useState(false);
   const [publicado, setPublicado] = useState<Publicado | null>(null);
   const desplazable = useRef<ScrollView>(null);
+  const posiciones = useRef<Partial<Record<CampoFormulario, number>>>({});
+  const entradaOrigen = useRef<TextInput>(null);
+  const entradaDestino = useRef<TextInput>(null);
+  const entradaHora = useRef<TextInput>(null);
+  const entradaPrecio = useRef<TextInput>(null);
   // Dos toques seguidos no piden dos huellas.
   const ocupado = useRef(false);
 
@@ -434,6 +448,22 @@ function Contenido() {
   const capacidad = vehiculo.capacidad;
   const nombreVehiculo = `${vehiculo.marca} ${vehiculo.modelo}`;
 
+  /** Lleva al campo con error, con foco (DESIGN_SYSTEM §9.2); sin campo, arriba, donde queda el aviso. */
+  const irA = (campo?: CampoFormulario) => {
+    const y = campo ? (posiciones.current[campo] ?? 0) : 0;
+    desplazable.current?.scrollTo({ y: Math.max(0, y - espacio(2)) });
+    if (campo)
+      ({
+        origen: entradaOrigen,
+        destino: entradaDestino,
+        hora: entradaHora,
+        precio: entradaPrecio,
+      })[campo].current?.focus();
+  };
+  const ubicar = (campo: CampoFormulario, e: LayoutChangeEvent) => {
+    posiciones.current[campo] = e.nativeEvent.layout.y;
+  };
+
   /** Traduce el error a lo que ve la persona; nunca muestra códigos técnicos (DESIGN_SYSTEM §13.4). */
   const atenderError = (error: unknown) => {
     const peligro = (clave: string, titulo?: string) =>
@@ -529,7 +559,9 @@ function Contenido() {
       monto === null ||
       Object.values(nuevos).some(Boolean)
     ) {
-      desplazable.current?.scrollTo({ y: 0 });
+      if (CAMPOS.filter((c) => nuevos[c]).length > MAXIMO_ERRORES_SIN_AVISO)
+        setFalla({ texto: t('viajes.publicar.varios_errores'), tono: 'peligro' });
+      irA(CAMPOS.find((c) => nuevos[c]));
       return;
     }
     const fechaHoraSalida = salida.toISOString();
@@ -557,7 +589,7 @@ function Contenido() {
       });
     } catch (error) {
       atenderError(error);
-      desplazable.current?.scrollTo({ y: 0 });
+      irA(error instanceof ErrorApi ? CAMPO_DEL_ERROR[error.codigo] : undefined);
     } finally {
       ocupado.current = false;
       setEnviando(false);
@@ -594,15 +626,18 @@ function Contenido() {
         )}
 
         {origen && destino && <MapaRuta origen={origen} destino={destino} />}
-        <SelectorLugar
-          etiqueta={t('viajes.publicar.origen')}
-          lugar={origen}
-          error={errores.origen}
-          alElegir={(l) => {
-            setOrigen(l);
-            setErrores((e) => ({ ...e, origen: undefined }));
-          }}
-        />
+        <View onLayout={(e) => ubicar('origen', e)}>
+          <SelectorLugar
+            refEntrada={entradaOrigen}
+            etiqueta={t('viajes.publicar.origen')}
+            lugar={origen}
+            error={errores.origen}
+            alElegir={(l) => {
+              setOrigen(l);
+              setErrores((e) => ({ ...e, origen: undefined }));
+            }}
+          />
+        </View>
         <View style={estilos.intercambiar}>
           <BotonIcono
             icono="swap_vert"
@@ -618,15 +653,18 @@ function Contenido() {
             }}
           />
         </View>
-        <SelectorLugar
-          etiqueta={t('viajes.publicar.destino')}
-          lugar={destino}
-          error={errores.destino}
-          alElegir={(l) => {
-            setDestino(l);
-            setErrores((e) => ({ ...e, destino: undefined }));
-          }}
-        />
+        <View onLayout={(e) => ubicar('destino', e)}>
+          <SelectorLugar
+            refEntrada={entradaDestino}
+            etiqueta={t('viajes.publicar.destino')}
+            lugar={destino}
+            error={errores.destino}
+            alElegir={(l) => {
+              setDestino(l);
+              setErrores((e) => ({ ...e, destino: undefined }));
+            }}
+          />
+        </View>
 
         <View style={estilos.grupo}>
           <Text style={estilos.etiqueta}>{t('viajes.publicar.fecha')}</Text>
@@ -659,18 +697,21 @@ function Contenido() {
             })}
           </View>
         </View>
-        <Campo
-          etiqueta={t('viajes.publicar.hora')}
-          ayuda={t('viajes.publicar.hora_ayuda')}
-          keyboardType="number-pad"
-          maxLength={5}
-          value={hora}
-          onChangeText={(v) => {
-            setSalida((s) => ({ ...s, hora: escribirHora(v) }));
-            setErrores((e) => ({ ...e, hora: undefined }));
-          }}
-          error={errores.hora}
-        />
+        <View onLayout={(e) => ubicar('hora', e)}>
+          <Campo
+            refEntrada={entradaHora}
+            etiqueta={t('viajes.publicar.hora')}
+            ayuda={t('viajes.publicar.hora_ayuda')}
+            keyboardType="number-pad"
+            maxLength={5}
+            value={hora}
+            onChangeText={(v) => {
+              setSalida((s) => ({ ...s, hora: escribirHora(v) }));
+              setErrores((e) => ({ ...e, hora: undefined }));
+            }}
+            error={errores.hora}
+          />
+        </View>
 
         <View style={estilos.grupo}>
           <Text style={estilos.etiqueta}>{t('viajes.publicar.asientos')}</Text>
@@ -724,21 +765,24 @@ function Contenido() {
           </Text>
         </View>
 
-        <Campo
-          etiqueta={t('viajes.publicar.precio')}
-          ayuda={con('viajes.publicar.precio_ayuda', {
-            minimo: urc(limites.precioMinimo),
-            maximo: urc(limites.precioMaximo),
-            organizacion,
-          })}
-          keyboardType="decimal-pad"
-          value={precio}
-          onChangeText={(v) => {
-            setPrecio(v);
-            setErrores((e) => ({ ...e, precio: undefined }));
-          }}
-          error={errores.precio}
-        />
+        <View onLayout={(e) => ubicar('precio', e)}>
+          <Campo
+            refEntrada={entradaPrecio}
+            etiqueta={t('viajes.publicar.precio')}
+            ayuda={con('viajes.publicar.precio_ayuda', {
+              minimo: urc(limites.precioMinimo),
+              maximo: urc(limites.precioMaximo),
+              organizacion,
+            })}
+            keyboardType="decimal-pad"
+            value={precio}
+            onChangeText={(v) => {
+              setPrecio(v);
+              setErrores((e) => ({ ...e, precio: undefined }));
+            }}
+            error={errores.precio}
+          />
+        </View>
       </ScrollView>
       <ZonaAccion>
         <Boton
