@@ -330,7 +330,9 @@ function Contenido() {
   if (sinMembresia) {
     return (
       <View style={[estilos.centrado, { paddingTop: top }]}>
-        <Aviso tono="peligro">{t('viajes.publicar.sin_membresia_activa')}</Aviso>
+        <Aviso tono="peligro">
+          {t('viajes.publicar.sin_membresia_activa')}
+        </Aviso>
         <Boton
           variante="secundario"
           etiqueta={t('viajes.publicar.elegir_organizacion')}
@@ -560,7 +562,10 @@ function Contenido() {
       Object.values(nuevos).some(Boolean)
     ) {
       if (CAMPOS.filter((c) => nuevos[c]).length > MAXIMO_ERRORES_SIN_AVISO)
-        setFalla({ texto: t('viajes.publicar.varios_errores'), tono: 'peligro' });
+        setFalla({
+          texto: t('viajes.publicar.varios_errores'),
+          tono: 'peligro',
+        });
       irA(CAMPOS.find((c) => nuevos[c]));
       return;
     }
@@ -589,7 +594,9 @@ function Contenido() {
       });
     } catch (error) {
       atenderError(error);
-      irA(error instanceof ErrorApi ? CAMPO_DEL_ERROR[error.codigo] : undefined);
+      irA(
+        error instanceof ErrorApi ? CAMPO_DEL_ERROR[error.codigo] : undefined,
+      );
     } finally {
       ocupado.current = false;
       setEnviando(false);
