@@ -58,6 +58,8 @@ export function SelectorLugar({
         returnKeyType="search"
         // El intercambio de origen y destino llega por `lugar`: lo elegido manda sobre lo escrito.
         value={lugar ? lugar.nombre : texto}
+        // Android deja el cursor al final y un nombre largo se vería sin su comienzo.
+        selection={lugar ? { start: 0, end: 0 } : undefined}
         onChangeText={(v) => {
           setTexto(v);
           setResultados(null);

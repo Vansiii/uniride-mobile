@@ -91,7 +91,7 @@ export default function Inicio() {
           />
         </View>
       </ScrollView>
-      <ZonaAccion>
+      <ZonaAccion enPestanas>
         <Boton
           variante="secundario"
           icono="logout"

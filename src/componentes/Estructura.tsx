@@ -24,11 +24,23 @@ export function BandaMarca({ children }: { children: ReactNode }) {
 }
 
 /** Zona de acción fija abajo, al alcance del pulgar (5.1): una acción primaria (+ una secundaria). */
-export function ZonaAccion({ children }: { children: ReactNode }) {
+export function ZonaAccion({
+  children,
+  enPestanas,
+}: {
+  children: ReactNode;
+  /** Sobre la barra de pestañas, que ya deja el margen del sistema. */
+  enPestanas?: boolean;
+}) {
   const { bottom } = useSafeAreaInsets();
   return (
     <View
-      style={[estilos.zona, { paddingBottom: Math.max(bottom, espacio(4)) }]}
+      style={[
+        estilos.zona,
+        {
+          paddingBottom: enPestanas ? espacio(4) : Math.max(bottom, espacio(4)),
+        },
+      ]}
     >
       {children}
     </View>

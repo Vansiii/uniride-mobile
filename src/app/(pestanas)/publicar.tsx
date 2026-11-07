@@ -2,6 +2,7 @@ import { Redirect, router, useFocusEffect } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Keyboard,
   KeyboardAvoidingView,
   LayoutChangeEvent,
   Platform,
@@ -452,6 +453,8 @@ function Contenido() {
 
   /** Lleva al campo con error, con foco (DESIGN_SYSTEM §9.2); sin campo, arriba, donde queda el aviso. */
   const irA = (campo?: CampoFormulario) => {
+    // En Android, un campo con foco devuelve el desplazamiento hacia él y deja el aviso fuera de la vista.
+    if (!campo) Keyboard.dismiss();
     const y = campo ? (posiciones.current[campo] ?? 0) : 0;
     desplazable.current?.scrollTo({ y: Math.max(0, y - espacio(2)) });
     if (campo)
@@ -791,7 +794,7 @@ function Contenido() {
           />
         </View>
       </ScrollView>
-      <ZonaAccion>
+      <ZonaAccion enPestanas>
         <Boton
           anchoCompleto
           cargando={enviando}
