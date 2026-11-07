@@ -160,6 +160,7 @@ function Contenido() {
   const { top } = useSafeAreaInsets();
   const [requisitos, setRequisitos] = useState<Requisitos | null>(null);
   const [sinConsulta, setSinConsulta] = useState(false);
+  const [suspendida, setSuspendida] = useState(false);
   const [origen, setOrigen] = useState<Lugar | null>(null);
   const [destino, setDestino] = useState<Lugar | null>(null);
   const [{ fecha, hora }, setSalida] = useState(() =>
@@ -198,7 +199,10 @@ function Contenido() {
         limites,
       });
       setSinConsulta(false);
-    } catch {
+      setSuspendida(false);
+    } catch (error) {
+      if (error instanceof ErrorApi && error.codigo === 'CUENTA_SUSPENDIDA')
+        return setSuspendida(true);
       // Con datos ya vistos se conservan: el servidor vuelve a decidir al publicar.
       setSinConsulta(true);
     }
@@ -268,6 +272,15 @@ function Contenido() {
             }}
           />
         </ZonaAccion>
+      </View>
+    );
+  }
+
+  // Sin formulario: firmar pide la huella, y el servidor rechazaría la publicación.
+  if (suspendida) {
+    return (
+      <View style={[estilos.centrado, { paddingTop: top }]}>
+        <Aviso tono="peligro">{t('viajes.publicar.cuenta_suspendida')}</Aviso>
       </View>
     );
   }
@@ -417,6 +430,8 @@ function Contenido() {
           tono: 'peligro',
         });
       // CA-6: cambió algo desde que se abrió la pantalla; se vuelve a la lista de lo que falta.
+      case 'CUENTA_SUSPENDIDA':
+        return setSuspendida(true);
       case 'CONDUCTOR_SIN_VEHICULO':
       case 'IDENTIDAD_NO_VERIFICADA':
       case 'NO_AUTORIZADO':

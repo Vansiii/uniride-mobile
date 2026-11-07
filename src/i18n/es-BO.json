@@ -365,6 +365,7 @@
       "requisito_dispositivo_texto": "Cada viaje se firma desde tu teléfono",
       "requisito_dispositivo_hecho": "Teléfono vinculado",
       "requisito_incompleto": "Antes de publicar, completa lo que te falta.",
+      "cuenta_suspendida": "Tu cuenta está suspendida, por eso no puedes publicar viajes. Comunícate con tu organización.",
       "origen": "Punto de encuentro",
       "destino": "Destino",
       "buscar_lugar": "Buscar lugar",

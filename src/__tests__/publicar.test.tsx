@@ -12,6 +12,7 @@ import { formatearHoraLocal } from '@/formato';
 import {
   dispositivoReal as d,
   identidadReal as i,
+  billeteraReal as b,
   respuestasReales as r,
   simularFetch,
   vehiculosReales as v,
@@ -348,6 +349,32 @@ describe('HU-17 · rechazos del servidor', () => {
     expect(screen.queryByText('Viaje publicado')).toBeNull();
     expect(screen.getByLabelText('Destino').props.value).toBe(UAGRM.nombre);
     expect(screen.queryByText(/CUPOS_|VIAJE_|FIRMA_/)).toBeNull();
+  });
+
+  it('cuenta suspendida al abrir: lo dice, sin formulario ni huella', async () => {
+    const { llamadas } = await abrir({
+      'GET /viajes/limites': b.cuentaSuspendida,
+    });
+    expect(
+      await screen.findByText(
+        'Tu cuenta está suspendida, por eso no puedes publicar viajes. Comunícate con tu organización.',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByLabelText('Punto de encuentro')).toBeNull();
+    expect(mockFirmar).not.toHaveBeenCalled();
+    expect(envios(llamadas)).toHaveLength(0);
+  });
+
+  it('cuenta suspendida con el formulario abierto: al publicar lo dice y no muestra el resultado', async () => {
+    await abrir({ 'POST /viajes': b.cuentaSuspendida });
+    await llenar();
+    await publicar();
+    expect(
+      await screen.findByText(
+        'Tu cuenta está suspendida, por eso no puedes publicar viajes. Comunícate con tu organización.',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText('Viaje publicado')).toBeNull();
   });
 
   it('CA-6: si perdió un requisito al publicar, vuelve a la lista de lo que falta', async () => {
