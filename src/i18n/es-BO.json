@@ -413,6 +413,13 @@
       "resultado_resumen": "{asientos} · {precio} URC c/u",
       "listo": "Listo"
     },
+    "mapa": {
+      "ver_trayecto": "Ver el trayecto en el mapa",
+      "ver_relieve": "Ver el relieve",
+      "ver_calles": "Ver las calles",
+      "atribucion": "OpenFreeMap © OpenMapTiles © OpenStreetMap",
+      "atribucion_relieve": "© OpenStreetMap · Relieve: Mapzen, USGS, NOAA y otros"
+    },
     "buscar": {
       "desde": "Desde",
       "buscar": "Buscar viajes",

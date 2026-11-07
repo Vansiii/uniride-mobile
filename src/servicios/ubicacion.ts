@@ -10,6 +10,15 @@ const TOPE_MS = 15_000;
 const VIGENCIA_MS = 60_000;
 const PRECISION_METROS = 300;
 
+/** Sin abrir ningún diálogo. */
+export async function tienePermisoUbicacion(): Promise<boolean> {
+  try {
+    return (await Location.getForegroundPermissionsAsync()).granted;
+  } catch {
+    return false;
+  }
+}
+
 /** La ubicación actual. Solo `pedir` abre el diálogo del sistema: al abrir la pantalla no se interrumpe a nadie. */
 export async function obtenerUbicacion(pedir: boolean): Promise<Ubicacion> {
   try {

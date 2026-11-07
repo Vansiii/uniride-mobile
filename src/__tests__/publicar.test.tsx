@@ -7,7 +7,8 @@ import {
 } from '@testing-library/react-native';
 import { AccessibilityInfo, Keyboard, ScrollView } from 'react-native';
 import PublicarPantalla from '@/app/(pestanas)/publicar';
-import { zoomParaVer } from '@/componentes/MapaRuta';
+import { limites } from '@/componentes/MapaRuta';
+import { zoomParaVer } from '@/componentes/MapaRuta.web';
 import { ProveedorSesion } from '@/contexto/sesion';
 import { ErrorKeystore } from '@/dispositivo/keystore';
 import { formatearHoraLocal } from '@/formato';
@@ -661,5 +662,12 @@ describe('MapaRuta', () => {
     expect(cerca).toBeGreaterThan(lejos);
     expect(lejos).toBeGreaterThan(0);
     expect(zoomParaVer(PLAZA, PLAZA, 328)).toBe(16);
+  });
+
+  it('el recuadro contiene ambos puntos sin importar cuál va primero', () => {
+    const a = { lat: -17.8, lng: -63.2 };
+    const b = { lat: -17.7, lng: -63.1 };
+    expect(limites(a, b)).toEqual([-63.2, -17.8, -63.1, -17.7]);
+    expect(limites(b, a)).toEqual(limites(a, b));
   });
 });

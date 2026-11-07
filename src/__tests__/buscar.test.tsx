@@ -10,7 +10,10 @@ import type { ViajeEncontrado } from '@/api/cliente';
 import Inicio from '@/app/(pestanas)/index';
 import DetalleViajePantalla from '@/app/viajes/[id]';
 import ResultadosPantalla from '@/app/viajes/buscar';
-import { dePixel, aPixel } from '@/componentes/MapaRuta';
+import { MapaRuta } from '@/componentes/MapaRuta';
+import { dePixel, aPixel } from '@/componentes/MapaRuta.web';
+import { ESTILOS } from '@/componentes/estiloMapa';
+import { mapaSimulado } from '../../__mocks__/@maplibre/maplibre-react-native';
 import { ProveedorSesion } from '@/contexto/sesion';
 import { formatearDistancia, formatearHoraLocal } from '@/formato';
 import {
@@ -208,6 +211,82 @@ describe('HU-18 · formulario de búsqueda', () => {
       screen.queryByRole('button', { name: 'Usar este punto' }),
     ).toBeNull();
     expect(screen.queryByDisplayValue('Punto en el mapa')).toBeNull();
+  });
+  it('los botones del mapa acercan, alejan y cambian de tipo', async () => {
+    await abrir(<Inicio />);
+    await fireEvent.press(
+      await screen.findByRole('button', { name: 'En el mapa' }),
+    );
+    await fireEvent.press(
+      await screen.findByRole('button', { name: 'Acercar el mapa' }),
+    );
+    await waitFor(() =>
+      expect(mapaSimulado.camara.zoomTo).toHaveBeenLastCalledWith(17, {
+        duration: 200,
+      }),
+    );
+    await fireEvent.press(
+      screen.getByRole('button', { name: 'Alejar el mapa' }),
+    );
+    await waitFor(() =>
+      expect(mapaSimulado.camara.zoomTo).toHaveBeenLastCalledWith(15, {
+        duration: 200,
+      }),
+    );
+
+    expect(mapaSimulado.estilo).toBe(ESTILOS.calles);
+    await fireEvent.press(
+      screen.getByRole('button', { name: 'Ver el relieve' }),
+    );
+    expect(mapaSimulado.estilo).toBe(ESTILOS.relieve);
+    expect(screen.getByText(/Relieve: Mapzen/)).toBeTruthy();
+    await fireEvent.press(
+      screen.getByRole('button', { name: 'Ver las calles' }),
+    );
+    expect(mapaSimulado.estilo).toBe(ESTILOS.calles);
+  });
+});
+
+describe('HU-18 · mapa del trayecto', () => {
+  it('tocar el trayecto lo abre a pantalla completa y se cierra', async () => {
+    await render(
+      <MapaRuta
+        origen={{ lat: -17.78, lng: -63.18 }}
+        destino={{ lat: -17.77, lng: -63.19 }}
+      />,
+    );
+    await fireEvent.press(
+      await screen.findByRole('button', { name: 'Ver el trayecto en el mapa' }),
+    );
+    const cerrar = await screen.findByRole('button', { name: 'Cerrar' });
+    expect(
+      screen.queryByRole('button', { name: 'Usar este punto' }),
+    ).toBeNull();
+    await fireEvent.press(cerrar);
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Cerrar' })).toBeNull(),
+    );
+  });
+});
+
+describe('HU-18 · estilos del mapa', () => {
+  const capas = (tipo: keyof typeof ESTILOS) =>
+    ESTILOS[tipo].layers.map((capa) => capa.id);
+
+  it('el relieve sombrea sobre el terreno y debajo de calles y nombres', () => {
+    expect(capas('calles')).not.toContain('sombreado');
+    const relieve = capas('relieve');
+    expect(relieve.indexOf('sombreado')).toBeGreaterThan(
+      relieve.indexOf('agua'),
+    );
+    expect(relieve.indexOf('sombreado')).toBeLessThan(relieve.indexOf('vias'));
+  });
+
+  it('cada capa usa una fuente declarada en su estilo', () => {
+    for (const estilo of Object.values(ESTILOS))
+      for (const capa of estilo.layers)
+        if ('source' in capa)
+          expect(Object.keys(estilo.sources)).toContain(capa.source);
   });
 });
 

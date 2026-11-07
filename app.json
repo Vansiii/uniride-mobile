@@ -48,7 +48,8 @@
           "photosPermission": "UniRide usa tus fotos para que elijas la foto de tu vehículo.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "@maplibre/maplibre-react-native"
     ],
     "experiments": {
       "typedRoutes": true,
