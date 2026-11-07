@@ -51,7 +51,9 @@ interface Requisitos {
   limites: LimitesViaje;
 }
 
-type Errores = Partial<Record<'origen' | 'destino' | 'hora' | 'precio', string>>;
+type Errores = Partial<
+  Record<'origen' | 'destino' | 'hora' | 'precio', string>
+>;
 
 interface Falla {
   titulo?: string;
@@ -677,7 +679,9 @@ function Contenido() {
           anchoCompleto
           cargando={enviando}
           etiqueta={t(
-            enviando ? 'viajes.publicar.publicando' : 'viajes.publicar.publicar',
+            enviando
+              ? 'viajes.publicar.publicando'
+              : 'viajes.publicar.publicar',
           )}
           alPresionar={() => void publicar()}
         />
@@ -741,7 +745,10 @@ const estilos = StyleSheet.create({
     borderColor: colores.bordeCampo,
     backgroundColor: colores.superficie,
   },
-  asientoNo: { backgroundColor: colores.fondoSutil, borderColor: colores.borde },
+  asientoNo: {
+    backgroundColor: colores.fondoSutil,
+    borderColor: colores.borde,
+  },
   textoAsientoNo: { color: colores.textoPlaceholder },
   secundario: { ...tipografia.secundario, color: colores.textoSecundario },
   enfasis: { ...tipografia.cuerpoEnfasis, color: colores.texto },

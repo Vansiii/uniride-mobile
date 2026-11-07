@@ -41,7 +41,13 @@ export function zoomParaVer(a: Punto, b: Punto, ancho: number): number {
  * Mapa fijo del trayecto con teselas de OpenStreetMap y su atribución obligatoria. Es secundario (P8): no se toca.
  * ponytail: sin librería de mapas (cambiar dependencias requiere autorización); agregarla al necesitar mover el mapa (HU-23).
  */
-export function MapaRuta({ origen, destino }: { origen: Punto; destino: Punto }) {
+export function MapaRuta({
+  origen,
+  destino,
+}: {
+  origen: Punto;
+  destino: Punto;
+}) {
   const [ancho, setAncho] = useState(0);
   const zoom = ancho ? zoomParaVer(origen, destino, ancho) : 0;
   const po = aPixel(origen, zoom);

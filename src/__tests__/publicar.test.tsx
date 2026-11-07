@@ -157,12 +157,12 @@ describe('HU-17 · formulario', () => {
     expect(
       screen.getByText('Entre 1 y 20 URC, el máximo de HU05MOB A.'),
     ).toBeTruthy();
-    expect(screen.getByLabelText('4 asientos').props.accessibilityState).toEqual(
-      expect.objectContaining({ disabled: false }),
-    );
-    expect(screen.getByLabelText('5 asientos').props.accessibilityState).toEqual(
-      expect.objectContaining({ disabled: true }),
-    );
+    expect(
+      screen.getByLabelText('4 asientos').props.accessibilityState,
+    ).toEqual(expect.objectContaining({ disabled: false }));
+    expect(
+      screen.getByLabelText('5 asientos').props.accessibilityState,
+    ).toEqual(expect.objectContaining({ disabled: true }));
   });
 
   it('CA-1: envía la salida como UTC y los datos del contrato, firmado, y muestra el resultado', async () => {
