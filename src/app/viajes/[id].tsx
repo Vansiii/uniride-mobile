@@ -16,6 +16,7 @@ import {
 } from '@/api/cliente';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { ZonaAccion } from '@/componentes/Estructura';
+import { Icono } from '@/componentes/Icono';
 import { MapaRuta } from '@/componentes/MapaRuta';
 import { Aviso, EtiquetaEstado } from '@/componentes/Mensajes';
 import {
@@ -148,10 +149,18 @@ export default function DetalleViajePantalla() {
               {encontrado && (
                 <InsigniasConductor conductor={encontrado.conductor} />
               )}
-              <Text style={estilos.enfasis}>
-                {nombreVehiculo(viaje.vehiculo)}
-              </Text>
-              <Text style={estilos.secundario}>{viaje.vehiculo.placa}</Text>
+              <View style={estilos.conductor}>
+                <Icono
+                  nombre="directions_car"
+                  color={colores.textoSecundario}
+                />
+                <View style={estilos.encoge}>
+                  <Text style={estilos.enfasis}>
+                    {nombreVehiculo(viaje.vehiculo)}
+                  </Text>
+                  <Text style={estilos.secundario}>{viaje.vehiculo.placa}</Text>
+                </View>
+              </View>
             </View>
 
             <View style={estilos.tarjeta}>
