@@ -155,6 +155,40 @@ describe('HU-18 · formulario de búsqueda', () => {
     expect(mockRouter.push).not.toHaveBeenCalled();
   });
 
+  it('una hora de hoy que ya pasó con toda su ventana no busca y lo dice', async () => {
+    jest.useFakeTimers({
+      now: new Date(2099, 2, 10, 10, 0),
+      advanceTimers: true,
+    });
+    try {
+      permiso.mockResolvedValue(dado(true));
+      await abrir(<Inicio />);
+      await screen.findByDisplayValue('Tu ubicación');
+      await fireEvent.changeText(
+        screen.getByLabelText('Hora de salida'),
+        '0920',
+      );
+      await fireEvent.press(
+        screen.getByRole('button', { name: 'Buscar viajes' }),
+      );
+      expect(mockRouter.push).not.toHaveBeenCalled();
+      expect(
+        screen.getByText('Esa hora ya pasó. Elige una más tarde.'),
+      ).toBeTruthy();
+      // 09:45 todavía alcanza a un viaje de las 10:10.
+      await fireEvent.changeText(
+        screen.getByLabelText('Hora de salida'),
+        '0945',
+      );
+      await fireEvent.press(
+        screen.getByRole('button', { name: 'Buscar viajes' }),
+      );
+      expect(mockRouter.push).toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('permiso negado para siempre: explica y ofrece abrir los ajustes', async () => {
     const ajustes = jest
       .spyOn(Linking, 'openSettings')
@@ -381,6 +415,7 @@ describe('HU-18 · ubicación', () => {
     expect(formatearDistancia(0.35)).toBe('350 m');
     expect(formatearDistancia(1)).toBe('1 km');
     expect(formatearDistancia(1.25)).toBe('1,3 km');
+    expect(formatearDistancia(0.9996)).toBe('1 km');
   });
 });
 
@@ -469,6 +504,17 @@ describe('HU-18 · resultados', () => {
     expect(screen.queryByText(/COORDENADAS_INVALIDAS/)).toBeNull();
   });
 
+  it('un enlace sin hora o sin coordenadas no rompe la pantalla ni consulta', async () => {
+    mockParametros.valor = { origenLat: '-17.783' };
+    const { llamadas } = await abrir(<ResultadosPantalla />);
+    expect(
+      await screen.findByText(
+        'No pudimos leer ese punto de salida. Elige otro lugar.',
+      ),
+    ).toBeTruthy();
+    expect(llamadas.some((l) => l.ruta === 'GET /viajes/buscar')).toBe(false);
+  });
+
   it('sin membresía aprobada en la activa: informa y lleva a elegir otra', async () => {
     await abrir(<ResultadosPantalla />, {
       'GET /viajes/buscar': vj.noAutorizado,
@@ -510,6 +556,20 @@ describe('HU-18 · detalle', () => {
       name: 'Reservar · disponible pronto',
     });
     expect(reservar.props.accessibilityState.disabled).toBe(true);
+    expect(screen.queryByText('Este viaje ya no está disponible.')).toBeNull();
+  });
+
+  it('un viaje cancelado se abre pero avisa que ya no está disponible', async () => {
+    const [viaje] = VIAJES;
+    mockParametros.valor = { id: viaje.id };
+    await abrir(<DetalleViajePantalla />, {
+      [`GET /viajes/${viaje.id}`]: {
+        ...vj.detalle,
+        cuerpo: { ...(vj.detalle.cuerpo as object), estado: 'cancelado' },
+      },
+    });
+    expect(await screen.findByText('Carlos')).toBeTruthy();
+    expect(screen.getByText('Este viaje ya no está disponible.')).toBeTruthy();
   });
 
   it('un viaje que ya no está se dice sin códigos', async () => {

@@ -35,16 +35,21 @@ export async function obtenerUbicacion(pedir: boolean): Promise<Ubicacion> {
     if (!ultima && !pedir && !(await Location.hasServicesEnabledAsync()))
       return { tipo: 'fallo' };
     // Bajo techo, Android puede no responder nunca: sin un tope la pantalla se quedaría esperando.
+    // ponytail: la petición al GPS no se puede cancelar; al vencer el tope Android la termina por su cuenta.
+    let tope: ReturnType<typeof setTimeout> | undefined;
     const { coords } =
       ultima ??
       (await Promise.race([
         Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,
         }),
-        new Promise<never>((_, rechazar) =>
-          setTimeout(() => rechazar(new Error('sin respuesta')), TOPE_MS),
-        ),
-      ]));
+        new Promise<never>((_, rechazar) => {
+          tope = setTimeout(
+            () => rechazar(new Error('sin respuesta')),
+            TOPE_MS,
+          );
+        }),
+      ]).finally(() => clearTimeout(tope)));
     return { tipo: 'ok', lat: coords.latitude, lng: coords.longitude };
   } catch {
     return { tipo: 'fallo' };

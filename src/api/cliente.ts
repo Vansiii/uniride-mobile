@@ -220,6 +220,7 @@ export async function cerrarSesion(): Promise<void> {
   } finally {
     tokenAcceso = null;
     dispositivoId = null;
+    viajesEncontrados.clear();
     await AlmacenSeguro.deleteItemAsync(CLAVE_REFRESCO);
   }
 }
@@ -247,6 +248,7 @@ export async function cambiarOrganizacionActiva(
     { organizacionId },
   );
   tokenAcceso = r.tokenAcceso;
+  viajesEncontrados.clear();
 }
 
 /** Lo que ve el dueño de su vehículo: nunca trae la foto ni su clave (D-20). */

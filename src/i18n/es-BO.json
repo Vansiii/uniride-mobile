@@ -430,6 +430,7 @@
       "usar_ubicacion": "Mi ubicación",
       "elegir_mapa": "En el mapa",
       "usar_punto": "Usar este punto",
+      "hora_pasada": "Esa hora ya pasó. Elige una más tarde.",
       "acercar": "Acercar el mapa",
       "alejar": "Alejar el mapa",
       "sin_permiso": "UniRide usa tu ubicación solo para buscar viajes que salgan cerca de ti. También puedes elegir el lugar.",

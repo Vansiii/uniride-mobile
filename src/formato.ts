@@ -45,10 +45,12 @@ export function formatearDia(iso: string, ahora = new Date()): string {
 }
 
 /** "350 m" hasta el kilómetro; "1 km" justo en el radio de búsqueda. */
-export const formatearDistancia = (km: number) =>
-  km >= 1
+export function formatearDistancia(km: number) {
+  const metros = Math.round(km * 1000);
+  return metros >= 1000
     ? `${String(Math.round(km * 10) / 10).replace('.', ',')} km`
-    : `${Math.round(km * 1000)} m`;
+    : `${metros} m`;
+}
 
 /** Hora local en 24 h ("07:05"). */
 export const formatearHoraLocal = (iso: string) => {

@@ -15,11 +15,10 @@ import { Ilustracion } from '@/componentes/Ilustracion';
 import { Aviso, EtiquetaEstado } from '@/componentes/Mensajes';
 import { TarjetaViaje } from '@/componentes/TarjetaViaje';
 import { useSesion } from '@/contexto/sesion';
-import { formatearDia, formatearHoraLocal } from '@/formato';
+import { formatearDia } from '@/formato';
 import { con, t } from '@/i18n';
 import { colores, espacio, tipografia } from '@/tema/tokens';
-
-const MEDIA_HORA_MS = 30 * 60_000;
+import { ventanaDe } from '@/viajes/salida';
 
 type Vista =
   | { tipo: 'cargando' }
@@ -36,7 +35,17 @@ export default function ResultadosPantalla() {
     origenLng: string;
     horaSalida: string;
   }>();
-  const [vista, setVista] = useState<Vista>({ tipo: 'cargando' });
+
+  const salida = Date.parse(horaSalida ?? '');
+  // Un enlace viejo o editado puede traer la ruta incompleta: sin esto la ventana no se puede dibujar.
+  const consultaValida =
+    Number.isFinite(salida) &&
+    [origenLat, origenLng].every((v) => v && Number.isFinite(Number(v)));
+  const [vista, setVista] = useState<Vista>(() =>
+    consultaValida
+      ? { tipo: 'cargando' }
+      : { tipo: 'falla', texto: t('comun.errores.coordenadas_invalidas') },
+  );
 
   const leer = useCallback(
     () =>
@@ -63,18 +72,18 @@ export default function ResultadosPantalla() {
   // Al entrar por un enlace la sesión todavía se está restaurando: sin token la API respondería 401.
   const conSesion = !cargando && Boolean(usuario);
   useEffect(() => {
-    if (conSesion) void leer();
-  }, [conSesion, leer]);
+    if (conSesion && consultaValida) void leer();
+  }, [conSesion, consultaValida, leer]);
 
   if (cargando) return null;
   if (!usuario) return <Redirect href="/iniciar-sesion" />;
 
-  const salida = new Date(horaSalida).getTime();
-  const ventana = con('viajes.buscar.resumen', {
-    dia: formatearDia(horaSalida),
-    desde: formatearHoraLocal(new Date(salida - MEDIA_HORA_MS).toISOString()),
-    hasta: formatearHoraLocal(new Date(salida + MEDIA_HORA_MS).toISOString()),
-  });
+  const ventana = consultaValida
+    ? con('viajes.buscar.resumen', {
+        dia: formatearDia(horaSalida),
+        ...ventanaDe(salida),
+      })
+    : '';
   const activa = usuario.membresias.find(
     (m) => m.organizacionId === usuario.organizacionActiva,
   );

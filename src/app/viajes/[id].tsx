@@ -41,6 +41,8 @@ export default function DetalleViajePantalla() {
   const { top } = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [viaje, setViaje] = useState<DetalleViaje | null>(null);
+  // Por un enlace o tras la búsqueda se puede llegar a uno cancelado, en curso o que ya salió.
+  const [disponible, setDisponible] = useState(true);
   const [falla, setFalla] = useState<string>();
   // Distancia e insignias vienen solo en la búsqueda; si se llegó por otro camino, no se muestran.
   const encontrado = viajesEncontrados.get(id);
@@ -48,7 +50,13 @@ export default function DetalleViajePantalla() {
   const leer = useCallback(
     () =>
       consultarViaje(id)
-        .then(setViaje)
+        .then((v) => {
+          setViaje(v);
+          setDisponible(
+            ['publicado', 'reservado'].includes(v.estado) &&
+              Date.parse(v.fechaHoraSalida) > Date.now(),
+          );
+        })
         .catch((error: unknown) => {
           const codigo = error instanceof ErrorApi ? error.codigo : '';
           setFalla(
@@ -117,6 +125,9 @@ export default function DetalleViajePantalla() {
       {viaje && (
         <>
           <ScrollView contentContainerStyle={estilos.contenido}>
+            {!disponible && (
+              <Aviso tono="info">{t('viajes.buscar.no_encontrado')}</Aviso>
+            )}
             <View style={estilos.tarjeta}>
               <MapaRuta origen={viaje.origen} destino={viaje.destino} />
               <View style={estilos.fila}>

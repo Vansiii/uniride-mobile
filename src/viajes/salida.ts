@@ -1,6 +1,7 @@
 import { formatearHoraLocal } from '@/formato';
 
-const MEDIA_HORA_MS = 30 * 60_000;
+/** La búsqueda mira ± media hora alrededor de la salida (RN-2 de HU-18). */
+export const MEDIA_HORA_MS = 30 * 60_000;
 export const ANTICIPACION_MAXIMA_DIAS = 7;
 
 export const medianoche = (fecha: Date) =>
@@ -14,6 +15,16 @@ export function salidaPorOmision(desde: number) {
     hora: formatearHoraLocal(salida.toISOString()),
   };
 }
+
+/** "07:00" y "08:00" para una salida a las 07:30. */
+export const ventanaDe = (salida: number) => ({
+  desde: formatearHoraLocal(new Date(salida - MEDIA_HORA_MS).toISOString()),
+  hasta: formatearHoraLocal(new Date(salida + MEDIA_HORA_MS).toISOString()),
+});
+
+/** Con toda la ventana en el pasado no queda viaje que encontrar: el servidor responde vacío sin buscar. */
+export const ventanaPasada = (salida: number, ahora = Date.now()) =>
+  salida + MEDIA_HORA_MS <= ahora;
 
 /** "0730" o "730" → "07:30": el teclado numérico no trae los dos puntos. */
 export function escribirHora(texto: string) {

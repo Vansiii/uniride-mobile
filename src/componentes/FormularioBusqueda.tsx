@@ -9,7 +9,7 @@ import { Aviso } from '@/componentes/Mensajes';
 import { SelectorFecha } from '@/componentes/SelectorFecha';
 import { SelectorLugar } from '@/componentes/SelectorLugar';
 import { SelectorMapa } from '@/componentes/SelectorMapa';
-import { formatearHoraLocal, formatearMonto } from '@/formato';
+import { formatearMonto } from '@/formato';
 import { con, t } from '@/i18n';
 import { Lugar } from '@/servicios/geocoding';
 import { obtenerUbicacion } from '@/servicios/ubicacion';
@@ -19,9 +19,9 @@ import {
   leerSalida,
   medianoche,
   salidaPorOmision,
+  ventanaDe,
+  ventanaPasada,
 } from '@/viajes/salida';
-
-const MEDIA_HORA_MS = 30 * 60_000;
 // Donde abre el mapa si todavía no se sabe dónde está la persona.
 const CENTRO_POR_OMISION = { lat: -17.783327, lng: -63.182129 };
 
@@ -90,10 +90,14 @@ export function FormularioBusqueda() {
       consultarSaldo()
         .then(setSaldo)
         .catch(() => setSaldo(null));
-      // La pestaña sigue montada de un día para otro: una fecha que ya pasó no está entre las opciones.
-      setSalida((s) =>
-        s.fecha < medianoche(new Date()) ? salidaPorOmision(Date.now()) : s,
-      );
+      // La pestaña sigue montada horas o días: una salida que ya pasó vuelve a la próxima media hora.
+      setSalida((s) => {
+        const elegida = leerSalida(s.fecha, s.hora);
+        return s.fecha < medianoche(new Date()) ||
+          (elegida && ventanaPasada(elegida.getTime()))
+          ? salidaPorOmision(Date.now())
+          : s;
+      });
     }, []),
   );
 
@@ -101,8 +105,15 @@ export function FormularioBusqueda() {
 
   const buscar = () => {
     setErrorOrigen(origen ? undefined : t('viajes.publicar.lugar_requerido'));
-    setErrorHora(salida ? undefined : t('viajes.publicar.hora_invalida'));
-    if (!origen || !salida) return;
+    const pasada = salida !== null && ventanaPasada(salida.getTime());
+    setErrorHora(
+      !salida
+        ? t('viajes.publicar.hora_invalida')
+        : pasada
+          ? t('viajes.buscar.hora_pasada')
+          : undefined,
+    );
+    if (!origen || !salida || pasada) return;
     router.push({
       pathname: '/viajes/buscar',
       params: {
@@ -160,14 +171,7 @@ export function FormularioBusqueda() {
           etiqueta={t('viajes.publicar.hora')}
           ayuda={
             salida
-              ? con('viajes.buscar.ventana', {
-                  desde: formatearHoraLocal(
-                    new Date(salida.getTime() - MEDIA_HORA_MS).toISOString(),
-                  ),
-                  hasta: formatearHoraLocal(
-                    new Date(salida.getTime() + MEDIA_HORA_MS).toISOString(),
-                  ),
-                })
+              ? con('viajes.buscar.ventana', ventanaDe(salida.getTime()))
               : t('viajes.publicar.hora_ayuda')
           }
           keyboardType="number-pad"
