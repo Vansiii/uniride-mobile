@@ -97,26 +97,31 @@ export function MapaCompleto({
     <Modal animationType="slide" onRequestClose={alCerrar}>
       <SafeAreaView style={estilos.raiz}>
         <View style={estilos.mapa}>
-          <Map
-            ref={mapa}
+          {/* La vista nativa trae su propia descripción: ocultarla exige un contenedor. Los botones dan las mismas acciones. */}
+          <View
             style={StyleSheet.absoluteFill}
-            mapStyle={ESTILOS[tipo]}
-            logo={false}
-            attribution={false}
-            compass
-            compassPosition={{ top: espacio(19), left: espacio(3) }}
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
           >
-            <Camera
-              ref={camara}
-              initialViewState={inicial}
-              minZoom={ZOOM_MINIMO}
-              maxZoom={ZOOM_MAXIMO}
-            />
-            {conPermiso && <NativeUserLocation />}
-            {children}
-          </Map>
+            <Map
+              ref={mapa}
+              style={StyleSheet.absoluteFill}
+              mapStyle={ESTILOS[tipo]}
+              logo={false}
+              attribution={false}
+              compass
+              compassPosition={{ top: espacio(19), left: espacio(3) }}
+            >
+              <Camera
+                ref={camara}
+                initialViewState={inicial}
+                minZoom={ZOOM_MINIMO}
+                maxZoom={ZOOM_MAXIMO}
+              />
+              {conPermiso && <NativeUserLocation />}
+              {children}
+            </Map>
+          </View>
           {alElegir && (
             <View style={estilos.pin} pointerEvents="none">
               <Icono

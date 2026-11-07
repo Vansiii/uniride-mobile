@@ -59,34 +59,38 @@ export function MapaRuta({
 
   return (
     <View style={estilos.mapa}>
-      <Map
+      <View
         style={StyleSheet.absoluteFill}
-        mapStyle={ESTILOS.calles}
-        // Dentro de una pantalla con desplazamiento, `surface` se dibuja fuera de lugar en Android.
-        androidView="texture"
-        dragPan={false}
-        touchZoom={false}
-        touchRotate={false}
-        touchPitch={false}
-        logo={false}
-        attribution={false}
-        compass={false}
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
       >
-        <Camera
-          bounds={recuadro}
-          padding={{
-            top: MARGEN,
-            bottom: MARGEN,
-            left: MARGEN,
-            right: MARGEN,
-          }}
-          maxZoom={ZOOM_MAXIMO}
-          duration={0}
-        />
-        <Puntos origen={origen} destino={destino} />
-      </Map>
+        <Map
+          style={StyleSheet.absoluteFill}
+          mapStyle={ESTILOS.calles}
+          // Dentro de una pantalla con desplazamiento, `surface` se dibuja fuera de lugar en Android.
+          androidView="texture"
+          dragPan={false}
+          touchZoom={false}
+          touchRotate={false}
+          touchPitch={false}
+          logo={false}
+          attribution={false}
+          compass={false}
+        >
+          <Camera
+            bounds={recuadro}
+            padding={{
+              top: MARGEN,
+              bottom: MARGEN,
+              left: MARGEN,
+              right: MARGEN,
+            }}
+            maxZoom={ZOOM_MAXIMO}
+            duration={0}
+          />
+          <Puntos origen={origen} destino={destino} />
+        </Map>
+      </View>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={t('viajes.mapa.ver_trayecto')}
