@@ -168,6 +168,7 @@ function Contenido() {
   // Lectura completa (la dirección pide huella): al reintentar una falla o al volver a pedir la dirección.
   const recargar = () => {
     if (enCurso.current) return;
+    setErrorRefresco(null);
     setVista({ tipo: 'cargando' });
     void leer().then((v) => v && setVista(v));
   };

@@ -128,8 +128,8 @@ function Contenido() {
             yaCreo.current
           )
             throw error;
-          yaCreo.current = true;
           await crearBilletera();
+          yaCreo.current = true;
           return { id, numero, pagina: await leer() };
         }
       } catch (error) {

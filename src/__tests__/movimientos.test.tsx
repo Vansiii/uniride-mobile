@@ -483,6 +483,20 @@ describe('Movimientos · CA-6 y errores', () => {
     expect(screen.getByRole('button', { name: 'Reintentar' })).toBeTruthy();
   });
 
+  it('si la creación falla, reintentar vuelve a crear la billetera', async () => {
+    const { llamadas } = await abrir({
+      [RUTA]: [h.noEncontrada, h.noEncontrada, h.pagina1],
+      'POST /billetera': [b.cadenaCaida, b.creada],
+    });
+    await fireEvent.press(
+      await screen.findByRole('button', { name: 'Reintentar' }),
+    );
+    expect(await screen.findByText('Pago de viaje recibido')).toBeTruthy();
+    expect(llamadas.filter((l) => l.ruta === 'POST /billetera')).toHaveLength(
+      2,
+    );
+  });
+
   it('403 CUENTA_SUSPENDIDA: su mensaje y sin reintentar', async () => {
     await abrir({ [RUTA]: b.cuentaSuspendida });
     expect(await screen.findByText(/cuenta está suspendida/)).toBeTruthy();
