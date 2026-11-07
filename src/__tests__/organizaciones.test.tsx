@@ -24,6 +24,10 @@ const mockRouter = {
 let mockParams: Record<string, string> = {};
 let mockRefresco: string | null = 'refresco-de-prueba';
 
+// Inicio monta el formulario de búsqueda, que tiene sus propias pruebas.
+jest.mock('@/componentes/FormularioBusqueda', () => ({
+  FormularioBusqueda: () => null,
+}));
 jest.mock('expo-router', () => {
   const { Text: Texto } = jest.requireActual('react-native');
   return {
@@ -478,7 +482,7 @@ describe('Entradas a las pantallas de organizaciones', () => {
     simularFetch({ ...CON_SESION, 'GET /yo': o.yoVarias });
     await abrir(<Inicio />);
     expect(await screen.findByText('Organización activa')).toBeTruthy();
-    expect(screen.getByText('P7MOB A')).toBeTruthy();
+    expect(screen.getAllByText('P7MOB A')).toHaveLength(2);
     await fireEvent.press(
       screen.getByRole('button', { name: 'Mis organizaciones' }),
     );

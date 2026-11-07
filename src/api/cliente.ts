@@ -558,6 +558,65 @@ export interface DatosViaje {
   precioPorAsiento: number;
 }
 
+/** Vehículo y conductor públicos (RN-4 de HU-18): nombre de pila, sin documentos. */
+export interface VehiculoPublico {
+  placa: string;
+  marca: string;
+  modelo: string;
+  color: string;
+}
+
+export interface ViajeEncontrado {
+  id: string;
+  origenNombre: string;
+  distanciaKm: number;
+  destinoNombre: string;
+  fechaHoraSalida: string;
+  cuposDisponibles: number;
+  precioPorAsiento: number;
+  conductor: {
+    nombre: string;
+    verificado: boolean;
+    calificacionPromedio: number | null;
+    esNuevo: boolean;
+    miembroDesde: string;
+  };
+  vehiculo: VehiculoPublico;
+}
+
+export interface DetalleViaje {
+  id: string;
+  origen: { nombre: string; lat: number; lng: number };
+  destino: { nombre: string; lat: number; lng: number };
+  fechaHoraSalida: string;
+  conductor: { nombre: string };
+  vehiculo: VehiculoPublico;
+  cuposDisponibles: number;
+  precioPorAsiento: number;
+  estado: string;
+}
+
+/** Lo último encontrado: el detalle no trae distancia ni insignias. En memoria y no por la ruta: un enlace no puede inventar una insignia. */
+export const viajesEncontrados = new Map<string, ViajeEncontrado>();
+
+/** Con token y membresía aprobada, sin firma: buscar no pide huella (RN-6 de HU-18). */
+export async function buscarViajes(consulta: {
+  origenLat: string;
+  origenLng: string;
+  horaSalida: string;
+}): Promise<ViajeEncontrado[]> {
+  const viajes = await solicitar<ViajeEncontrado[]>(
+    `/viajes/buscar?${new URLSearchParams(consulta)}`,
+    'GET',
+  );
+  viajesEncontrados.clear();
+  viajes.forEach((v) => viajesEncontrados.set(v.id, v));
+  return viajes;
+}
+
+export const consultarViaje = (id: string) =>
+  solicitar<DetalleViaje>(`/viajes/${encodeURIComponent(id)}`, 'GET');
+
 /** Pide la huella (CA-7); se publica en la organización activa, que el cliente no envía (A-13). */
 export const publicarViaje = (datos: DatosViaje) =>
   solicitarFirmado<{ id: string; estado: string; cuposDisponibles: number }>(

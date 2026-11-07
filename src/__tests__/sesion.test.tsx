@@ -12,6 +12,10 @@ import IniciarSesion from '@/app/iniciar-sesion';
 import { ProveedorSesion } from '@/contexto/sesion';
 import { t } from '@/i18n';
 
+// Inicio monta el formulario de búsqueda, que tiene sus propias pruebas.
+jest.mock('@/componentes/FormularioBusqueda', () => ({
+  FormularioBusqueda: () => null,
+}));
 jest.mock('expo-router', () => {
   const { Text: Texto } = jest.requireActual('react-native');
   return {

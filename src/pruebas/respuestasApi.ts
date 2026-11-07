@@ -1154,6 +1154,60 @@ export const viajeReal = {
     codigo: 'FIRMA_DISPOSITIVO_INVALIDA',
     mensaje: 'La firma del dispositivo no es válida.',
   }),
+  /** GET /viajes/buscar → 200 */
+  encontrados: ok(200, [
+    {
+      id: '3f6b1c2e-9d4a-4e7b-8a10-2c5d7e9f1b34',
+      origenNombre: 'Av. Busch',
+      distanciaKm: 0.35,
+      destinoNombre: 'UAGRM, Módulos',
+      fechaHoraSalida: '2099-03-10T12:20:00.000Z',
+      cuposDisponibles: 2,
+      precioPorAsiento: 10,
+      conductor: {
+        nombre: 'Carlos',
+        verificado: true,
+        calificacionPromedio: null,
+        esNuevo: true,
+        miembroDesde: '2026-10-20T14:00:00.000Z',
+      },
+      vehiculo: {
+        placa: '3021 KLM',
+        marca: 'Suzuki',
+        modelo: 'Swift',
+        color: 'rojo',
+      },
+    },
+  ]),
+  /** GET /viajes/{id} → 200 */
+  detalle: ok(200, {
+    id: '3f6b1c2e-9d4a-4e7b-8a10-2c5d7e9f1b34',
+    origen: { nombre: 'Av. Busch', lat: -17.78, lng: -63.18 },
+    destino: { nombre: 'UAGRM, Módulos', lat: -17.775, lng: -63.195 },
+    fechaHoraSalida: '2099-03-10T12:20:00.000Z',
+    conductor: { nombre: 'Carlos' },
+    vehiculo: {
+      placa: '3021 KLM',
+      marca: 'Suzuki',
+      modelo: 'Swift',
+      color: 'rojo',
+    },
+    cuposDisponibles: 2,
+    precioPorAsiento: 10,
+    estado: 'publicado',
+  }),
+  coordenadasInvalidas: ok(400, {
+    codigo: 'COORDENADAS_INVALIDAS',
+    mensaje: 'comun.errores.coordenadas_invalidas',
+  }),
+  noAutorizado: ok(403, {
+    codigo: 'NO_AUTORIZADO',
+    mensaje: 'comun.errores.no_autorizado',
+  }),
+  noEncontrado: ok(404, {
+    codigo: 'VIAJE_NO_ENCONTRADO',
+    mensaje: 'viajes.detalle.no_encontrado',
+  }),
 };
 
 /** `fetch` falso que responde según "MÉTODO /ruta"; lo que no está en `rutas` falla como una caída de red. */

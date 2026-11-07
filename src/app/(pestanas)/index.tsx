@@ -1,6 +1,7 @@
 import { Redirect, router } from 'expo-router';
 import {
   ActivityIndicator,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -8,7 +9,9 @@ import {
 } from 'react-native';
 import { useSesion } from '@/contexto/sesion';
 import { Boton } from '@/componentes/Boton';
-import { BandaMarca, ZonaAccion } from '@/componentes/Estructura';
+import { BandaMarca } from '@/componentes/Estructura';
+import { FormularioBusqueda } from '@/componentes/FormularioBusqueda';
+import { Icono } from '@/componentes/Icono';
 import { t } from '@/i18n';
 import { colores, espacio, radio, tipografia } from '@/tema/tokens';
 
@@ -34,20 +37,39 @@ export default function Inicio() {
   ) {
     return <Redirect href="/estado-membresia" />;
   }
-  // ponytail: pantalla mínima; Buscar, Mis viajes y Perfil (DESIGN_SYSTEM §6.1) llegan con sus historias.
+  const organizacion = usuario.membresias.find(
+    (m) => m.organizacionId === usuario.organizacionActiva,
+  )?.organizacion;
+  // ponytail: Tu cuenta sigue aquí hasta que llegue la pestaña Perfil (DESIGN_SYSTEM §6.1).
   return (
     <View style={estilos.raiz}>
       <ScrollView contentContainerStyle={estilos.desplazable}>
         <BandaMarca>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${t('inicio.organizacion')}: ${organizacion ?? '—'}`}
+            onPress={() => router.push('/organizaciones')}
+            style={estilos.chipOrganizacion}
+          >
+            <Icono
+              nombre="corporate_fare"
+              color={colores.sobreMarca}
+              tamano={16}
+            />
+            <Text style={estilos.textoChip} numberOfLines={1}>
+              {organizacion ?? '—'}
+            </Text>
+          </Pressable>
           <Text style={estilos.saludo} accessibilityRole="header">
             {t('autenticacion.sesion.bienvenida').replace(
               '{nombre}',
               usuario.nombreCompleto,
             )}
           </Text>
-          <Text style={estilos.eslogan}>{t('aplicacion.eslogan')}</Text>
+          <Text style={estilos.eslogan}>{t('viajes.buscar.subtitulo')}</Text>
         </BandaMarca>
-        <View style={estilos.tarjeta}>
+        <FormularioBusqueda key={usuario.id} />
+        <View style={[estilos.tarjeta, estilos.cuenta]}>
           <Text style={estilos.subtitulo}>{t('inicio.cuenta')}</Text>
           <View style={estilos.dato}>
             <Text style={estilos.etiqueta}>{t('inicio.nombre')}</Text>
@@ -89,17 +111,15 @@ export default function Inicio() {
             etiqueta={t('identidad.verificacion.ver')}
             alPresionar={() => router.push('/identidad')}
           />
+          <Boton
+            variante="secundario"
+            icono="logout"
+            anchoCompleto
+            etiqueta={t('autenticacion.sesion.salir')}
+            alPresionar={cerrar}
+          />
         </View>
       </ScrollView>
-      <ZonaAccion enPestanas>
-        <Boton
-          variante="secundario"
-          icono="logout"
-          anchoCompleto
-          etiqueta={t('autenticacion.sesion.salir')}
-          alPresionar={cerrar}
-        />
-      </ZonaAccion>
     </View>
   );
 }
@@ -117,9 +137,25 @@ const estilos = StyleSheet.create({
   desplazable: { flexGrow: 1, paddingBottom: espacio(6) },
   saludo: { ...tipografia.pantalla, color: colores.sobreMarca },
   eslogan: { ...tipografia.cuerpo, color: colores.sobreMarcaSecundario },
-  // Tarjeta que se superpone 24 a la banda (elevación 0,5, 4.6).
+  chipOrganizacion: {
+    alignSelf: 'flex-start',
+    minHeight: 32,
+    maxWidth: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espacio(1),
+    paddingHorizontal: espacio(3),
+    borderRadius: radio.completo,
+    borderWidth: 1,
+    borderColor: colores.sobreMarcaSecundario,
+  },
+  textoChip: {
+    ...tipografia.etiqueta,
+    flexShrink: 1,
+    color: colores.sobreMarca,
+  },
+  cuenta: { marginTop: espacio(3) },
   tarjeta: {
-    marginTop: -espacio(6),
     marginHorizontal: espacio(4),
     padding: espacio(4),
     gap: espacio(3),

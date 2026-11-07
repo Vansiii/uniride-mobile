@@ -36,6 +36,12 @@
       ],
       "expo-secure-store",
       [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "UniRide usa tu ubicación para buscar viajes que salgan cerca de ti."
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "cameraPermission": "UniRide usa la cámara para tomar la foto de tu vehículo.",

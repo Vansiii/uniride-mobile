@@ -13,6 +13,13 @@ export function t(clave: string): string {
   return typeof valor === 'string' ? valor : clave;
 }
 
+/** `t` con sus `{marcadores}` llenos. */
+export const con = (clave: string, valores: Record<string, string | number>) =>
+  Object.entries(valores).reduce(
+    (texto, [nombre, valor]) => texto.replaceAll(`{${nombre}}`, String(valor)),
+    t(clave),
+  );
+
 /** Hora local en 24 h ("07:46") de una fecha ISO, para decir cuándo se puede reintentar. */
 export function formatearHora(iso: unknown): string {
   return new Date(String(iso)).toLocaleTimeString('es-BO', {
