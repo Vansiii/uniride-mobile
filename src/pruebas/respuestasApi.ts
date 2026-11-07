@@ -507,7 +507,7 @@ export const historialReal = {
     moneda: 'URC',
     enLinea: true,
   }),
-  /** GET /billetera/saldo con el nodo caído → 200 con el saldo contable (forma del contrato). */
+  /** GET /billetera/saldo con el nodo caído (backend con CADENA_RPC_URL inalcanzable) → 200 con el saldo contable. */
   saldoSinNodo: ok(200, {
     saldoTotal: '362.00',
     saldoDisponible: '347.00',

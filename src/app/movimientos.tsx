@@ -1,4 +1,5 @@
 import { Redirect, router } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -88,7 +89,7 @@ export default function MovimientosPantalla() {
 
 function Contenido() {
   const { cargando, usuario } = useSesion();
-  const { top } = useSafeAreaInsets();
+  const { top, bottom } = useSafeAreaInsets();
   const [filtro, setFiltro] = useState<Filtro>('todos');
   const [items, setItems] = useState<Movimiento[]>([]);
   const [pagina, setPagina] = useState({ actual: 0, total: 0 });
@@ -284,6 +285,8 @@ function Contenido() {
 
   return (
     <View style={estilos.raiz}>
+      {/* La pestaña Billetera deja la barra de estado clara (zona de marca): aquí el fondo es blanco. */}
+      <StatusBar style="dark" />
       <View style={[estilos.barra, { paddingTop: top }]}>
         <BotonIcono
           icono="arrow_back"
@@ -363,7 +366,11 @@ function Contenido() {
         onRefresh={refrescar}
         onEndReached={cargarMas}
         onEndReachedThreshold={0.5}
-        contentContainerStyle={estilos.contenido}
+        // La última fila no debe quedar bajo la barra de navegación del sistema.
+        contentContainerStyle={[
+          estilos.contenido,
+          { paddingBottom: bottom + espacio(6) },
+        ]}
       />
     </View>
   );
@@ -382,13 +389,13 @@ const estilos = StyleSheet.create({
   contenido: {
     flexGrow: 1,
     paddingHorizontal: espacio(4),
-    paddingBottom: espacio(6),
   },
   encabezadoLista: { gap: espacio(3), paddingBottom: espacio(2) },
-  filtros: { flexDirection: 'row', flexWrap: 'wrap', gap: espacio(2) },
+  // 4 chips en una fila a 360 dp (prototipo); si la letra del sistema crece, pasan a otra fila.
+  filtros: { flexDirection: 'row', flexWrap: 'wrap', gap: espacio(1) },
   chip: {
     height: 32,
-    paddingHorizontal: espacio(3),
+    paddingHorizontal: espacio(2),
     borderRadius: radio.s,
     borderWidth: 1,
     borderColor: colores.bordeCampo,
