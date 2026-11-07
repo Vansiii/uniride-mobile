@@ -1,9 +1,4 @@
-import {
-  act,
-  fireEvent,
-  render,
-  screen,
-} from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import RecargarPantalla from '@/app/recargar';
 import { cerrarSesion } from '@/api/cliente';
@@ -222,9 +217,9 @@ describe('Recargar · monto (CA-2, RN-1, RN-7)', () => {
 describe('Recargar · QR (RN-4)', () => {
   it('muestra el QR del servidor, la marca de simulado y la cuenta regresiva', async () => {
     await abrirQr();
-    expect(screen.getByLabelText('Código QR de pago simulado').props.source).toEqual(
-      { uri: 'data:image/png;base64,iVBORw0KGgo=' },
-    );
+    expect(
+      screen.getByLabelText('Código QR de pago simulado').props.source,
+    ).toEqual({ uri: 'data:image/png;base64,iVBORw0KGgo=' });
     expect(screen.getByText('Pago simulado · red de prueba')).toBeTruthy();
     expect(screen.getByText('50,00 Bs')).toBeTruthy();
     expect(screen.getByText('Vence en 15:00')).toBeTruthy();
@@ -306,9 +301,7 @@ describe('Recargar · confirmación (CA-1, CA-3, CA-4, RN-6)', () => {
     expect(screen.getByText('Recarga en camino')).toBeTruthy();
     await avanzar(3_000);
     expect(screen.getByText('Recarga acreditada')).toBeTruthy();
-    expect(
-      screen.getByText('Sumamos 50,00 URC a tu billetera.'),
-    ).toBeTruthy();
+    expect(screen.getByText('Sumamos 50,00 URC a tu billetera.')).toBeTruthy();
     // Acreditada no es "pago repetido".
     expect(screen.queryByText(/ya se acreditó/)).toBeNull();
     expect(firma).toHaveBeenCalledTimes(1);

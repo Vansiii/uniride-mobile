@@ -274,7 +274,9 @@ function Contenido() {
             contentContainerStyle={estilos.contenido}
             keyboardShouldPersistTaps="handled"
           >
-            <Text style={estilos.etiqueta}>{t('billetera.recarga.cuanto')}</Text>
+            <Text style={estilos.etiqueta}>
+              {t('billetera.recarga.cuanto')}
+            </Text>
             <View style={estilos.montos} accessibilityRole="radiogroup">
               {MONTOS_RAPIDOS.map((m) => {
                 const elegido = !conOtro && rapido === m;
@@ -334,7 +336,9 @@ function Contenido() {
                 </View>
               </View>
             )}
-            <Text style={estilos.pequeno}>{t('billetera.recarga.simulado')}</Text>
+            <Text style={estilos.pequeno}>
+              {t('billetera.recarga.simulado')}
+            </Text>
             {pie}
           </ScrollView>
           <ZonaAccion>
@@ -368,7 +372,11 @@ function Contenido() {
                 style={estilos.imagenQr}
               />
               <View style={estilos.sello}>
-                <Icono nombre="science" color={colores.avisoTexto} tamano={16} />
+                <Icono
+                  nombre="science"
+                  color={colores.avisoTexto}
+                  tamano={16}
+                />
                 <Text style={estilos.textoSello}>
                   {t('billetera.recarga.etiqueta_simulado')}
                 </Text>
@@ -416,11 +424,14 @@ function Contenido() {
               }
             />
             {paso.tipo === 'procesando' && (
-              <EtiquetaEstado
-                dominio="movimiento"
-                estado="pendiente"
-                texto={t('billetera.historial.estado.pendiente')}
-              />
+              // La etiqueta se alinea sola al inicio; envuelta queda centrada.
+              <View>
+                <EtiquetaEstado
+                  dominio="movimiento"
+                  estado="pendiente"
+                  texto={t('billetera.historial.estado.pendiente')}
+                />
+              </View>
             )}
             <Text style={estilos.tituloResultado} accessibilityRole="header">
               {t(
