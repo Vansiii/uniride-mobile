@@ -200,6 +200,9 @@
       "keystore_no_disponible": "Esta versión de la app todavía no puede vincular el teléfono. Actualiza la app e inténtalo de nuevo."
     },
     "autenticacion": {
+      "titulo": "Confirma que eres tú",
+      "subtitulo": "Usa tu huella o rostro para continuar.",
+      "cancelar": "Cancelar",
       "cancelada": "Cancelaste la verificación biométrica, así que no se hizo la acción."
     }
   },
