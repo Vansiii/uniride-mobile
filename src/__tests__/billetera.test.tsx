@@ -110,7 +110,9 @@ describe('Billetera · CA-5: saldo, dirección y enlace', () => {
     expect(screen.getByText('0x3021…6805')).toBeTruthy();
     // La dirección completa no se muestra, solo se copia.
     expect(screen.queryByText(b.direccion)).toBeNull();
-    expect(screen.getByText('Saldo de prueba · sin valor real')).toBeTruthy();
+    expect(
+      screen.getByText('Saldo de prueba · sin valor real · 1 URC = 1 Bs'),
+    ).toBeTruthy();
     expect(lecturas(llamadas)).toBe(1);
     expect(firma).toHaveBeenCalledTimes(1);
   });

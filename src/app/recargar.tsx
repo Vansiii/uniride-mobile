@@ -24,6 +24,7 @@ import { Boton, BotonIcono } from '@/componentes/Boton';
 import { Campo } from '@/componentes/Campo';
 import { ZonaAccion } from '@/componentes/Estructura';
 import { Icono } from '@/componentes/Icono';
+import { FilaMovimiento } from '@/componentes/FilaMovimiento';
 import { Ilustracion } from '@/componentes/Ilustracion';
 import { Aviso, EtiquetaEstado } from '@/componentes/Mensajes';
 import { useSesion } from '@/contexto/sesion';
@@ -452,6 +453,21 @@ function Contenido() {
             )}
             {paso.tipo === 'procesando' && (
               <>
+                <View style={estilos.filaEnCamino}>
+                  <FilaMovimiento
+                    primero
+                    ultimo
+                    movimiento={{
+                      id: paso.orden.ordenId,
+                      tipo: 'recarga',
+                      monto: paso.orden.monto,
+                      estado: 'pendiente',
+                      hashTx: null,
+                      exploradorUrl: null,
+                      creadoEn: new Date(ahora).toISOString(),
+                    }}
+                  />
+                </View>
                 <Aviso tono="info">
                   {t('billetera.recarga.procesando_onchain')}
                 </Aviso>
@@ -500,6 +516,7 @@ function Contenido() {
 
 const estilos = StyleSheet.create({
   raiz: { flex: 1, backgroundColor: colores.fondo },
+  filaEnCamino: { alignSelf: 'stretch' },
   barra: {
     minHeight: 56,
     flexDirection: 'row',

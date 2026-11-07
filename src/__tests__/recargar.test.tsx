@@ -279,6 +279,7 @@ describe('Recargar · confirmación (CA-1, CA-3, CA-4, RN-6)', () => {
     });
     await fireEvent.press(boton('Simular pago'));
     expect(await screen.findByText('Recarga en camino')).toBeTruthy();
+    expect(screen.getByText('+50,00')).toBeTruthy();
     expect(
       screen.getByText(
         'Pagaste 50,00 Bs. Estamos registrando tus 50,00 URC en la red de prueba; puede tardar unos minutos.',
