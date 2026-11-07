@@ -1144,6 +1144,7 @@ export const viajeReal = {
     codigo: 'VIAJE_SOLAPADO',
     mensaje: 'viajes.publicar.viaje_solapado',
     margenHoras: 2,
+    salidaExistente: '2099-03-10T12:15:00.000Z',
   }),
   sinVehiculo: ok(403, {
     codigo: 'CONDUCTOR_SIN_VEHICULO',

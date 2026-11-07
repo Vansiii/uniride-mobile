@@ -57,7 +57,8 @@ export function SelectorLugar({ etiqueta, lugar, alElegir, error }: Props) {
           if (lugar) alElegir(null);
         }}
         onSubmitEditing={() => void buscar()}
-        error={error ?? aviso}
+        // Lo que respondió la última búsqueda dice más que el "elige una opción" de haber tocado Publicar.
+        error={aviso ?? error}
       />
       {!lugar && (
         <Boton

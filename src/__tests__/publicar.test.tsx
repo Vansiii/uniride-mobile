@@ -1,4 +1,5 @@
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -22,6 +23,8 @@ import { buscarLugares } from '@/servicios/geocoding';
 
 const mockRouter = { push: jest.fn() };
 const mockFirmar = jest.fn();
+// Volver a la pestaña es volver a correr el efecto de foco.
+const mockFoco: { efecto?: () => void } = {};
 
 jest.mock('expo-router', () => {
   const { Text: Texto } = jest.requireActual('react-native');
@@ -31,7 +34,10 @@ jest.mock('expo-router', () => {
       <Texto>{`redirige:${href}`}</Texto>
     ),
     router: { push: (...a: unknown[]) => mockRouter.push(...a) },
-    useFocusEffect: (efecto: () => void) => useEffect(efecto, [efecto]),
+    useFocusEffect: (efecto: () => void) => {
+      mockFoco.efecto = efecto;
+      useEffect(efecto, [efecto]);
+    },
   };
 });
 jest.mock(
@@ -125,7 +131,7 @@ describe('HU-17 · requisitos (CA-6)', () => {
   it('con vehículo, sin verificar: marca lo hecho y lleva a verificar', async () => {
     await abrir({ 'GET /identidad/estado': i.sinVerificar });
     expect(await screen.findByText('Vehículo registrado')).toBeTruthy();
-    expect(screen.getByText('Toyota Corolla')).toBeTruthy();
+    expect(screen.getByText(/^Toyota Corolla · /)).toBeTruthy();
     await fireEvent.press(
       screen.getByRole('button', { name: 'Verificar identidad' }),
     );
@@ -244,7 +250,7 @@ describe('HU-17 · formulario', () => {
     await publicar();
     expect(
       screen.getByText(
-        'Elige una salida con al menos 15 minutos de anticipación y hasta dentro de 7 días.',
+        /Sale en menos de 15 minutos\. Elige una hora a partir de las \d\d:\d\d|Elige una salida con al menos 15 minutos/,
       ),
     ).toBeTruthy();
     expect(envios(llamadas)).toHaveLength(0);
@@ -272,6 +278,21 @@ describe('HU-17 · formulario', () => {
       UAGRM.nombre,
     );
     expect(screen.getByLabelText('Destino').props.value).toBe(PLAZA.nombre);
+  });
+
+  it('al intercambiar no queda el error sobre el lugar que ya se llenó', async () => {
+    await abrir();
+    await elegirLugar('Destino', UAGRM);
+    await publicar();
+    expect(
+      screen.getByText('Busca el lugar y elige una opción de la lista.'),
+    ).toBeTruthy();
+    await fireEvent.press(
+      screen.getByRole('button', { name: 'Intercambiar origen y destino' }),
+    );
+    expect(
+      screen.queryByText('Busca el lugar y elige una opción de la lista.'),
+    ).toBeNull();
   });
 
   it('editar un lugar elegido obliga a elegir otro: sin coordenadas no se publica (RN-4)', async () => {
@@ -310,6 +331,20 @@ describe('HU-17 · búsqueda de lugar', () => {
     ).toBeTruthy();
   });
 
+  it('tras tocar Publicar sin lugar, lo que respondió la búsqueda se ve sobre el error', async () => {
+    await abrir();
+    const campo = await screen.findByLabelText('Destino');
+    await publicar();
+    await fireEvent.changeText(campo, 'zzz');
+    buscar.mockResolvedValueOnce([]);
+    await fireEvent(campo, 'submitEditing');
+    expect(
+      await screen.findByText(
+        'No encontramos ese lugar. Prueba con otro nombre.',
+      ),
+    ).toBeTruthy();
+  });
+
   it('con menos de 3 letras no consulta a Nominatim', async () => {
     await abrir();
     const campo = await screen.findByLabelText('Destino');
@@ -335,7 +370,11 @@ describe('HU-17 · rechazos del servidor', () => {
       vj.horarioInvalido,
       'Elige una salida con al menos 15 minutos de anticipación y hasta dentro de 7 días.',
     ],
-    ['CA-5', vj.solapado, 'Deja al menos 2 horas entre tus viajes.'],
+    [
+      'CA-5',
+      vj.solapado,
+      /^Ya tienes uno para .+ a las \d\d:\d\d\. Deja al menos 2 horas entre tus viajes\.$/,
+    ],
     [
       'CA-7',
       vj.firmaInvalida,
@@ -349,6 +388,56 @@ describe('HU-17 · rechazos del servidor', () => {
     expect(screen.queryByText('Viaje publicado')).toBeNull();
     expect(screen.getByLabelText('Destino').props.value).toBe(UAGRM.nombre);
     expect(screen.queryByText(/CUPOS_|VIAJE_|FIRMA_/)).toBeNull();
+  });
+
+  it('al volver de resolverlo, no queda el aviso de lo que había fallado y conserva lo escrito', async () => {
+    await abrir({ 'POST /viajes': vj.firmaInvalida });
+    await llenar();
+    await publicar();
+    const aviso =
+      'Vincula este teléfono para publicar: cada viaje se firma desde él.';
+    expect(await screen.findByText(aviso)).toBeTruthy();
+    await act(async () => mockFoco.efecto?.());
+    expect(screen.queryByText(aviso)).toBeNull();
+    expect(screen.getByLabelText('Destino').props.value).toBe(UAGRM.nombre);
+  });
+
+  it('CA-2 con un solo asiento: en singular', async () => {
+    await abrir({
+      'POST /viajes': {
+        ...vj.cuposExceden,
+        cuerpo: { ...vj.cuposExceden.cuerpo, maximo: 1 },
+      },
+    });
+    await llenar();
+    await publicar();
+    expect(
+      await screen.findByText(
+        'Tu vehículo tiene 1 asiento para pasajeros. Ofrece solo 1.',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('sin membresía en la organización activa: no lo confunde con falta de red y deja elegir otra', async () => {
+    await abrir({
+      'GET /viajes/limites': {
+        estado: 403,
+        cuerpo: {
+          codigo: 'NO_AUTORIZADO',
+          mensaje: 'comun.errores.no_autorizado',
+        },
+      },
+    });
+    expect(
+      await screen.findByText(
+        'Ya no tienes una membresía aprobada en tu organización activa. Elige otra para publicar.',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText(/conexión/)).toBeNull();
+    await fireEvent.press(
+      screen.getByRole('button', { name: 'Elegir organización' }),
+    );
+    expect(mockRouter.push).toHaveBeenCalledWith('/organizaciones');
   });
 
   it('cuenta suspendida al abrir: lo dice, sin formulario ni huella', async () => {

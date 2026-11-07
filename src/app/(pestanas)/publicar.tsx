@@ -139,6 +139,21 @@ function horarioPermitido(salida: Date) {
   );
 }
 
+/** Qué decir de una salida no permitida; si solo le faltan minutos, desde qué hora se puede. */
+function errorHorario(salida: Date): string | undefined {
+  if (horarioPermitido(salida)) return undefined;
+  const ahora = Date.now();
+  if (salida.getTime() < ahora || salida.getTime() > ahora + DIA_MS)
+    return t('viajes.publicar.horario_invalido');
+  return con('viajes.publicar.horario_pronto', {
+    hora: formatearHoraLocal(
+      new Date(
+        Math.ceil((ahora + ANTICIPACION_MINIMA_MS) / MINUTO_MS) * MINUTO_MS,
+      ).toISOString(),
+    ),
+  });
+}
+
 function leerPrecio(texto: string, limites: LimitesViaje): number | null {
   const limpio = texto.trim().replace(',', '.');
   if (!/^\d+(\.\d{1,2})?$/.test(limpio)) return null;
@@ -161,6 +176,7 @@ function Contenido() {
   const [requisitos, setRequisitos] = useState<Requisitos | null>(null);
   const [sinConsulta, setSinConsulta] = useState(false);
   const [suspendida, setSuspendida] = useState(false);
+  const [sinMembresia, setSinMembresia] = useState(false);
   const [origen, setOrigen] = useState<Lugar | null>(null);
   const [destino, setDestino] = useState<Lugar | null>(null);
   const [{ fecha, hora }, setSalida] = useState(() =>
@@ -200,17 +216,23 @@ function Contenido() {
       });
       setSinConsulta(false);
       setSuspendida(false);
+      setSinMembresia(false);
     } catch (error) {
       if (error instanceof ErrorApi && error.codigo === 'CUENTA_SUSPENDIDA')
         return setSuspendida(true);
+      // Aprobada en otra organización, pero ya no en la activa: el servidor respondió, no es la red.
+      if (error instanceof ErrorApi && error.codigo === 'NO_AUTORIZADO')
+        return setSinMembresia(true);
       // Con datos ya vistos se conservan: el servidor vuelve a decidir al publicar.
       setSinConsulta(true);
     }
   }, []);
 
   // Al volver de registrar el vehículo o verificarse, o tras cambiar de organización, se ve lo vigente sin perder lo escrito.
+  // Un aviso de lo que había fallado ya no vale: quizá se fue a resolverlo.
   useFocusEffect(
     useCallback(() => {
+      setFalla(null);
       if (!cargando && aprobada) void leer();
     }, [cargando, aprobada, leer]),
   );
@@ -248,8 +270,14 @@ function Contenido() {
                 texto={t('viajes.publicar.estado_publicado')}
               />
             </View>
-            <Text style={estilos.valor}>{publicado.origen}</Text>
-            <Text style={estilos.valor}>{publicado.destino}</Text>
+            <View style={estilos.parada}>
+              <View style={[estilos.punto, estilos.puntoOrigen]} />
+              <Text style={estilos.valorParada}>{publicado.origen}</Text>
+            </View>
+            <View style={estilos.parada}>
+              <View style={[estilos.punto, estilos.puntoDestino]} />
+              <Text style={estilos.valorParada}>{publicado.destino}</Text>
+            </View>
             <Text style={estilos.secundario}>
               {con('viajes.publicar.resultado_resumen', {
                 asientos,
@@ -281,6 +309,19 @@ function Contenido() {
     return (
       <View style={[estilos.centrado, { paddingTop: top }]}>
         <Aviso tono="peligro">{t('viajes.publicar.cuenta_suspendida')}</Aviso>
+      </View>
+    );
+  }
+
+  if (sinMembresia) {
+    return (
+      <View style={[estilos.centrado, { paddingTop: top }]}>
+        <Aviso tono="peligro">{t('viajes.publicar.sin_membresia_activa')}</Aviso>
+        <Boton
+          variante="secundario"
+          etiqueta={t('viajes.publicar.elegir_organizacion')}
+          alPresionar={() => router.push('/organizaciones')}
+        />
       </View>
     );
   }
@@ -322,7 +363,9 @@ function Contenido() {
         hecho: Boolean(vehiculo),
         ruta: '/vehiculo',
         accion: t('vehiculos.registro.ver'),
-        detalleHecho: vehiculo && `${vehiculo.marca} ${vehiculo.modelo}`,
+        detalleHecho:
+          vehiculo &&
+          `${vehiculo.marca} ${vehiculo.modelo} · ${vehiculo.placa}`,
       },
       {
         clave: 'identidad',
@@ -407,9 +450,12 @@ function Contenido() {
     switch (error.codigo) {
       case 'CUPOS_EXCEDEN_CAPACIDAD':
         return setFalla({
-          texto: con('viajes.publicar.cupos_exceden_capacidad', {
-            maximo: String(error.datos.maximo),
-          }),
+          texto:
+            error.datos.maximo === 1
+              ? t('viajes.publicar.cupos_exceden_capacidad_uno')
+              : con('viajes.publicar.cupos_exceden_capacidad', {
+                  maximo: String(error.datos.maximo),
+                }),
           tono: 'peligro',
         });
       case 'PRECIO_FUERA_DE_RANGO':
@@ -425,6 +471,10 @@ function Contenido() {
         return setFalla({
           titulo: t('viajes.publicar.viaje_solapado_titulo'),
           texto: con('viajes.publicar.viaje_solapado', {
+            dia: formatearDia(
+              String(error.datos.salidaExistente),
+            ).toLowerCase(),
+            hora: formatearHoraLocal(String(error.datos.salidaExistente)),
             horas: String(error.datos.margenHoras),
           }),
           tono: 'peligro',
@@ -461,11 +511,7 @@ function Contenido() {
     const nuevos: Errores = {
       origen: origen ? undefined : lugarRequerido,
       destino: destino ? undefined : lugarRequerido,
-      hora: !salida
-        ? t('viajes.publicar.hora_invalida')
-        : horarioPermitido(salida)
-          ? undefined
-          : t('viajes.publicar.horario_invalido'),
+      hora: salida ? errorHorario(salida) : t('viajes.publicar.hora_invalida'),
       precio:
         monto === null
           ? con('viajes.publicar.precio_invalido', {
@@ -564,6 +610,11 @@ function Contenido() {
             alPresionar={() => {
               setOrigen(destino);
               setDestino(origen);
+              setErrores((e) => ({
+                ...e,
+                origen: undefined,
+                destino: undefined,
+              }));
             }}
           />
         </View>
@@ -767,7 +818,11 @@ const estilos = StyleSheet.create({
   textoAsientoNo: { color: colores.textoPlaceholder },
   secundario: { ...tipografia.secundario, color: colores.textoSecundario },
   enfasis: { ...tipografia.cuerpoEnfasis, color: colores.texto },
-  valor: { ...tipografia.cuerpo, color: colores.texto },
+  parada: { flexDirection: 'row', gap: espacio(2) },
+  punto: { width: 10, height: 10, marginTop: 7, borderRadius: 5 },
+  puntoOrigen: { backgroundColor: colores.primario },
+  puntoDestino: { backgroundColor: colores.exito },
+  valorParada: { ...tipografia.cuerpo, flex: 1, color: colores.texto },
   pasos: {
     marginTop: -espacio(6),
     marginHorizontal: espacio(4),
