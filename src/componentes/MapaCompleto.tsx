@@ -9,16 +9,18 @@ import {
 } from '@maplibre/maplibre-react-native';
 import { Image } from 'expo-image';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
-import { Modal, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { ESTILOS, type TipoMapa } from '@/componentes/estiloMapa';
+import { Icono } from '@/componentes/Icono';
 import { Aviso } from '@/componentes/Mensajes';
 import { abrirHttps } from '@/enlaces';
 import { t } from '@/i18n';
 import { obtenerUbicacion, tienePermisoUbicacion } from '@/servicios/ubicacion';
 import { colores, espacio, radio, tipografia } from '@/tema/tokens';
 
+const PLEGAR_ATRIBUCION_MS = 5000;
 const ZOOM_MINIMO = 3;
 const ZOOM_MAXIMO = 19;
 // El dibujo mide 40 × 56 y su cabeza 36 de ancho: a 38 de ancho la cabeza queda en 34.
@@ -41,8 +43,31 @@ function PinMapa() {
   );
 }
 
-/** Atribución siempre a la vista: la de OpenStreetMap es obligatoria. */
+/**
+ * Atribución obligatoria de OpenStreetMap. Se ve al abrir y a los 5 s se pliega en una «i» que la vuelve a mostrar,
+ * como permiten sus pautas de atribución para mapas en apps.
+ */
 export function AtribucionMapa({ tipo = 'calles' }: { tipo?: TipoMapa }) {
+  const [abierta, setAbierta] = useState(true);
+
+  useEffect(() => {
+    if (!abierta) return;
+    const plegar = setTimeout(() => setAbierta(false), PLEGAR_ATRIBUCION_MS);
+    return () => clearTimeout(plegar);
+  }, [abierta]);
+
+  if (!abierta)
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t('viajes.mapa.creditos')}
+        onPress={() => setAbierta(true)}
+        hitSlop={espacio(3)}
+        style={estilos.info}
+      >
+        <Icono nombre="info" color={colores.textoSecundario} tamano={16} />
+      </Pressable>
+    );
   return (
     <Text
       accessibilityRole="link"
@@ -144,7 +169,7 @@ export function MapaCompleto({
               )}
             </Map>
           </View>
-          <AtribucionMapa tipo={tipo} />
+          <AtribucionMapa key={tipo} tipo={tipo} />
           <View style={estilos.cerrar}>
             <BotonIcono
               icono="close"
@@ -227,6 +252,14 @@ const estilos = StyleSheet.create({
     elevation: 3,
   },
   pie: { gap: espacio(3), padding: espacio(4) },
+  info: {
+    position: 'absolute',
+    right: espacio(1),
+    bottom: espacio(1),
+    padding: espacio(1),
+    borderRadius: radio.completo,
+    backgroundColor: colores.superficie,
+  },
   atribucion: {
     ...tipografia.pequeno,
     position: 'absolute',

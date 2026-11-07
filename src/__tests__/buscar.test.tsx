@@ -1,4 +1,5 @@
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -279,6 +280,27 @@ describe('HU-18 · formulario de búsqueda', () => {
 });
 
 describe('HU-18 · mapa del trayecto', () => {
+  it('los créditos se ven al abrir, se pliegan a los 5 s y la «i» los vuelve a mostrar', async () => {
+    jest.useFakeTimers();
+    try {
+      await render(
+        <MapaRuta
+          origen={{ lat: -17.78, lng: -63.18 }}
+          destino={{ lat: -17.77, lng: -63.19 }}
+        />,
+      );
+      const creditos = 'OpenFreeMap © OpenMapTiles © OpenStreetMap';
+      expect(screen.getByText(creditos)).toBeTruthy();
+      await act(() => jest.advanceTimersByTime(5000));
+      expect(screen.queryByText(creditos)).toBeNull();
+      await fireEvent.press(
+        screen.getByRole('button', { name: 'Ver los créditos del mapa' }),
+      );
+      expect(screen.getByText(creditos)).toBeTruthy();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
   it('tocar el trayecto lo abre a pantalla completa y se cierra', async () => {
     await render(
       <MapaRuta

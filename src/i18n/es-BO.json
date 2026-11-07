@@ -415,6 +415,7 @@
     },
     "mapa": {
       "ver_trayecto": "Ver el trayecto en el mapa",
+      "creditos": "Ver los créditos del mapa",
       "ver_relieve": "Ver el relieve",
       "ver_calles": "Ver las calles",
       "atribucion": "OpenFreeMap © OpenMapTiles © OpenStreetMap",
