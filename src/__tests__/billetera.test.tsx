@@ -277,7 +277,10 @@ describe('Billetera · creación y lectura firmada', () => {
   it('un toque en actualizar mientras la huella está en curso no abre una segunda lectura', async () => {
     // La huella tarda: la primera lectura sigue en curso cuando la persona toca actualizar.
     firma.mockImplementation(
-      () => new Promise((resolver) => setTimeout(() => resolver({ firma: 'firma', marca: '1' }), 150)),
+      () =>
+        new Promise((resolver) =>
+          setTimeout(() => resolver({ firma: 'firma', marca: '1' }), 150),
+        ),
     );
     const { llamadas } = await abrir({ 'GET /billetera/mia': b.conSaldo });
     await fireEvent.press(

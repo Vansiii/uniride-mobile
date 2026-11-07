@@ -378,10 +378,12 @@ export async function solicitarFirmado<T>(
   if (
     respuesta.status === 401 &&
     tokenAcceso &&
-    (await respuesta
-      .clone()
-      .json()
-      .catch(() => ({}))).codigo === 'NO_AUTENTICADO' &&
+    (
+      await respuesta
+        .clone()
+        .json()
+        .catch(() => ({}))
+    ).codigo === 'NO_AUTENTICADO' &&
     (await renovarSesion())
   )
     respuesta = await enviar(ruta, metodo, cuerpo, firma);

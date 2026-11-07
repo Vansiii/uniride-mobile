@@ -117,7 +117,9 @@ const envios = (llamadas: { ruta: string }[]) =>
 
 beforeEach(() => {
   // La animación de la ilustración deja un temporizador que sobrevive a la prueba y rompe la siguiente suite.
-  jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
+  jest
+    .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
+    .mockResolvedValue(true);
   jest.clearAllMocks();
   mockFirmar.mockResolvedValue({ 'X-Firma': 'firma-de-prueba' });
 });
