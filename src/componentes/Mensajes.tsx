@@ -75,6 +75,7 @@ const estados: Record<string, [Tono | 'neutro', NombreIcono]> = {
   // Movimiento confirmado: sin etiqueta, es el caso normal (4.1.2).
   'movimiento.pendiente': ['neutro', 'hourglass_top'],
   'movimiento.fallido': ['peligro', 'error'],
+  'viaje.publicado': ['info', 'campaign'],
 };
 
 /** Tono neutro de la tabla 4.1.2: fondo sutil, texto secundario y borde. */
@@ -89,7 +90,7 @@ export function EtiquetaEstado({
   estado,
   texto,
 }: {
-  dominio: 'membresia' | 'movimiento';
+  dominio: 'membresia' | 'movimiento' | 'viaje';
   estado: string;
   /** Texto visible ya traducido. */
   texto: string;

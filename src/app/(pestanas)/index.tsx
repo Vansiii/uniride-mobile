@@ -34,7 +34,7 @@ export default function Inicio() {
   ) {
     return <Redirect href="/estado-membresia" />;
   }
-  // ponytail: pantalla mínima; Buscar, Mis viajes, Publicar y Perfil (DESIGN_SYSTEM §6.1) llegan con sus historias.
+  // ponytail: pantalla mínima; Buscar, Mis viajes y Perfil (DESIGN_SYSTEM §6.1) llegan con sus historias.
   return (
     <View style={estilos.raiz}>
       <ScrollView contentContainerStyle={estilos.desplazable}>

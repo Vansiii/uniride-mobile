@@ -525,3 +525,33 @@ export const confirmarRecarga = (id: string) =>
 /** Sin firma: consultar el estado nunca pide la huella. */
 export const consultarRecarga = (id: string) =>
   solicitar<OrdenRecarga>(`/billetera/recargas/${id}`, 'GET');
+
+/** Precio por asiento de la organización activa (HU-17), en URC. Solo para avisar: decide `POST /viajes`. */
+export interface LimitesViaje {
+  precioMinimo: number;
+  precioMaximo: number;
+}
+
+export const consultarLimitesViaje = () =>
+  solicitar<LimitesViaje>('/viajes/limites', 'GET');
+
+export interface DatosViaje {
+  origenNombre: string;
+  origenLat: number;
+  origenLng: number;
+  destinoNombre: string;
+  destinoLat: number;
+  destinoLng: number;
+  /** ISO 8601 con zona. */
+  fechaHoraSalida: string;
+  cuposTotales: number;
+  precioPorAsiento: number;
+}
+
+/** Pide la huella (CA-7); se publica en la organización activa, que el cliente no envía (A-13). */
+export const publicarViaje = (datos: DatosViaje) =>
+  solicitarFirmado<{ id: string; estado: string; cuposDisponibles: number }>(
+    '/viajes',
+    'POST',
+    datos,
+  );

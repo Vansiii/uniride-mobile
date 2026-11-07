@@ -1,0 +1,394 @@
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react-native';
+import PublicarPantalla from '@/app/(pestanas)/publicar';
+import { zoomParaVer } from '@/componentes/MapaRuta';
+import { ProveedorSesion } from '@/contexto/sesion';
+import { ErrorKeystore } from '@/dispositivo/keystore';
+import { formatearHoraLocal } from '@/formato';
+import {
+  dispositivoReal as d,
+  identidadReal as i,
+  respuestasReales as r,
+  simularFetch,
+  vehiculosReales as v,
+  viajeReal as vj,
+} from '@/pruebas/respuestasApi';
+import { buscarLugares } from '@/servicios/geocoding';
+
+const mockRouter = { push: jest.fn() };
+const mockFirmar = jest.fn();
+
+jest.mock('expo-router', () => {
+  const { Text: Texto } = jest.requireActual('react-native');
+  const { useEffect } = jest.requireActual('react');
+  return {
+    Redirect: ({ href }: { href: string }) => (
+      <Texto>{`redirige:${href}`}</Texto>
+    ),
+    router: { push: (...a: unknown[]) => mockRouter.push(...a) },
+    useFocusEffect: (efecto: () => void) => useEffect(efecto, [efecto]),
+  };
+});
+jest.mock(
+  'react-native-safe-area-context',
+  () => jest.requireActual('react-native-safe-area-context/jest/mock').default,
+);
+jest.mock('expo-secure-store', () => ({
+  getItemAsync: jest.fn(async () => 'refresco-de-prueba'),
+  setItemAsync: jest.fn().mockResolvedValue(undefined),
+  deleteItemAsync: jest.fn().mockResolvedValue(undefined),
+}));
+jest.mock('@/dispositivo/firma', () => ({
+  cabecerasFirma: (...a: unknown[]) => mockFirmar(...a),
+}));
+jest.mock('@/servicios/geocoding', () => ({ buscarLugares: jest.fn() }));
+
+const buscar = jest.mocked(buscarLugares);
+const PLAZA = {
+  nombre: 'Plaza 24 de Septiembre',
+  detalle: 'Plaza 24 de Septiembre, Santa Cruz de la Sierra, Bolivia',
+  lat: -17.783327,
+  lng: -63.182129,
+};
+const UAGRM = {
+  nombre: 'UAGRM, Módulos',
+  detalle: 'UAGRM, Módulos, Santa Cruz de la Sierra, Bolivia',
+  lat: -17.775,
+  lng: -63.195,
+};
+const REQUISITOS_OK = {
+  'POST /autenticacion/refrescar': r.sesionAprobada,
+  'GET /yo': r.yoAprobada,
+  'GET /vehiculos/mio': v.mio,
+  'GET /identidad/estado': i.verificada,
+  'GET /dispositivos/mi-dispositivo': d.vinculado,
+  'GET /viajes/limites': vj.limites,
+};
+
+const abrir = async (rutas: Parameters<typeof simularFetch>[0] = {}) => {
+  const simulado = simularFetch({ ...REQUISITOS_OK, ...rutas });
+  await render(
+    <ProveedorSesion>
+      <PublicarPantalla />
+    </ProveedorSesion>,
+  );
+  return simulado;
+};
+
+const elegirLugar = async (etiqueta: string, lugar: typeof PLAZA) => {
+  buscar.mockResolvedValueOnce([lugar]);
+  await fireEvent.changeText(
+    await screen.findByLabelText(etiqueta),
+    lugar.nombre,
+  );
+  await fireEvent(screen.getByLabelText(etiqueta), 'submitEditing');
+  await fireEvent.press(await screen.findByLabelText(lugar.detalle));
+};
+
+const llenar = async (precio = '10,50') => {
+  await elegirLugar('Punto de encuentro', PLAZA);
+  await elegirLugar('Destino', UAGRM);
+  await fireEvent.press(screen.getByLabelText('Mañana'));
+  await fireEvent.changeText(screen.getByLabelText('Hora de salida'), '0730');
+  await fireEvent.press(screen.getByLabelText('3 asientos'));
+  await fireEvent.changeText(
+    screen.getByLabelText('Precio por asiento (URC)'),
+    precio,
+  );
+};
+
+const publicar = () =>
+  fireEvent.press(screen.getByRole('button', { name: 'Publicar viaje' }));
+
+const envios = (llamadas: { ruta: string }[]) =>
+  llamadas.filter((l) => l.ruta === 'POST /viajes');
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockFirmar.mockResolvedValue({ 'X-Firma': 'firma-de-prueba' });
+});
+
+describe('HU-17 · requisitos (CA-6)', () => {
+  it('sin vehículo: dice qué falta y lleva a registrarlo, sin formulario', async () => {
+    await abrir({ 'GET /vehiculos/mio': v.sinVehiculo });
+    expect(await screen.findByText('Registra tu vehículo')).toBeTruthy();
+    expect(screen.queryByLabelText('Punto de encuentro')).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Mi vehículo' }));
+    expect(mockRouter.push).toHaveBeenCalledWith('/vehiculo');
+  });
+
+  it('con vehículo, sin verificar: marca lo hecho y lleva a verificar', async () => {
+    await abrir({ 'GET /identidad/estado': i.sinVerificar });
+    expect(await screen.findByText('Vehículo registrado')).toBeTruthy();
+    expect(screen.getByText('Toyota Corolla')).toBeTruthy();
+    await fireEvent.press(
+      screen.getByRole('button', { name: 'Verificar identidad' }),
+    );
+    expect(mockRouter.push).toHaveBeenCalledWith('/identidad');
+  });
+
+  it('sin teléfono vinculado: lleva a vincular', async () => {
+    await abrir({ 'GET /dispositivos/mi-dispositivo': d.sinDispositivo });
+    expect(await screen.findByText('Vincula este teléfono')).toBeTruthy();
+  });
+
+  it('si no se pudo consultar, no ofrece el formulario y deja reintentar', async () => {
+    const { falso } = await abrir({ 'GET /viajes/limites': [] });
+    await fireEvent.press(
+      await screen.findByRole('button', { name: 'Reintentar' }),
+    );
+    expect(falso).toHaveBeenCalled();
+    expect(screen.queryByLabelText('Punto de encuentro')).toBeNull();
+  });
+});
+
+describe('HU-17 · formulario', () => {
+  it('muestra los límites antes de fallar y bloquea asientos sobre la capacidad (CA-2, CA-3)', async () => {
+    await abrir();
+    expect(
+      await screen.findByText(
+        'Tu Toyota Corolla tiene 4 asientos para pasajeros.',
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText('Entre 1 y 20 URC, el máximo de HU05MOB A.'),
+    ).toBeTruthy();
+    expect(screen.getByLabelText('4 asientos').props.accessibilityState).toEqual(
+      expect.objectContaining({ disabled: false }),
+    );
+    expect(screen.getByLabelText('5 asientos').props.accessibilityState).toEqual(
+      expect.objectContaining({ disabled: true }),
+    );
+  });
+
+  it('CA-1: envía la salida como UTC y los datos del contrato, firmado, y muestra el resultado', async () => {
+    const { llamadas } = await abrir({ 'POST /viajes': vj.publicado });
+    await llenar();
+    await publicar();
+
+    expect(await screen.findByText('Viaje publicado')).toBeTruthy();
+    expect(screen.getByText('Publicado')).toBeTruthy();
+    expect(screen.getByText('3 asientos · 10,50 URC c/u')).toBeTruthy();
+
+    const [envio] = envios(llamadas);
+    const cuerpo = envio as unknown as { cuerpo: Record<string, unknown> };
+    const manana = new Date();
+    manana.setDate(manana.getDate() + 1);
+    manana.setHours(7, 30, 0, 0);
+    expect(cuerpo.cuerpo).toEqual({
+      origenNombre: PLAZA.nombre,
+      origenLat: PLAZA.lat,
+      origenLng: PLAZA.lng,
+      destinoNombre: UAGRM.nombre,
+      destinoLat: UAGRM.lat,
+      destinoLng: UAGRM.lng,
+      fechaHoraSalida: manana.toISOString(),
+      cuposTotales: 3,
+      precioPorAsiento: 10.5,
+    });
+    // CA-7: lo firmado es exactamente el cuerpo que se envía, y sin organización (A-13).
+    expect(mockFirmar).toHaveBeenCalledTimes(1);
+    expect(mockFirmar.mock.calls[0][1]).toBe('POST');
+    expect(JSON.parse(mockFirmar.mock.calls[0][3])).toEqual(cuerpo.cuerpo);
+    expect(cuerpo.cuerpo).not.toHaveProperty('organizacionId');
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Listo' }));
+    expect(screen.getByLabelText('Punto de encuentro').props.value).toBe('');
+    expect(screen.getByLabelText('Precio por asiento (URC)').props.value).toBe(
+      '',
+    );
+  });
+
+  it('sin datos: marca los errores y no pide la huella', async () => {
+    const { llamadas } = await abrir();
+    await screen.findByLabelText('Punto de encuentro');
+    await publicar();
+    expect(
+      screen.getAllByText('Busca el lugar y elige una opción de la lista.'),
+    ).toHaveLength(2);
+    expect(
+      screen.getByText('El precio debe estar entre 1 y 20 URC.'),
+    ).toBeTruthy();
+    expect(mockFirmar).not.toHaveBeenCalled();
+    expect(envios(llamadas)).toHaveLength(0);
+  });
+
+  it.each(['0,99', '20,01', 'abc', '1,005'])(
+    'CA-3: precio %s no pide la huella',
+    async (precio) => {
+      const { llamadas } = await abrir();
+      await llenar(precio);
+      await publicar();
+      expect(
+        screen.getByText('El precio debe estar entre 1 y 20 URC.'),
+      ).toBeTruthy();
+      expect(envios(llamadas)).toHaveLength(0);
+    },
+  );
+
+  it('CA-4: con menos de 15 minutos no pide la huella', async () => {
+    const { llamadas } = await abrir();
+    await llenar();
+    await fireEvent.press(screen.getByLabelText('Hoy'));
+    const dentroDeUnRato = new Date(Date.now() + 5 * 60_000);
+    // Cerca de medianoche, "hoy" a esa hora ya pasó o no cumple: en ambos casos se rechaza.
+    await fireEvent.changeText(
+      screen.getByLabelText('Hora de salida'),
+      formatearHoraLocal(dentroDeUnRato.toISOString()),
+    );
+    await publicar();
+    expect(
+      screen.getByText(
+        'Elige una salida con al menos 15 minutos de anticipación y hasta dentro de 7 días.',
+      ),
+    ).toBeTruthy();
+    expect(envios(llamadas)).toHaveLength(0);
+  });
+
+  it('hora mal escrita: lo dice, y el texto se arma con los dos puntos', async () => {
+    await abrir();
+    const hora = await screen.findByLabelText('Hora de salida');
+    await fireEvent.changeText(hora, '2575');
+    expect(screen.getByLabelText('Hora de salida').props.value).toBe('25:75');
+    await publicar();
+    expect(
+      screen.getByText('Escribe la hora en 24 horas, por ejemplo 07:30.'),
+    ).toBeTruthy();
+  });
+
+  it('intercambia origen y destino', async () => {
+    await abrir();
+    await elegirLugar('Punto de encuentro', PLAZA);
+    await elegirLugar('Destino', UAGRM);
+    await fireEvent.press(
+      screen.getByRole('button', { name: 'Intercambiar origen y destino' }),
+    );
+    expect(screen.getByLabelText('Punto de encuentro').props.value).toBe(
+      UAGRM.nombre,
+    );
+    expect(screen.getByLabelText('Destino').props.value).toBe(PLAZA.nombre);
+  });
+
+  it('editar un lugar elegido obliga a elegir otro: sin coordenadas no se publica (RN-4)', async () => {
+    const { llamadas } = await abrir();
+    await llenar();
+    await fireEvent.changeText(
+      screen.getByLabelText('Destino'),
+      'Otro lugar escrito',
+    );
+    await publicar();
+    expect(
+      screen.getByText('Busca el lugar y elige una opción de la lista.'),
+    ).toBeTruthy();
+    expect(envios(llamadas)).toHaveLength(0);
+  });
+});
+
+describe('HU-17 · búsqueda de lugar', () => {
+  it('sin resultados y con la red caída lo dice', async () => {
+    await abrir();
+    const campo = await screen.findByLabelText('Destino');
+    await fireEvent.changeText(campo, 'zzz');
+    buscar.mockResolvedValueOnce([]);
+    await fireEvent(campo, 'submitEditing');
+    expect(
+      await screen.findByText(
+        'No encontramos ese lugar. Prueba con otro nombre.',
+      ),
+    ).toBeTruthy();
+    buscar.mockRejectedValueOnce(new Error('caído'));
+    await fireEvent(screen.getByLabelText('Destino'), 'submitEditing');
+    expect(
+      await screen.findByText(
+        'No pudimos buscar el lugar. Revisa tu conexión e inténtalo de nuevo.',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('con menos de 3 letras no consulta a Nominatim', async () => {
+    await abrir();
+    const campo = await screen.findByLabelText('Destino');
+    await fireEvent.changeText(campo, 'ab');
+    await fireEvent(campo, 'submitEditing');
+    expect(
+      screen.getByText('Escribe al menos 3 letras para buscar.'),
+    ).toBeTruthy();
+    expect(buscar).not.toHaveBeenCalled();
+  });
+});
+
+describe('HU-17 · rechazos del servidor', () => {
+  it.each([
+    [
+      'CA-2',
+      vj.cuposExceden,
+      'Tu vehículo tiene 2 asientos para pasajeros. Ofrece 2 o menos.',
+    ],
+    ['CA-3', vj.precioFuera, 'El precio debe estar entre 1 y 15 URC.'],
+    [
+      'CA-4',
+      vj.horarioInvalido,
+      'Elige una salida con al menos 15 minutos de anticipación y hasta dentro de 7 días.',
+    ],
+    ['CA-5', vj.solapado, 'Deja al menos 2 horas entre tus viajes.'],
+    [
+      'CA-7',
+      vj.firmaInvalida,
+      'Vincula este teléfono para publicar: cada viaje se firma desde él.',
+    ],
+  ])('%s: lo traduce y conserva lo escrito', async (_, respuesta, texto) => {
+    await abrir({ 'POST /viajes': respuesta });
+    await llenar();
+    await publicar();
+    expect(await screen.findByText(texto)).toBeTruthy();
+    expect(screen.queryByText('Viaje publicado')).toBeNull();
+    expect(screen.getByLabelText('Destino').props.value).toBe(UAGRM.nombre);
+    expect(screen.queryByText(/CUPOS_|VIAJE_|FIRMA_/)).toBeNull();
+  });
+
+  it('CA-6: si perdió un requisito al publicar, vuelve a la lista de lo que falta', async () => {
+    await abrir({
+      'POST /viajes': vj.sinVehiculo,
+      'GET /vehiculos/mio': [v.mio, v.sinVehiculo],
+    });
+    await llenar();
+    await publicar();
+    expect(await screen.findByText('Registra tu vehículo')).toBeTruthy();
+  });
+
+  it('cancelar la huella no es un error y no publica', async () => {
+    mockFirmar.mockRejectedValue(new ErrorKeystore('BIOMETRIA_CANCELADA'));
+    const { llamadas } = await abrir();
+    await llenar();
+    await publicar();
+    expect(
+      await screen.findByText(
+        'Cancelaste la huella. Tu viaje no se publicó; tus datos siguen aquí.',
+      ),
+    ).toBeTruthy();
+    expect(envios(llamadas)).toHaveLength(0);
+  });
+
+  it('dos toques seguidos piden una sola huella', async () => {
+    const { llamadas } = await abrir({ 'POST /viajes': vj.publicado });
+    await llenar();
+    const boton = screen.getByRole('button', { name: 'Publicar viaje' });
+    await Promise.all([fireEvent.press(boton), fireEvent.press(boton)]);
+    await waitFor(() => expect(envios(llamadas)).toHaveLength(1));
+    expect(mockFirmar).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('MapaRuta', () => {
+  it('acerca lugares próximos y aleja los lejanos, siempre dentro del recuadro', () => {
+    const cerca = zoomParaVer(PLAZA, UAGRM, 328);
+    const lejos = zoomParaVer(PLAZA, { lat: -16.5, lng: -68.15 }, 328);
+    expect(cerca).toBeGreaterThan(lejos);
+    expect(lejos).toBeGreaterThan(0);
+    expect(zoomParaVer(PLAZA, PLAZA, 328)).toBe(16);
+  });
+});
