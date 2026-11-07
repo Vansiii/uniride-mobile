@@ -13,9 +13,11 @@ import {
   Billetera,
   consultarEstadoIdentidad,
   consultarMiBilletera,
+  consultarMovimientos,
   consultarSaldo,
   crearBilletera,
   ErrorApi,
+  Movimiento,
   Saldo,
 } from '@/api/cliente';
 import { Boton, BotonIcono } from '@/componentes/Boton';
@@ -104,6 +106,15 @@ function Contenido() {
   const [copia, setCopia] = useState<'ok' | 'fallo' | null>(null);
   // Falla al actualizar el saldo: se avisa sin perder lo que ya se ve ni gastar otra huella.
   const [errorRefresco, setErrorRefresco] = useState<string | null>(null);
+  // Recargas por acreditarse (HU-13 RN-6). Sin firma; si falla la lectura, se conserva lo último visto.
+  const [pendientes, setPendientes] = useState<Movimiento[]>([]);
+  const leerPendientes = useCallback(() => {
+    consultarMovimientos(1, ['recarga'])
+      .then((p) =>
+        setPendientes(p.items.filter((m) => m.estado === 'pendiente')),
+      )
+      .catch(() => undefined);
+  }, []);
   // Cada lectura firmada pide la huella: nunca dos a la vez.
   const enCurso = useRef(false);
 
@@ -149,35 +160,12 @@ function Contenido() {
     void leer().then((v) => v && setVista(v));
   }, [cargando, personaId, leer]);
 
-  // Quien verifica su identidad en /identidad y vuelve no debe seguir viendo "Verificar identidad": esa vista no tiene
-  // botón de actualizar, así que al recuperar el foco (y solo en ella) se lee otra vez. `leer` consulta primero
-  // /identidad/estado sin firma: no pide huella mientras la identidad siga sin verificar. Las demás vistas no releen
-  // por foco (cada lectura firmada pide huella). El tipo va en un ref para que el callback no cambie y el foco no
-  // dispare la lectura de nuevo.
-  const tipoVista = useRef(vista.tipo);
-  useEffect(() => {
-    tipoVista.current = vista.tipo;
-  }, [vista.tipo]);
-  useFocusEffect(
-    useCallback(() => {
-      if (tipoVista.current !== 'sin_billetera') return;
-      void leer().then((v) => v && setVista(v));
-    }, [leer]),
-  );
-
-  // Lectura completa (la dirección pide huella): al reintentar una falla o al volver a pedir la dirección.
-  const recargar = () => {
-    if (enCurso.current) return;
-    setErrorRefresco(null);
-    setVista({ tipo: 'cargando' });
-    void leer().then((v) => v && setVista(v));
-  };
-  // Actualizar solo relee el saldo: nunca pide huella.
-  const actualizar = async () => {
-    if (vista.tipo !== 'lista') return recargar();
+  // Relee saldo y recargas pendientes; nunca pide huella.
+  const refrescarSaldo = useCallback(async () => {
     if (enCurso.current) return;
     enCurso.current = true;
     setErrorRefresco(null);
+    leerPendientes();
     try {
       const saldo = await consultarSaldo();
       setVista((v) => (v.tipo === 'lista' ? { ...v, saldo } : v));
@@ -188,7 +176,38 @@ function Contenido() {
     } finally {
       enCurso.current = false;
     }
+  }, [leerPendientes]);
+
+  const yaLista = vista.tipo === 'lista';
+  useEffect(() => {
+    if (yaLista) leerPendientes();
+  }, [yaLista, leerPendientes]);
+
+  // Quien verifica su identidad en /identidad y vuelve no debe seguir viendo "Verificar identidad": esa vista no tiene
+  // botón de actualizar, así que al recuperar el foco se lee otra vez. `leer` consulta primero /identidad/estado sin
+  // firma: no pide huella mientras la identidad siga sin verificar. Quien vuelve de recargar ve su saldo nuevo: con la
+  // billetera lista solo se relee lo que no firma. Las demás vistas no releen por foco (cada lectura firmada pide
+  // huella). El tipo va en un ref para que el callback no cambie y el foco no dispare la lectura de nuevo.
+  const tipoVista = useRef(vista.tipo);
+  useEffect(() => {
+    tipoVista.current = vista.tipo;
+  }, [vista.tipo]);
+  useFocusEffect(
+    useCallback(() => {
+      if (tipoVista.current === 'lista') void refrescarSaldo();
+      if (tipoVista.current !== 'sin_billetera') return;
+      void leer().then((v) => v && setVista(v));
+    }, [leer, refrescarSaldo]),
+  );
+
+  // Lectura completa (la dirección pide huella): al reintentar una falla o al volver a pedir la dirección.
+  const recargar = () => {
+    if (enCurso.current) return;
+    setErrorRefresco(null);
+    setVista({ tipo: 'cargando' });
+    void leer().then((v) => v && setVista(v));
   };
+  const actualizar = () => (yaLista ? void refrescarSaldo() : recargar());
   useEffect(() => {
     if (!copia) return;
     const espera = setTimeout(() => setCopia(null), 4000);
@@ -222,7 +241,7 @@ function Contenido() {
                 icono="refresh"
                 color={colores.sobreMarca}
                 etiqueta={t('billetera.pantalla.actualizar')}
-                alPresionar={() => void actualizar()}
+                alPresionar={actualizar}
               />
             )}
           </View>
@@ -293,15 +312,33 @@ function Contenido() {
 
         {lista && (
           <View style={[estilos.bloque, estilos.sobreBanda]}>
-            <View style={estilos.tarjeta}>
-              <Boton
-                variante="secundario"
-                icono="receipt_long"
-                anchoCompleto
-                etiqueta={t('billetera.pantalla.movimientos')}
-                alPresionar={() => router.push('/movimientos')}
-              />
+            <View style={[estilos.tarjeta, estilos.acciones]}>
+              <View style={estilos.accion}>
+                <Boton
+                  icono="add"
+                  anchoCompleto
+                  etiqueta={t('billetera.recarga.boton')}
+                  alPresionar={() => router.push('/recargar')}
+                />
+              </View>
+              <View style={estilos.accion}>
+                <Boton
+                  variante="secundario"
+                  icono="receipt_long"
+                  anchoCompleto
+                  etiqueta={t('billetera.pantalla.movimientos')}
+                  alPresionar={() => router.push('/movimientos')}
+                />
+              </View>
             </View>
+            {pendientes.map((m) => (
+              <Aviso key={m.id} tono="info">
+                {t('billetera.recarga.pendiente').replace(
+                  '{monto}',
+                  formatearMonto(m.monto),
+                )}
+              </Aviso>
+            ))}
             {(!lista.saldo.enLinea || !billetera) && (
               <Aviso tono="aviso">
                 {t('billetera.saldo.sincronizacion_pendiente').replace(
@@ -431,6 +468,9 @@ const estilos = StyleSheet.create({
     backgroundColor: colores.superficie,
     elevation: 3,
   },
+  // Dos acciones lado a lado; si la letra del sistema crece, pasan a otra fila.
+  acciones: { flexDirection: 'row', flexWrap: 'wrap' },
+  accion: { flexGrow: 1, flexBasis: 130 },
   fila: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -276,9 +276,16 @@ function Contenido() {
           : t('billetera.historial.vacio_filtro')}
       </Text>
       {filtro === 'todos' && (
-        <Text style={estilos.textoVacio}>
-          {t('billetera.historial.vacio_detalle')}
-        </Text>
+        <>
+          <Text style={estilos.textoVacio}>
+            {t('billetera.historial.vacio_detalle')}
+          </Text>
+          <Boton
+            icono="add"
+            etiqueta={t('billetera.recarga.boton')}
+            alPresionar={() => router.push('/recargar')}
+          />
+        </>
       )}
     </View>
   );

@@ -424,13 +424,14 @@ describe('Movimientos · filtros', () => {
 });
 
 describe('Movimientos · historial vacío', () => {
-  it('invita sin pedir nada y no ofrece Recargar (es de HU-13)', async () => {
+  it('invita a recargar (HU-13)', async () => {
     await abrir({ [RUTA]: h.vacio });
     expect(
       await screen.findByText('Todavía no tienes movimientos'),
     ).toBeTruthy();
     expect(screen.getByText(/Cuando recargues o pagues un viaje/)).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Recargar' })).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Recargar' }));
+    expect(router.push).toHaveBeenCalledWith('/recargar');
   });
 
   it('con un filtro sin resultados lo dice distinto', async () => {

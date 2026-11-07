@@ -1067,6 +1067,52 @@ export const historialReal = {
   }),
 };
 
+const ORDEN_RECARGA = {
+  ordenId: '7f1c1a52-6f3e-4a1b-9c55-0d6a3f6f1b11',
+  monto: '50.00',
+  estado: 'pendiente',
+  expiraEn: '2026-11-07T15:15:00.000Z',
+  hashTx: null,
+};
+
+// Contrato de `backend/src/billetera/dto/recarga.dto.ts` (HU-13).
+export const recargaReal = {
+  ordenId: ORDEN_RECARGA.ordenId,
+  /** POST /billetera/recargas → 201 */
+  creada: (expiraEn = ORDEN_RECARGA.expiraEn) =>
+    ok(201, {
+      ...ORDEN_RECARGA,
+      expiraEn,
+      qrTexto: `uniride://recarga/${ORDEN_RECARGA.ordenId}`,
+      qrImagenBase64: 'iVBORw0KGgo=',
+    }),
+  /** POST .../confirmar → 202, y GET mientras se acredita → 200 */
+  procesando: (estado = 202) =>
+    ok(estado, { ...ORDEN_RECARGA, estado: 'procesando' }),
+  /** Ya acreditada → 200 */
+  completada: ok(200, {
+    ...ORDEN_RECARGA,
+    estado: 'completada',
+    hashTx:
+      '0x5c504ed432cb51138bcf09aa5e8a410dd4a1e204ef84bfed1be16dfba1b22060',
+  }),
+  /** GET de una orden vencida → 200 */
+  expirada: ok(200, { ...ORDEN_RECARGA, estado: 'expirada' }),
+  /** POST .../confirmar de una orden vencida → 410 */
+  ordenExpirada: ok(410, {
+    codigo: 'ORDEN_EXPIRADA',
+    mensaje: 'billetera.recarga.orden_expirada',
+  }),
+  fueraDeRango: ok(400, {
+    codigo: 'MONTO_FUERA_DE_RANGO',
+    mensaje: 'billetera.recarga.monto_fuera_de_rango',
+  }),
+  firmaInvalida: ok(401, {
+    codigo: 'FIRMA_DISPOSITIVO_INVALIDA',
+    mensaje: 'La firma del dispositivo no es válida.',
+  }),
+};
+
 /** `fetch` falso que responde según "MÉTODO /ruta"; lo que no está en `rutas` falla como una caída de red. */
 export function simularFetch(
   rutas: Record<string, RespuestaSimulada | RespuestaSimulada[]>,

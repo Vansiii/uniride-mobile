@@ -537,9 +537,70 @@ describe('Billetera · HU-14: saldo desglosado y movimientos', () => {
     expect(router.push).toHaveBeenCalledWith('/movimientos');
   });
 
-  it('no hay botón Recargar: es de HU-13', async () => {
+  it('HU-13: el botón Recargar abre la recarga', async () => {
     await abrir({ 'GET /billetera/mia': b.conSaldo });
-    await screen.findByText('Saldo disponible');
+    await fireEvent.press(
+      await screen.findByRole('button', { name: 'Recargar' }),
+    );
+    expect(router.push).toHaveBeenCalledWith('/recargar');
+  });
+
+  it('HU-13: sin billetera no se ofrece Recargar (CA-6)', async () => {
+    await abrir({ 'GET /identidad/estado': i.sinVerificar });
+    await screen.findByText('Tu billetera se crea al verificar tu identidad');
     expect(screen.queryByRole('button', { name: 'Recargar' })).toBeNull();
+  });
+
+  it('HU-13: avisa cada recarga pendiente, sin huella ni tocar los montos', async () => {
+    const { llamadas } = await abrir({
+      'GET /billetera/mia': b.conSaldo,
+      'GET /billetera/movimientos': h.pagina1,
+    });
+    expect(
+      await screen.findByText(
+        'Tienes una recarga de 50,00 URC pendiente de confirmación.',
+      ),
+    ).toBeTruthy();
+    expect(firma).toHaveBeenCalledTimes(1);
+    expect(
+      llamadas.filter((l) => l.ruta === 'GET /billetera/movimientos'),
+    ).toHaveLength(1);
+  });
+
+  it('HU-13: sin poder leer los pendientes, la billetera se ve igual', async () => {
+    await abrir({ 'GET /billetera/mia': b.conSaldo });
+    expect(await screen.findByText('Saldo disponible')).toBeTruthy();
+    expect(screen.queryByText(/pendiente de confirmación/)).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('HU-13: al volver de recargar se ve el saldo nuevo y sin el aviso, sin otra huella', async () => {
+    await abrir({
+      'GET /billetera/mia': b.conSaldo,
+      'GET /billetera/movimientos': h.pagina1,
+    });
+    await screen.findByText(/pendiente de confirmación/);
+    const { llamadas } = simularFetch({
+      'GET /billetera/saldo': {
+        estado: 200,
+        cuerpo: {
+          saldoTotal: '412.00',
+          saldoDisponible: '397.00',
+          saldoBloqueadoEscrow: '15.00',
+          moneda: 'URC',
+          enLinea: true,
+        },
+      },
+      'GET /billetera/movimientos': h.vacio,
+    });
+    await act(async () => {
+      mockFoco.alEnfocar?.();
+    });
+    expect(await screen.findByLabelText('397,00 URC')).toBeTruthy();
+    await waitFor(() =>
+      expect(screen.queryByText(/pendiente de confirmación/)).toBeNull(),
+    );
+    expect(firma).toHaveBeenCalledTimes(1);
+    expect(lecturas(llamadas)).toBe(0);
   });
 });
