@@ -32,6 +32,8 @@ jest.mock('@/dispositivo/keystore', () => ({
       .sign('sha256', new TextEncoder().encode(mensaje), mockPar.privateKey)
       .toString('base64'),
   ),
+  nonceAleatorio: () =>
+    jest.requireActual('node:crypto').randomBytes(16).toString('hex'),
 }));
 jest.mock('expo-secure-store', () => ({
   getItemAsync: jest.fn(async () => null),
