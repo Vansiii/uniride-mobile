@@ -14,3 +14,4 @@ Lo propio de este repositorio:
 - Ramas `main` y `develop` protegidas; una rama `feat/HU-xx-slug` por historia; PR con CI en verde y revisión de otro integrante.
 - Commits `HU-xx SPyy: descripción`.
 - Al terminar un PR aquí, actualiza en el principal el puntero del submódulo `mobile` y el estado en `.agents/`.
+- Hermes (el motor de JavaScript de la app) no trae `crypto` de Node ni `crypto.subtle`, y Jest corre en Node, donde sí existen: una prueba verde no detecta su uso. Para hashes, aleatorios y firmas usa `src/dispositivo/sha256.ts` y el módulo nativo detrás de `keystore.ts`; nunca importes `crypto` ni `node:crypto` en `src/`.

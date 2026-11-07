@@ -7,7 +7,7 @@ import {
 import { ReactNode } from 'react';
 import * as api from '@/api/cliente';
 import EstadoMembresia from '@/app/estado-membresia';
-import Inicio from '@/app/index';
+import Inicio from '@/app/(pestanas)/index';
 import IniciarSesion from '@/app/iniciar-sesion';
 import { ProveedorSesion } from '@/contexto/sesion';
 import { t } from '@/i18n';
