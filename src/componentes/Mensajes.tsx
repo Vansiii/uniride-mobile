@@ -77,7 +77,8 @@ const estados: Record<string, [Tono | 'neutro', NombreIcono]> = {
   'movimiento.fallido': ['peligro', 'error'],
   'viaje.publicado': ['info', 'campaign'],
   'viaje.verificado': ['exito', 'verified'],
-  'viaje.nuevo': ['info', 'new_releases'],
+  // `new_releases` se dibuja igual que `verified`: «Nuevo» parecía otra verificación.
+  'viaje.nuevo': ['info', 'auto_awesome'],
   'viaje.distancia': ['neutro', 'directions_walk'],
 };
 
