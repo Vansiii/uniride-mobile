@@ -4,6 +4,7 @@ import {
   type InitialViewState,
   Map,
   type MapRef,
+  Marker,
   NativeUserLocation,
 } from '@maplibre/maplibre-react-native';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
@@ -11,7 +12,6 @@ import { Modal, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { ESTILOS, type TipoMapa } from '@/componentes/estiloMapa';
-import { Icono } from '@/componentes/Icono';
 import { Aviso } from '@/componentes/Mensajes';
 import { abrirHttps } from '@/enlaces';
 import { t } from '@/i18n';
@@ -20,13 +20,24 @@ import { colores, espacio, radio, tipografia } from '@/tema/tokens';
 
 const ZOOM_MINIMO = 3;
 const ZOOM_MAXIMO = 19;
-const ALTO_PIN = 48;
+const LADO_PIN = 34;
 const URL_ATRIBUCION = {
   calles: 'https://www.openstreetmap.org/copyright',
   relieve: 'https://github.com/tilezen/joerd/blob/master/docs/attribution.md',
 } as const;
 
 export type Punto = { lat: number; lng: number };
+
+/** Gota con borde blanco y sombra, en el color de marca. Su caja termina justo en la punta. */
+function PinMapa() {
+  return (
+    <View style={estilos.pin}>
+      <View style={estilos.gota}>
+        <View style={estilos.centroPin} />
+      </View>
+    </View>
+  );
+}
 
 /** Atribución siempre a la vista: la de OpenStreetMap es obligatoria. */
 export function AtribucionMapa({ tipo = 'calles' }: { tipo?: TipoMapa }) {
@@ -47,17 +58,18 @@ export function AtribucionMapa({ tipo = 'calles' }: { tipo?: TipoMapa }) {
 
 /**
  * El mapa a pantalla completa: pellizco, doble toque, rotar con brújula, tipos de mapa y tu ubicación.
- * Con `alElegir`, un pin fijo marca el centro. Los botones de zoom cubren a quien no puede hacer los gestos.
+ * Con `elegir`, tocar el mapa deja el pin donde se tocó; moverlo o rotarlo no lo mueve del lugar.
+ * Los botones de zoom y «Mi ubicación» cubren a quien no puede hacer los gestos.
  */
 export function MapaCompleto({
   inicial,
   alCerrar,
-  alElegir,
+  elegir,
   children,
 }: {
   inicial: InitialViewState;
   alCerrar: () => void;
-  alElegir?: (punto: Punto) => void;
+  elegir?: { punto: Punto; alElegir: (punto: Punto) => void };
   children?: ReactNode;
 }) {
   const mapa = useRef<MapRef>(null);
@@ -65,6 +77,7 @@ export function MapaCompleto({
   const [tipo, setTipo] = useState<TipoMapa>('calles');
   const [conPermiso, setConPermiso] = useState(false);
   const [sinUbicacion, setSinUbicacion] = useState(false);
+  const [punto, setPunto] = useState(elegir?.punto);
 
   useEffect(() => {
     void tienePermisoUbicacion().then(setConPermiso);
@@ -75,6 +88,7 @@ export function MapaCompleto({
     setSinUbicacion(ubicacion.tipo !== 'ok');
     if (ubicacion.tipo === 'ok') {
       setConPermiso(true);
+      if (elegir) setPunto({ lat: ubicacion.lat, lng: ubicacion.lng });
       camara.current?.easeTo({
         center: [ubicacion.lng, ubicacion.lat],
         duration: 300,
@@ -86,11 +100,6 @@ export function MapaCompleto({
     const zoom = await mapa.current?.getZoom();
     if (zoom !== undefined)
       camara.current?.zoomTo(zoom + cambio, { duration: 200 });
-  };
-
-  const elegir = async () => {
-    const centro = await mapa.current?.getCenter();
-    if (centro) alElegir?.({ lng: centro[0], lat: centro[1] });
   };
 
   return (
@@ -111,6 +120,11 @@ export function MapaCompleto({
               attribution={false}
               compass
               compassPosition={{ top: espacio(19), left: espacio(3) }}
+              onPress={
+                elegir &&
+                (({ nativeEvent: { lngLat } }) =>
+                  setPunto({ lng: lngLat[0], lat: lngLat[1] }))
+              }
             >
               <Camera
                 ref={camara}
@@ -120,17 +134,14 @@ export function MapaCompleto({
               />
               {conPermiso && <NativeUserLocation />}
               {children}
+              {punto && (
+                // La vista anotada no gira con el mapa: el pin queda de pie y su punta sobre el punto.
+                <Marker lngLat={[punto.lng, punto.lat]} anchor="bottom">
+                  <PinMapa />
+                </Marker>
+              )}
             </Map>
           </View>
-          {alElegir && (
-            <View style={estilos.pin} pointerEvents="none">
-              <Icono
-                nombre="location_on"
-                color={colores.primario}
-                tamano={ALTO_PIN}
-              />
-            </View>
-          )}
           <AtribucionMapa tipo={tipo} />
           <View style={estilos.cerrar}>
             <BotonIcono
@@ -173,18 +184,18 @@ export function MapaCompleto({
             />
           </View>
         </View>
-        {(alElegir || sinUbicacion) && (
+        {(elegir || sinUbicacion) && (
           <View style={estilos.pie}>
             {sinUbicacion && (
               <Aviso tono="info">
                 {t('viajes.buscar.ubicacion_mapa_fallo')}
               </Aviso>
             )}
-            {alElegir && (
+            {elegir && punto && (
               <Boton
                 anchoCompleto
                 etiqueta={t('viajes.buscar.usar_punto')}
-                alPresionar={() => void elegir()}
+                alPresionar={() => elegir.alElegir(punto)}
               />
             )}
           </View>
@@ -197,13 +208,31 @@ export function MapaCompleto({
 const estilos = StyleSheet.create({
   raiz: { flex: 1, backgroundColor: colores.fondo },
   mapa: { flex: 1, overflow: 'hidden', backgroundColor: colores.fondoSutil },
-  // La punta del pin marca el centro del mapa.
+  // Un cuadrado con una esquina recta, girado 45°: la esquina es la punta y queda abajo, en el centro de la caja.
   pin: {
-    position: 'absolute',
-    left: '50%',
-    top: '50%',
-    marginLeft: -ALTO_PIN / 2,
-    marginTop: -ALTO_PIN,
+    width: LADO_PIN * Math.SQRT2,
+    height: LADO_PIN * Math.SQRT2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gota: {
+    width: LADO_PIN,
+    height: LADO_PIN,
+    borderRadius: LADO_PIN / 2,
+    borderBottomRightRadius: 0,
+    borderWidth: 3,
+    borderColor: colores.superficie,
+    backgroundColor: colores.primario,
+    alignItems: 'center',
+    justifyContent: 'center',
+    transform: [{ rotate: '45deg' }],
+    elevation: 4,
+  },
+  centroPin: {
+    width: LADO_PIN / 3,
+    height: LADO_PIN / 3,
+    borderRadius: LADO_PIN / 6,
+    backgroundColor: colores.superficie,
   },
   cerrar: {
     position: 'absolute',

@@ -12,10 +12,12 @@ export const mapaSimulado = {
 export function Map({
   ref,
   mapStyle,
+  onPress,
   children,
 }: {
   ref?: React.Ref<unknown>;
   mapStyle: unknown;
+  onPress?: unknown;
   children?: ReactNode;
 }) {
   mapaSimulado.estilo = mapStyle;
@@ -23,7 +25,12 @@ export function Map({
     getCenter: async () => mapaSimulado.centro,
     getZoom: async () => mapaSimulado.zoom,
   }));
-  return <View>{children}</View>;
+  // La prueba simula un toque con fireEvent(getByTestId('mapa'), 'press', { nativeEvent: { lngLat } }).
+  return (
+    <View testID="mapa" {...{ onPress }}>
+      {children}
+    </View>
+  );
 }
 
 export function Camera({ ref }: { ref?: React.Ref<unknown> }) {
@@ -31,7 +38,11 @@ export function Camera({ ref }: { ref?: React.Ref<unknown> }) {
   return null;
 }
 
-export const Marker = ({ children }: { children?: ReactNode }) => (
-  <View>{children}</View>
-);
+export const Marker = ({
+  lngLat,
+  children,
+}: {
+  lngLat: number[];
+  children?: ReactNode;
+}) => <View testID={`marcador ${lngLat.join(',')}`}>{children}</View>;
 export const NativeUserLocation = () => null;

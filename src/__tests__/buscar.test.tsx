@@ -199,6 +199,37 @@ describe('HU-18 · formulario de búsqueda', () => {
     );
     expect(await screen.findByDisplayValue('Punto en el mapa')).toBeTruthy();
   });
+  it('tocar el mapa deja el pin ahí y buscar usa ese punto', async () => {
+    await abrir(<Inicio />);
+    await fireEvent.press(
+      await screen.findByRole('button', { name: 'En el mapa' }),
+    );
+    await fireEvent(
+      screen.getByTestId('mapa', { includeHiddenElements: true }),
+      'press',
+      {
+        nativeEvent: { lngLat: [-63.2, -17.79] },
+      },
+    );
+    expect(
+      screen.getByTestId('marcador -63.2,-17.79', {
+        includeHiddenElements: true,
+      }),
+    ).toBeTruthy();
+    await fireEvent.press(
+      screen.getByRole('button', { name: 'Usar este punto' }),
+    );
+    await fireEvent.press(
+      await screen.findByRole('button', { name: 'Buscar viajes' }),
+    );
+    expect(mockRouter.push).toHaveBeenCalledWith({
+      pathname: '/viajes/buscar',
+      params: expect.objectContaining({
+        origenLat: '-17.79',
+        origenLng: '-63.2',
+      }),
+    });
+  });
   it('cerrar el mapa no cambia el origen', async () => {
     await abrir(<Inicio />);
     await fireEvent.press(

@@ -434,7 +434,7 @@
       "ir_a_ajustes": "El permiso de ubicación está desactivado. Actívalo en los ajustes o elige el lugar.",
       "abrir_ajustes": "Abrir ajustes",
       "fallo": "No pudimos obtener tu ubicación. Revisa que el GPS esté activo o elige el lugar.",
-      "ubicacion_mapa_fallo": "No pudimos obtener tu ubicación. Mueve el mapa hasta el punto de salida.",
+      "ubicacion_mapa_fallo": "No pudimos obtener tu ubicación. Elige en el mapa el punto de salida.",
       "ventana": "Viajes entre {desde} y {hasta}, a menos de 1 km.",
       "titulo_resultados": "Viajes cerca de ti",
       "resumen": "{dia} · {desde}–{hasta} · a menos de 1 km",
