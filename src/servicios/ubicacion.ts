@@ -18,12 +18,16 @@ export async function obtenerUbicacion(pedir: boolean): Promise<Ubicacion> {
       : await Location.getForegroundPermissionsAsync();
     if (!permiso.granted)
       return { tipo: 'sin_permiso', puedePedir: permiso.canAskAgain };
+    const ultima = await Location.getLastKnownPositionAsync({
+      maxAge: VIGENCIA_MS,
+      requiredAccuracy: PRECISION_METROS,
+    });
+    // Con la ubicación apagada, pedir la posición abre la ventana de Google para activarla: solo si la persona tocó el botón.
+    if (!ultima && !pedir && !(await Location.hasServicesEnabledAsync()))
+      return { tipo: 'fallo' };
     // Bajo techo, Android puede no responder nunca: sin un tope la pantalla se quedaría esperando.
     const { coords } =
-      (await Location.getLastKnownPositionAsync({
-        maxAge: VIGENCIA_MS,
-        requiredAccuracy: PRECISION_METROS,
-      })) ??
+      ultima ??
       (await Promise.race([
         Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,

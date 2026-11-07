@@ -1,4 +1,9 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react-native';
 import * as Location from 'expo-location';
 import { AccessibilityInfo, Linking } from 'react-native';
 import type { ViajeEncontrado } from '@/api/cliente';
@@ -49,6 +54,7 @@ jest.mock('expo-location', () => ({
   requestForegroundPermissionsAsync: jest.fn(),
   getLastKnownPositionAsync: jest.fn(),
   getCurrentPositionAsync: jest.fn(),
+  hasServicesEnabledAsync: jest.fn(),
 }));
 
 const permiso = jest.mocked(Location.getForegroundPermissionsAsync);
@@ -91,9 +97,22 @@ beforeEach(() => {
   pedirPermiso.mockResolvedValue(dado(false));
   ultima.mockResolvedValue(null);
   actual.mockResolvedValue(posicion(-17.78, -63.18));
+  jest.mocked(Location.hasServicesEnabledAsync).mockResolvedValue(true);
 });
 
 describe('HU-18 · formulario de búsqueda', () => {
+  it('con la ubicación apagada, abrir la pantalla no pide posición: abriría la ventana de Google', async () => {
+    permiso.mockResolvedValue(dado(true));
+    jest.mocked(Location.hasServicesEnabledAsync).mockResolvedValue(false);
+    await abrir(<Inicio />);
+    await screen.findByText('Buscar lugar');
+    await waitFor(() =>
+      expect(Location.hasServicesEnabledAsync).toHaveBeenCalled(),
+    );
+    expect(actual).not.toHaveBeenCalled();
+    expect(screen.queryByDisplayValue('Tu ubicación')).toBeNull();
+  });
+
   it('con permiso ya dado, el origen sale del GPS y la búsqueda lleva sus coordenadas', async () => {
     permiso.mockResolvedValue(dado(true));
     ultima.mockResolvedValue(posicion(-17.7, -63.1));
