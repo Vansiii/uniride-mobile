@@ -177,6 +177,19 @@ describe('HU-18 · formulario de búsqueda', () => {
     );
     expect(await screen.findByDisplayValue('Punto en el mapa')).toBeTruthy();
   });
+  it('cerrar el mapa no cambia el origen', async () => {
+    await abrir(<Inicio />);
+    await fireEvent.press(
+      await screen.findByRole('button', { name: 'En el mapa' }),
+    );
+    await fireEvent.press(
+      await screen.findByRole('button', { name: 'Cerrar' }),
+    );
+    expect(
+      screen.queryByRole('button', { name: 'Usar este punto' }),
+    ).toBeNull();
+    expect(screen.queryByDisplayValue('Punto en el mapa')).toBeNull();
+  });
 });
 
 describe('HU-18 · ubicación', () => {

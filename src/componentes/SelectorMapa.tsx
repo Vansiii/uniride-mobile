@@ -96,7 +96,7 @@ export function SelectorMapa({
           <View style={estilos.cerrar}>
             <BotonIcono
               icono="close"
-              etiqueta={t('comun.acciones.cancelar')}
+              etiqueta={t('comun.acciones.cerrar')}
               color={colores.texto}
               alPresionar={alCancelar}
             />
