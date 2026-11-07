@@ -20,7 +20,11 @@ import { colores, espacio, radio, tipografia } from '@/tema/tokens';
 
 const ZOOM_MINIMO = 3;
 const ZOOM_MAXIMO = 19;
-const LADO_PIN = 34;
+// La cabeza mide lo mismo que antes; la punta larga le da el cuerpo.
+const CABEZA_PIN = 34;
+const ANCHO_PIN = CABEZA_PIN + 4;
+const ALTO_PIN = 58;
+const SOMBRA_PIN = 'rgba(26,31,39,0.2)';
 const URL_ATRIBUCION = {
   calles: 'https://www.openstreetmap.org/copyright',
   relieve: 'https://github.com/tilezen/joerd/blob/master/docs/attribution.md',
@@ -28,13 +32,73 @@ const URL_ATRIBUCION = {
 
 export type Punto = { lat: number; lng: number };
 
-/** Gota con borde blanco y sombra, en el color de marca. Su caja termina justo en la punta. */
+/** Una capa del pin: cabeza redonda y, debajo, una punta en triángulo que termina en `punta`. */
+function CapaPin({
+  diametro,
+  arriba,
+  mitadPunta,
+  inicioPunta,
+  punta,
+  color,
+}: {
+  diametro: number;
+  arriba: number;
+  mitadPunta: number;
+  inicioPunta: number;
+  punta: number;
+  color: string;
+}) {
+  return (
+    <>
+      <View
+        style={{
+          position: 'absolute',
+          top: inicioPunta,
+          left: ANCHO_PIN / 2 - mitadPunta,
+          borderLeftWidth: mitadPunta,
+          borderRightWidth: mitadPunta,
+          borderTopWidth: punta - inicioPunta,
+          borderLeftColor: 'transparent',
+          borderRightColor: 'transparent',
+          borderTopColor: color,
+        }}
+      />
+      <View
+        style={{
+          position: 'absolute',
+          top: arriba,
+          left: (ANCHO_PIN - diametro) / 2,
+          width: diametro,
+          height: diametro,
+          borderRadius: diametro / 2,
+          backgroundColor: color,
+        }}
+      />
+    </>
+  );
+}
+
+/** Pin en el color de marca con un contorno de sombra. Su caja termina justo en la punta. */
 function PinMapa() {
   return (
     <View style={estilos.pin}>
-      <View style={estilos.gota}>
-        <View style={estilos.centroPin} />
-      </View>
+      <CapaPin
+        diametro={CABEZA_PIN + 4}
+        arriba={0}
+        mitadPunta={13}
+        inicioPunta={20}
+        punta={ALTO_PIN}
+        color={SOMBRA_PIN}
+      />
+      <CapaPin
+        diametro={CABEZA_PIN}
+        arriba={2}
+        mitadPunta={11}
+        inicioPunta={22}
+        punta={ALTO_PIN - 1}
+        color={colores.primario}
+      />
+      <View style={estilos.centroPin} />
     </View>
   );
 }
@@ -208,30 +272,15 @@ export function MapaCompleto({
 const estilos = StyleSheet.create({
   raiz: { flex: 1, backgroundColor: colores.fondo },
   mapa: { flex: 1, overflow: 'hidden', backgroundColor: colores.fondoSutil },
-  // Un cuadrado con una esquina recta, girado 45°: la esquina es la punta y queda abajo, en el centro de la caja.
-  pin: {
-    width: LADO_PIN * Math.SQRT2,
-    height: LADO_PIN * Math.SQRT2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  gota: {
-    width: LADO_PIN,
-    height: LADO_PIN,
-    borderRadius: LADO_PIN / 2,
-    borderBottomRightRadius: 0,
-    borderWidth: 3,
-    borderColor: colores.superficie,
-    backgroundColor: colores.primario,
-    alignItems: 'center',
-    justifyContent: 'center',
-    transform: [{ rotate: '45deg' }],
-    elevation: 4,
-  },
+  pin: { width: ANCHO_PIN, height: ALTO_PIN },
+  // El punto blanco en el centro de la cabeza azul.
   centroPin: {
-    width: LADO_PIN / 3,
-    height: LADO_PIN / 3,
-    borderRadius: LADO_PIN / 6,
+    position: 'absolute',
+    top: ANCHO_PIN / 2 - 6,
+    left: ANCHO_PIN / 2 - 6,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     backgroundColor: colores.superficie,
   },
   cerrar: {
