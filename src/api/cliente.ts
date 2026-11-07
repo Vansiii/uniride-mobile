@@ -454,3 +454,48 @@ export async function consultarMiBilletera(): Promise<Billetera | null> {
 /** Reintento de la creación automática; idempotente: si ya existía devuelve la misma billetera. */
 export const crearBilletera = () =>
   solicitarFirmado<Billetera>('/billetera', 'POST');
+
+/** Desglose de la billetera (HU-14): montos como texto de la API, nunca `Number`. Lectura con token, sin firma ni huella. */
+export interface Saldo {
+  saldoTotal: string;
+  saldoDisponible: string;
+  saldoBloqueadoEscrow: string;
+  moneda: 'URC';
+  /** `false`: el nodo no respondió y el saldo es el contable (último sincronizado). */
+  enLinea: boolean;
+}
+
+export const consultarSaldo = () => solicitar<Saldo>('/billetera/saldo', 'GET');
+
+export type TipoMovimiento =
+  'recarga' | 'bloqueo_reserva' | 'liberacion_viaje' | 'reembolso_reserva';
+
+export interface Movimiento {
+  id: string;
+  tipo: TipoMovimiento;
+  monto: string;
+  estado: 'pendiente' | 'confirmado' | 'fallido';
+  /** `null` mientras está pendiente. */
+  hashTx: string | null;
+  /** `null` si está pendiente o fuera de Polygon Amoy (nodo local): no hay enlace que mostrar. */
+  exploradorUrl: string | null;
+  creadoEn: string;
+}
+
+export interface PaginaMovimientos {
+  items: Movimiento[];
+  total: number;
+  pagina: number;
+  paginas: number;
+}
+
+/** Del más reciente al más antiguo; sin firma: refrescar o paginar nunca pide la huella. */
+export const consultarMovimientos = (
+  pagina: number,
+  tipos: TipoMovimiento[] = [],
+  limite = 20,
+) =>
+  solicitar<PaginaMovimientos>(
+    `/billetera/movimientos?pagina=${pagina}&limite=${limite}${tipos.length ? `&tipo=${tipos.join(',')}` : ''}`,
+    'GET',
+  );

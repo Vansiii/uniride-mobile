@@ -66,12 +66,22 @@ export function Aviso({
 }
 
 /** Estados con tono, ícono y texto (8.3, 4.1.2). Un estado nuevo se agrega solo aquí. */
-const estados: Record<string, [Tono, NombreIcono]> = {
+const estados: Record<string, [Tono | 'neutro', NombreIcono]> = {
   'membresia.pendiente': ['aviso', 'hourglass_top'],
   'membresia.aprobada': ['exito', 'check_circle'],
   'membresia.rechazada': ['peligro', 'cancel'],
   // La organización con la que se ven los viajes (HU-07).
   'membresia.activa': ['info', 'radio_button_checked'],
+  // Movimiento confirmado: sin etiqueta, es el caso normal (4.1.2).
+  'movimiento.pendiente': ['neutro', 'hourglass_top'],
+  'movimiento.fallido': ['peligro', 'error'],
+};
+
+/** Tono neutro de la tabla 4.1.2: fondo sutil, texto secundario y borde. */
+const neutro = {
+  fondo: colores.fondoSutil,
+  texto: colores.textoSecundario,
+  icono: colores.textoSecundario,
 };
 
 export function EtiquetaEstado({
@@ -79,15 +89,21 @@ export function EtiquetaEstado({
   estado,
   texto,
 }: {
-  dominio: 'membresia';
+  dominio: 'membresia' | 'movimiento';
   estado: string;
   /** Texto visible ya traducido. */
   texto: string;
 }) {
   const [tono, simbolo] = estados[`${dominio}.${estado}`] ?? ['info', 'info'];
-  const c = tonos[tono];
+  const c = tono === 'neutro' ? neutro : tonos[tono];
   return (
-    <View style={[estilos.etiqueta, { backgroundColor: c.fondo }]}>
+    <View
+      style={[
+        estilos.etiqueta,
+        { backgroundColor: c.fondo },
+        tono === 'neutro' && estilos.bordeNeutro,
+      ]}
+    >
       <Icono nombre={simbolo} color={c.texto} tamano={16} />
       <Text style={[estilos.textoEtiqueta, { color: c.texto }]}>{texto}</Text>
     </View>
@@ -115,5 +131,6 @@ const estilos = StyleSheet.create({
     paddingHorizontal: espacio(2),
     borderRadius: radio.completo,
   },
+  bordeNeutro: { borderWidth: 1, borderColor: colores.borde },
   textoEtiqueta: { ...tipografia.pequeno },
 });
