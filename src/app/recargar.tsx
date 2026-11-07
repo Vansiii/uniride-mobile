@@ -40,6 +40,7 @@ const MAXIMO = 500;
 const VIGENCIA_S = 15 * 60;
 // ponytail: intervalo fijo mientras la pantalla está abierta; con espera creciente si la carga del backend lo pide.
 const CONSULTA_MS = 3000;
+const AVISO_DEMORA_MS = 30_000;
 
 type Paso =
   | { tipo: 'monto' }
@@ -129,6 +130,7 @@ function Contenido() {
 
   // `delConfirmar`: solo la respuesta de confirmar puede decir que el pago se repitió. `pendiente` no cambia de paso.
   const aplicar = useCallback((orden: OrdenRecarga, delConfirmar = false) => {
+    if (orden.estado === 'pendiente') return;
     setFalla(null);
     if (orden.estado === 'completada')
       setPaso({ tipo: 'acreditada', orden, repetida: delConfirmar });
@@ -159,8 +161,17 @@ function Contenido() {
       try {
         const orden = await consultarRecarga(ordenAConsultar);
         if (vigente) aplicar(orden);
-      } catch {
-        // Sin conexión o nodo caído: la orden no se pierde, se vuelve a preguntar.
+      } catch (error) {
+        // Sin conexión o nodo caído: la orden no se pierde, se vuelve a preguntar. Un rechazo no se arregla solo.
+        if (
+          error instanceof ErrorApi &&
+          error.estado >= 400 &&
+          error.estado < 500 &&
+          error.estado !== 429
+        ) {
+          if (vigente) setFalla(fallaDe(error));
+          return;
+        }
       }
       if (vigente) espera = setTimeout(consultar, CONSULTA_MS);
     };
@@ -170,6 +181,18 @@ function Contenido() {
       clearTimeout(espera);
     };
   }, [ordenAConsultar, aplicar]);
+
+  // "Seguimos intentando" es para cuando el nodo falla (RN-6): el camino normal no llega a verlo.
+  const [demorada, setDemorada] = useState(false);
+  const procesando = paso.tipo === 'procesando';
+  useEffect(() => {
+    if (!procesando) return;
+    const reloj = setTimeout(() => setDemorada(true), AVISO_DEMORA_MS);
+    return () => {
+      clearTimeout(reloj);
+      setDemorada(false);
+    };
+  }, [procesando]);
 
   if (cargando) return null;
   if (!usuario) return <Redirect href="/iniciar-sesion" />;
@@ -468,9 +491,12 @@ function Contenido() {
                     }}
                   />
                 </View>
-                <Aviso tono="info">
-                  {t('billetera.recarga.procesando_onchain')}
-                </Aviso>
+                {demorada && (
+                  <Aviso tono="info">
+                    {t('billetera.recarga.procesando_onchain')}
+                  </Aviso>
+                )}
+                {pie}
                 <Text style={estilos.pequeno}>
                   {t('billetera.recarga.seguir_usando')}
                 </Text>

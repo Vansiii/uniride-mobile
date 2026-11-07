@@ -285,11 +285,8 @@ describe('Recargar · confirmación (CA-1, CA-3, CA-4, RN-6)', () => {
         'Pagaste 50,00 Bs. Estamos registrando tus 50,00 URC en la red de prueba; puede tardar unos minutos.',
       ),
     ).toBeTruthy();
-    expect(
-      screen.getByText(
-        'Tu pago quedó registrado. Seguimos intentando sumar los URC; aparecerá como pendiente hasta lograrlo.',
-      ),
-    ).toBeTruthy();
+    // Camino normal: nada falló, así que no dice que se está reintentando (RN-6).
+    expect(screen.queryByText(/Seguimos intentando/)).toBeNull();
 
     const llamada = falso.mock.calls.find(([url]) =>
       url.endsWith('/confirmar'),
@@ -409,6 +406,53 @@ describe('Recargar · confirmación (CA-1, CA-3, CA-4, RN-6)', () => {
     expect(await screen.findByText('Recarga en camino')).toBeTruthy();
     expect(firma).toHaveBeenCalledTimes(2);
     expect(veces(llamadas, CREAR)).toBe(1);
+  });
+
+  it('RN-6: si tarda, avisa que se sigue intentando', async () => {
+    await abrirQr({
+      [CONFIRMAR]: o.procesando(),
+      [CONSULTAR]: o.procesando(200),
+    });
+    await fireEvent.press(boton('Simular pago'));
+    await screen.findByText('Recarga en camino');
+    await avanzar(29_000);
+    expect(screen.queryByText(/Seguimos intentando/)).toBeNull();
+    await avanzar(1_000);
+    expect(
+      screen.getByText(
+        'Tu pago quedó registrado. Seguimos intentando sumar los URC; aparecerá como pendiente hasta lograrlo.',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('un rechazo del servidor al consultar se avisa y deja de preguntar', async () => {
+    const { llamadas } = await abrirQr({
+      [CONFIRMAR]: o.procesando(),
+      [CONSULTAR]: { estado: 403, cuerpo: { codigo: 'CUENTA_SUSPENDIDA' } },
+    });
+    await fireEvent.press(boton('Simular pago'));
+    await screen.findByText('Recarga en camino');
+    await avanzar(3_000);
+    expect(veces(llamadas, CONSULTAR)).toBe(1);
+    expect(
+      screen.getByText(
+        'Tu cuenta está suspendida, por eso no puedes recargar. Comunícate con tu organización.',
+      ),
+    ).toBeTruthy();
+    await avanzar(30_000);
+    expect(veces(llamadas, CONSULTAR)).toBe(1);
+  });
+
+  it('consultar una orden aún pendiente no borra el error a la vista', async () => {
+    firma.mockRejectedValueOnce(new ErrorKeystore('BIOMETRIA_CANCELADA'));
+    await abrirQr({ [CONSULTAR]: { ...o.creada(), estado: 200 } });
+    await avanzar(15 * 60_000);
+    await fireEvent.press(boton('Simular pago'));
+    await screen.findByText(/Cancelaste la confirmación con tu huella/);
+    await avanzar(3_000);
+    expect(
+      screen.getByText(/Cancelaste la confirmación con tu huella/),
+    ).toBeTruthy();
   });
 
   it('mientras se acredita, una falla de red no la da por perdida', async () => {

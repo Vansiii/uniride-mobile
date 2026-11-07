@@ -576,6 +576,47 @@ describe('Billetera · HU-14: saldo desglosado y movimientos', () => {
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
+  it('HU-13: con una recarga pendiente, el saldo se actualiza solo y deja de consultar al acreditarse', async () => {
+    jest.useFakeTimers({
+      doNotFake: ['nextTick', 'setImmediate', 'queueMicrotask'],
+    });
+    try {
+      await abrir({
+        'GET /billetera/mia': b.conSaldo,
+        'GET /billetera/movimientos': h.pagina1,
+      });
+      await screen.findByText(/pendiente de confirmación/);
+      const { llamadas } = simularFetch({
+        'GET /billetera/saldo': {
+          estado: 200,
+          cuerpo: {
+            saldoTotal: '412.00',
+            saldoDisponible: '397.00',
+            saldoBloqueadoEscrow: '15.00',
+            moneda: 'URC',
+            enLinea: true,
+          },
+        },
+        'GET /billetera/movimientos': h.vacio,
+      });
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(5_000);
+      });
+      expect(screen.getByLabelText('397,00 URC')).toBeTruthy();
+      expect(screen.queryByText(/pendiente de confirmación/)).toBeNull();
+      expect(firma).toHaveBeenCalledTimes(1);
+      expect(lecturas(llamadas)).toBe(0);
+
+      const consultas = llamadas.length;
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(30_000);
+      });
+      expect(llamadas).toHaveLength(consultas);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('HU-13: al volver de recargar se ve el saldo nuevo y sin el aviso, sin otra huella', async () => {
     await abrir({
       'GET /billetera/mia': b.conSaldo,

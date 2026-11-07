@@ -89,6 +89,8 @@ function vistaDe(error: unknown): Vista {
   }
 }
 
+const CONSULTA_MS = 5_000;
+
 /** `0x7a3F…9C21`: solo para mirar; lo que se copia es la dirección completa. */
 const acortar = (direccion: string) =>
   `${direccion.slice(0, 6)}…${direccion.slice(-4)}`;
@@ -109,7 +111,7 @@ function Contenido() {
   // Recargas por acreditarse (HU-13 RN-6). Sin firma; si falla la lectura, se conserva lo último visto.
   const [pendientes, setPendientes] = useState<Movimiento[]>([]);
   const leerPendientes = useCallback(() => {
-    consultarMovimientos(1, ['recarga'])
+    return consultarMovimientos(1, ['recarga'])
       .then((p) =>
         setPendientes(p.items.filter((m) => m.estado === 'pendiente')),
       )
@@ -165,8 +167,9 @@ function Contenido() {
     if (enCurso.current) return;
     enCurso.current = true;
     setErrorRefresco(null);
-    leerPendientes();
     try {
+      // Primero los pendientes: si ya no hay, el saldo que sigue incluye lo acreditado.
+      await leerPendientes();
       const saldo = await consultarSaldo();
       setVista((v) => (v.tipo === 'lista' ? { ...v, saldo } : v));
     } catch (error) {
@@ -180,8 +183,18 @@ function Contenido() {
 
   const yaLista = vista.tipo === 'lista';
   useEffect(() => {
-    if (yaLista) leerPendientes();
+    if (yaLista) void leerPendientes();
   }, [yaLista, leerPendientes]);
+
+  // CA-1: con una recarga en camino, el saldo se actualiza solo mientras se mira esta pantalla; nunca pide huella.
+  const hayPendientes = pendientes.length > 0;
+  useFocusEffect(
+    useCallback(() => {
+      if (!hayPendientes) return;
+      const reloj = setInterval(() => void refrescarSaldo(), CONSULTA_MS);
+      return () => clearInterval(reloj);
+    }, [hayPendientes, refrescarSaldo]),
+  );
 
   // Quien verifica su identidad en /identidad y vuelve no debe seguir viendo "Verificar identidad": esa vista no tiene
   // botón de actualizar, así que al recuperar el foco se lee otra vez. `leer` consulta primero /identidad/estado sin

@@ -20,6 +20,7 @@ import {
   simularFetch,
 } from '@/pruebas/respuestasApi';
 
+const mockFoco: { alEnfocar?: () => void } = {};
 jest.mock('expo-router', () => {
   const { Text: Texto } = jest.requireActual('react-native');
   return {
@@ -27,6 +28,12 @@ jest.mock('expo-router', () => {
       <Texto>{`redirige:${href}`}</Texto>
     ),
     router: { push: jest.fn(), back: jest.fn() },
+    // Como el real: corre el callback al montar y lo deja a mano para simular "volver a la pantalla".
+    useFocusEffect: (alEnfocar: () => void) => {
+      const { useEffect } = jest.requireActual('react');
+      mockFoco.alEnfocar = alEnfocar;
+      useEffect(() => alEnfocar(), [alEnfocar]);
+    },
   };
 });
 // La lista real solo dibuja una ventana de filas; esta las dibuja todas para poder contarlas. Conserva los avisos
@@ -432,6 +439,19 @@ describe('Movimientos · historial vacío', () => {
     expect(screen.getByText(/Cuando recargues o pagues un viaje/)).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Recargar' }));
     expect(router.push).toHaveBeenCalledWith('/recargar');
+  });
+
+  it('al volver de recargar muestra el movimiento nuevo', async () => {
+    await abrir({ [RUTA]: h.vacio });
+    await screen.findByText('Todavía no tienes movimientos');
+    simularFetch({ ...CON_SESION, [RUTA]: h.pagina1 });
+    await act(async () => {
+      mockFoco.alEnfocar?.();
+    });
+    await waitFor(() =>
+      expect(screen.queryByText('Todavía no tienes movimientos')).toBeNull(),
+    );
+    expect(filas()).toBeGreaterThan(0);
   });
 
   it('con un filtro sin resultados lo dice distinto', async () => {
