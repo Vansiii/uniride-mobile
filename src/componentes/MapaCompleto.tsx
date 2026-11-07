@@ -7,6 +7,7 @@ import {
   Marker,
   NativeUserLocation,
 } from '@maplibre/maplibre-react-native';
+import { Image } from 'expo-image';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { Modal, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,11 +21,9 @@ import { colores, espacio, radio, tipografia } from '@/tema/tokens';
 
 const ZOOM_MINIMO = 3;
 const ZOOM_MAXIMO = 19;
-// La cabeza mide lo mismo que antes; la punta larga le da el cuerpo.
-const CABEZA_PIN = 34;
-const ANCHO_PIN = CABEZA_PIN + 4;
-const ALTO_PIN = 58;
-const SOMBRA_PIN = 'rgba(26,31,39,0.2)';
+// El dibujo mide 40 × 56 y su cabeza 36 de ancho: a 38 de ancho la cabeza queda en 34.
+const ANCHO_PIN = 38;
+const ALTO_PIN = (ANCHO_PIN * 56) / 40;
 const URL_ATRIBUCION = {
   calles: 'https://www.openstreetmap.org/copyright',
   relieve: 'https://github.com/tilezen/joerd/blob/master/docs/attribution.md',
@@ -32,74 +31,13 @@ const URL_ATRIBUCION = {
 
 export type Punto = { lat: number; lng: number };
 
-/** Una capa del pin: cabeza redonda y, debajo, una punta en triángulo que termina en `punta`. */
-function CapaPin({
-  diametro,
-  arriba,
-  mitadPunta,
-  inicioPunta,
-  punta,
-  color,
-}: {
-  diametro: number;
-  arriba: number;
-  mitadPunta: number;
-  inicioPunta: number;
-  punta: number;
-  color: string;
-}) {
-  return (
-    <>
-      <View
-        style={{
-          position: 'absolute',
-          top: inicioPunta,
-          left: ANCHO_PIN / 2 - mitadPunta,
-          borderLeftWidth: mitadPunta,
-          borderRightWidth: mitadPunta,
-          borderTopWidth: punta - inicioPunta,
-          borderLeftColor: 'transparent',
-          borderRightColor: 'transparent',
-          borderTopColor: color,
-        }}
-      />
-      <View
-        style={{
-          position: 'absolute',
-          top: arriba,
-          left: (ANCHO_PIN - diametro) / 2,
-          width: diametro,
-          height: diametro,
-          borderRadius: diametro / 2,
-          backgroundColor: color,
-        }}
-      />
-    </>
-  );
-}
-
-/** Pin en el color de marca con un contorno de sombra. Su caja termina justo en la punta. */
+/** Gota en el color de marca. La caja termina en la punta, que es la que marca el punto. */
 function PinMapa() {
   return (
-    <View style={estilos.pin}>
-      <CapaPin
-        diametro={CABEZA_PIN + 4}
-        arriba={0}
-        mitadPunta={13}
-        inicioPunta={20}
-        punta={ALTO_PIN}
-        color={SOMBRA_PIN}
-      />
-      <CapaPin
-        diametro={CABEZA_PIN}
-        arriba={2}
-        mitadPunta={11}
-        inicioPunta={22}
-        punta={ALTO_PIN - 1}
-        color={colores.primario}
-      />
-      <View style={estilos.centroPin} />
-    </View>
+    <Image
+      source={require('../../assets/images/pin-mapa.svg')}
+      style={{ width: ANCHO_PIN, height: ALTO_PIN }}
+    />
   );
 }
 
@@ -272,17 +210,6 @@ export function MapaCompleto({
 const estilos = StyleSheet.create({
   raiz: { flex: 1, backgroundColor: colores.fondo },
   mapa: { flex: 1, overflow: 'hidden', backgroundColor: colores.fondoSutil },
-  pin: { width: ANCHO_PIN, height: ALTO_PIN },
-  // El punto blanco en el centro de la cabeza azul.
-  centroPin: {
-    position: 'absolute',
-    top: ANCHO_PIN / 2 - 6,
-    left: ANCHO_PIN / 2 - 6,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: colores.superficie,
-  },
   cerrar: {
     position: 'absolute',
     top: espacio(3),
