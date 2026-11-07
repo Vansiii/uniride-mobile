@@ -430,3 +430,98 @@ export function verificarIdentidad(datos: {
   );
   return solicitar('/identidad/verificar', 'POST', formulario);
 }
+
+/** Billetera de la persona (HU-12): el saldo es texto tal cual lo envía la API; nunca se convierte a número. */
+export interface Billetera {
+  id: string;
+  direccion: string;
+  saldoUrc: string;
+  /** `null` fuera de Polygon Amoy (nodo local): no hay enlace que mostrar. */
+  exploradorUrl: string | null;
+}
+
+/** Lectura firmada: pide la huella. `null` si todavía no tiene billetera (404). */
+export async function consultarMiBilletera(): Promise<Billetera | null> {
+  try {
+    return await solicitarFirmado<Billetera>('/billetera/mia', 'GET');
+  } catch (error) {
+    if (error instanceof ErrorApi && error.codigo === 'BILLETERA_NO_ENCONTRADA')
+      return null;
+    throw error;
+  }
+}
+
+/** Reintento de la creación automática; idempotente: si ya existía devuelve la misma billetera. */
+export const crearBilletera = () =>
+  solicitarFirmado<Billetera>('/billetera', 'POST');
+
+/** Desglose de la billetera (HU-14): montos como texto de la API, nunca `Number`. Lectura con token, sin firma ni huella. */
+export interface Saldo {
+  saldoTotal: string;
+  saldoDisponible: string;
+  saldoBloqueadoEscrow: string;
+  moneda: 'URC';
+  /** `false`: el nodo no respondió y el saldo es el contable (último sincronizado). */
+  enLinea: boolean;
+}
+
+export const consultarSaldo = () => solicitar<Saldo>('/billetera/saldo', 'GET');
+
+export type TipoMovimiento =
+  'recarga' | 'bloqueo_reserva' | 'liberacion_viaje' | 'reembolso_reserva';
+
+export interface Movimiento {
+  id: string;
+  tipo: TipoMovimiento;
+  monto: string;
+  estado: 'pendiente' | 'confirmado' | 'fallido';
+  /** `null` mientras está pendiente. */
+  hashTx: string | null;
+  /** `null` si está pendiente o fuera de Polygon Amoy (nodo local): no hay enlace que mostrar. */
+  exploradorUrl: string | null;
+  creadoEn: string;
+}
+
+export interface PaginaMovimientos {
+  items: Movimiento[];
+  total: number;
+  pagina: number;
+  paginas: number;
+}
+
+/** Del más reciente al más antiguo; sin firma: refrescar o paginar nunca pide la huella. */
+export const consultarMovimientos = (
+  pagina: number,
+  tipos: TipoMovimiento[] = [],
+  limite = 20,
+) =>
+  solicitar<PaginaMovimientos>(
+    `/billetera/movimientos?pagina=${pagina}&limite=${limite}${tipos.length ? `&tipo=${tipos.join(',')}` : ''}`,
+    'GET',
+  );
+
+/** Orden de recarga (HU-13): el monto es texto de la API; `procesando` ya no vence y se acredita sola. */
+export interface OrdenRecarga {
+  ordenId: string;
+  monto: string;
+  estado: 'pendiente' | 'procesando' | 'completada' | 'expirada';
+  expiraEn: string;
+  hashTx: string | null;
+}
+
+export interface OrdenRecargaCreada extends OrdenRecarga {
+  qrTexto: string;
+  /** PNG en Base64, sin prefijo `data:`. */
+  qrImagenBase64: string;
+}
+
+export const crearRecarga = (monto: number) =>
+  solicitar<OrdenRecargaCreada>('/billetera/recargas', 'POST', { monto });
+
+/** Pide la huella (CA-4). Idempotente: repetirla responde el estado actual y nunca acuña de nuevo (CA-3). */
+export const confirmarRecarga = (id: string) =>
+  solicitarFirmado<OrdenRecarga>(`/billetera/recargas/${id}/confirmar`, 'POST');
+
+/** Sin firma: consultar el estado nunca pide la huella. */
+export const consultarRecarga = (id: string) =>
+  solicitar<OrdenRecarga>(`/billetera/recargas/${id}`, 'GET');

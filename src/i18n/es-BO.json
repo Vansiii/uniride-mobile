@@ -96,7 +96,8 @@
     "cuenta": "Tu cuenta",
     "nombre": "Nombre",
     "correo": "Correo",
-    "organizacion": "Organización activa"
+    "organizacion": "Organización activa",
+    "pestana": "Inicio"
   },
   "membresias": {
     "lista": {
@@ -200,6 +201,9 @@
       "keystore_no_disponible": "Esta versión de la app todavía no puede vincular el teléfono. Actualiza la app e inténtalo de nuevo."
     },
     "autenticacion": {
+      "titulo": "Confirma que eres tú",
+      "subtitulo": "Usa tu huella o rostro para continuar.",
+      "cancelar": "Cancelar",
       "cancelada": "Cancelaste la verificación biométrica, así que no se hizo la acción."
     }
   },
@@ -242,6 +246,108 @@
       "servicio_no_disponible": "No pudimos completar la verificación por un problema del servicio. Inténtalo de nuevo más tarde.",
       "liveness_no_disponible": "Esta versión de la app todavía no puede hacer la prueba de vida. Actualiza la app e inténtalo de nuevo.",
       "ya_verificada": "Tu identidad ya estaba verificada."
+    }
+  },
+  "billetera": {
+    "pantalla": {
+      "titulo": "Billetera",
+      "saldo": "Saldo disponible",
+      "unidad": "URC",
+      "prueba": "Saldo de prueba · sin valor real · 1 URC = 1 Bs",
+      "actualizar": "Actualizar saldo",
+      "direccion": "Dirección de tu billetera",
+      "copiar": "Copiar dirección completa",
+      "copiada": "Dirección copiada.",
+      "copia_fallida": "No pudimos copiar la dirección. Inténtalo de nuevo.",
+      "explorador": "Ver en el explorador",
+      "explorador_detalle": "Polygonscan · red de prueba Amoy",
+      "sin_billetera_titulo": "Tu billetera se crea al verificar tu identidad",
+      "sin_billetera_texto": "Con ella pagas y cobras viajes. No tienes que configurar llaves ni guardar contraseñas extra.",
+      "verificar": "Verificar identidad",
+      "vincular_texto": "Para ver tu billetera, primero vincula este teléfono. Al abrirla te pediremos tu huella o rostro, así nadie más puede verla.",
+      "vincular": "Vincular mi teléfono",
+      "cuenta_suspendida": "Tu cuenta está suspendida, por eso no podemos mostrar tu billetera. Comunícate con tu organización.",
+      "servicio_no_disponible": "No pudimos consultar tu saldo en este momento. No se perdió nada; inténtalo de nuevo.",
+      "biometria_cancelada": "Cancelaste la confirmación con tu huella, así que no mostramos tu billetera. Puedes volver a intentarlo cuando quieras.",
+      "keystore_no_disponible": "Esta versión de la app no puede usar la llave de seguridad de tu teléfono. Actualiza la app e inténtalo de nuevo.",
+      "peticion_expirada": "La comprobación de tu teléfono venció. Inténtalo de nuevo.",
+      "movimientos": "Movimientos",
+      "direccion_no_disponible": "No pudimos cargar la dirección de tu billetera por ahora.",
+      "direccion_reintentar": "Cargar la dirección (pide tu huella)"
+    },
+    "saldo": {
+      "total": "Total: {monto} URC",
+      "en_garantia": "En garantía: {monto} URC",
+      "sincronizacion_pendiente": "Mostramos el último saldo sincronizado ({monto} URC). Lo actualizaremos al reconectar."
+    },
+    "creacion": {
+      "identidad_requerida": "Verifica tu identidad para ver tus movimientos. Tu billetera se crea al verificarla."
+    },
+    "historial": {
+      "titulo": "Movimientos",
+      "hoy": "Hoy",
+      "vacio": "Todavía no tienes movimientos",
+      "vacio_detalle": "Cuando recargues o pagues un viaje, lo verás aquí.",
+      "vacio_filtro": "No hay movimientos de este tipo.",
+      "confirmandose": "confirmándose",
+      "filtros": "Filtrar por tipo",
+      "filtro": {
+        "todos": "Todos",
+        "recargas": "Recargas",
+        "pagos": "Pagos",
+        "reembolsos": "Reembolsos"
+      },
+      "tipo": {
+        "recarga": "Recarga",
+        "bloqueo_reserva": "Reserva en garantía",
+        "liberacion_viaje": "Pago de viaje recibido",
+        "reembolso_reserva": "Reembolso"
+      },
+      "estado": {
+        "pendiente": "Pendiente",
+        "fallido": "No se completó"
+      },
+      "explorador": "Ver en el explorador",
+      "cargando_mas": "Cargando más movimientos…",
+      "error_pagina": "No pudimos cargar más movimientos.",
+      "error": "No pudimos cargar tus movimientos. No se perdió nada; inténtalo de nuevo."
+    },
+    "recarga": {
+      "boton": "Recargar",
+      "titulo": "Recargar saldo",
+      "cuanto": "¿Cuánto quieres recargar?",
+      "otro_monto": "Otro monto",
+      "otro_monto_ayuda": "Entre 10 y 500 Bs",
+      "pagas": "Pagas",
+      "recibes": "Recibes en tu billetera",
+      "simulado": "Pago simulado · red de prueba · sin valor real",
+      "generar": "Generar QR de pago",
+      "titulo_qr": "Pagar con QR",
+      "monto_a_pagar": "Monto a pagar",
+      "qr": "Código QR de pago simulado",
+      "etiqueta_simulado": "Pago simulado · red de prueba",
+      "vence_en": "Vence en {tiempo}",
+      "instruccion": "No se cobra dinero real. Toca \"Simular pago\" y confirma con tu huella.",
+      "simular": "Simular pago",
+      "en_camino": "Recarga en camino",
+      "en_camino_texto": "Pagaste {monto} Bs. Estamos registrando tus {monto} URC en la red de prueba; puede tardar unos minutos.",
+      "seguir_usando": "Puedes seguir usando la app mientras tanto.",
+      "acreditada": "Recarga acreditada",
+      "acreditada_texto": "Sumamos {monto} URC a tu billetera.",
+      "ver_billetera": "Ver mi billetera",
+      "qr_nuevo": "Generar un QR nuevo",
+      "vencida_titulo": "Este QR venció",
+      "pendiente": "Tienes una recarga de {monto} URC pendiente de confirmación.",
+      "monto_fuera_de_rango": "Puedes recargar entre 10 y 500 Bs por vez.",
+      "monto_invalido": "Escribe un monto con hasta 2 decimales.",
+      "ya_procesada": "Esta recarga ya se acreditó. No se cobró ni se sumó dos veces.",
+      "orden_expirada": "Pasaron 15 minutos sin confirmar el pago. No se cobró nada.",
+      "procesando_onchain": "Tu pago quedó registrado. Seguimos intentando sumar los URC; aparecerá como pendiente hasta lograrlo.",
+      "identidad_requerida": "Verifica tu identidad para recargar. Tu billetera se crea al verificarla.",
+      "vincular_requerido": "Para confirmar la recarga, primero vincula este teléfono.",
+      "biometria_cancelada": "Cancelaste la confirmación con tu huella, así que el pago no se confirmó. Puedes volver a intentarlo.",
+      "cuenta_suspendida": "Tu cuenta está suspendida, por eso no puedes recargar. Comunícate con tu organización.",
+      "error": "No pudimos completar este paso. Inténtalo de nuevo: una misma recarga nunca se cobra dos veces."
     }
   }
 }
