@@ -63,6 +63,7 @@ const MAXIMO_ERRORES_SIN_AVISO = 2;
 const CAMPO_DEL_ERROR: Record<string, CampoFormulario> = {
   HORARIO_INVALIDO: 'hora',
   PRECIO_FUERA_DE_RANGO: 'precio',
+  LUGARES_IGUALES: 'destino',
 };
 
 interface Falla {
@@ -120,9 +121,11 @@ const etiquetaFecha = (fecha: Date, indice: number) =>
       ? t('viajes.publicar.manana')
       : formatearDia(fecha.toISOString());
 
-/** "0730" → "07:30": el teclado numérico no trae los dos puntos. */
+/** "0730" o "730" → "07:30": el teclado numérico no trae los dos puntos. */
 function escribirHora(texto: string) {
-  const digitos = texto.replace(/\D/g, '').slice(0, 4);
+  const escrito = texto.replace(/\D/g, '').slice(0, 4);
+  // Ninguna hora empieza por 3-9: "730" no es "73:0".
+  const digitos = /^[3-9]\d\d$/.test(escrito) ? `0${escrito}` : escrito;
   return digitos.length > 2
     ? `${digitos.slice(0, 2)}:${digitos.slice(2)}`
     : digitos;
@@ -155,10 +158,12 @@ function errorHorario(salida: Date): string | undefined {
   const ahora = Date.now();
   if (salida.getTime() < ahora || salida.getTime() > ahora + DIA_MS)
     return t('viajes.publicar.horario_invalido');
+  // Un minuto de holgura: la hora sugerida debe seguir valiendo cuando termine de escribirla.
   return con('viajes.publicar.horario_pronto', {
     hora: formatearHoraLocal(
       new Date(
-        Math.ceil((ahora + ANTICIPACION_MINIMA_MS) / MINUTO_MS) * MINUTO_MS,
+        Math.ceil((ahora + ANTICIPACION_MINIMA_MS + MINUTO_MS) / MINUTO_MS) *
+          MINUTO_MS,
       ).toISOString(),
     ),
   });
@@ -248,6 +253,10 @@ function Contenido() {
   useFocusEffect(
     useCallback(() => {
       setFalla(null);
+      // La pestaña sigue montada de un día para otro: una fecha que ya pasó no está entre las opciones.
+      setSalida((s) =>
+        s.fecha < medianoche(new Date()) ? salidaPorOmision(Date.now()) : s,
+      );
       if (!cargando && aprobada) void leer();
     }, [cargando, aprobada, leer]),
   );
@@ -301,7 +310,7 @@ function Contenido() {
             </Text>
           </View>
         </ScrollView>
-        <ZonaAccion>
+        <ZonaAccion enPestanas>
           <Boton
             anchoCompleto
             etiqueta={t('viajes.publicar.listo')}
@@ -449,6 +458,8 @@ function Contenido() {
 
   const fechas = fechasPosibles(new Date());
   const capacidad = vehiculo.capacidad;
+  // Si cambió de vehículo, lo elegido nunca pasa de lo que cabe: no se gasta una huella en un rechazo seguro.
+  const asientos = Math.min(cupos, capacidad);
   const nombreVehiculo = `${vehiculo.marca} ${vehiculo.modelo}`;
 
   /** Lleva al campo con error, con foco (DESIGN_SYSTEM §9.2); sin campo, arriba, donde queda el aviso. */
@@ -483,7 +494,9 @@ function Contenido() {
     if (!(error instanceof ErrorApi))
       return peligro('comun.errores.desconocido');
     switch (error.codigo) {
+      // Lo que se mostraba ya no vale: se vuelve a leer para no pedir otra huella en vano.
       case 'CUPOS_EXCEDEN_CAPACIDAD':
+        void leer();
         return setFalla({
           texto:
             error.datos.maximo === 1
@@ -494,6 +507,7 @@ function Contenido() {
           tono: 'peligro',
         });
       case 'PRECIO_FUERA_DE_RANGO':
+        void leer();
         return setErrores({
           precio: con('viajes.publicar.precio_invalido', {
             minimo: urc(Number(error.datos.minimo)),
@@ -502,6 +516,8 @@ function Contenido() {
         });
       case 'HORARIO_INVALIDO':
         return setErrores({ hora: t('viajes.publicar.horario_invalido') });
+      case 'LUGARES_IGUALES':
+        return setErrores({ destino: t('viajes.publicar.lugares_iguales') });
       case 'VIAJE_SOLAPADO':
         return setFalla({
           titulo: t('viajes.publicar.viaje_solapado_titulo'),
@@ -545,7 +561,11 @@ function Contenido() {
     const lugarRequerido = t('viajes.publicar.lugar_requerido');
     const nuevos: Errores = {
       origen: origen ? undefined : lugarRequerido,
-      destino: destino ? undefined : lugarRequerido,
+      destino: !destino
+        ? lugarRequerido
+        : origen?.lat === destino.lat && origen.lng === destino.lng
+          ? t('viajes.publicar.lugares_iguales')
+          : undefined,
       hora: salida ? errorHorario(salida) : t('viajes.publicar.hora_invalida'),
       precio:
         monto === null
@@ -584,14 +604,14 @@ function Contenido() {
         destinoLat: destino.lat,
         destinoLng: destino.lng,
         fechaHoraSalida,
-        cuposTotales: cupos,
+        cuposTotales: asientos,
         precioPorAsiento: monto,
       });
       setPublicado({
         salida: fechaHoraSalida,
         origen: origen.nombre,
         destino: destino.nombre,
-        cupos,
+        cupos: asientos,
         precio: monto,
         organizacion,
       });
@@ -729,7 +749,7 @@ function Contenido() {
             {Array.from({ length: CAPACIDAD_MAXIMA }, (_, i) => i + 1).map(
               (n) => {
                 const disponible = n <= capacidad;
-                const elegido = n === cupos;
+                const elegido = n === asientos;
                 return (
                   <Pressable
                     key={n}

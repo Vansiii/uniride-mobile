@@ -1,5 +1,12 @@
-import { Ref, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Ref, useRef, useState } from 'react';
+import {
+  Keyboard,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { Boton } from '@/componentes/Boton';
 import { Campo } from '@/componentes/Campo';
 import { Icono } from '@/componentes/Icono';
@@ -29,21 +36,29 @@ export function SelectorLugar({
   const [resultados, setResultados] = useState<Lugar[] | null>(null);
   const [buscando, setBuscando] = useState(false);
   const [aviso, setAviso] = useState<string>();
+  const [foco, setFoco] = useState(false);
+  // Lo que ya se cambió de texto hace vieja la búsqueda en camino: su respuesta no se muestra.
+  const edicion = useRef(0);
 
   const buscar = async () => {
+    // El teclado también busca: repetir "buscar" no manda otra petición (política de Nominatim).
+    if (buscando) return;
     const consulta = texto.trim();
     setResultados(null);
     if (consulta.length < MINIMO_BUSQUEDA)
       return setAviso(t('viajes.publicar.busqueda_corta'));
     setAviso(undefined);
     setBuscando(true);
+    const inicio = edicion.current;
     try {
       const encontrados = await buscarLugares(consulta);
+      if (inicio !== edicion.current) return;
       setResultados(encontrados);
       if (!encontrados.length)
         setAviso(t('viajes.publicar.busqueda_sin_resultados'));
     } catch {
-      setAviso(t('viajes.publicar.busqueda_fallida'));
+      if (inicio === edicion.current)
+        setAviso(t('viajes.publicar.busqueda_fallida'));
     } finally {
       setBuscando(false);
     }
@@ -58,17 +73,21 @@ export function SelectorLugar({
         returnKeyType="search"
         // El intercambio de origen y destino llega por `lugar`: lo elegido manda sobre lo escrito.
         value={lugar ? lugar.nombre : texto}
-        // Android deja el cursor al final y un nombre largo se vería sin su comienzo.
-        selection={lugar ? { start: 0, end: 0 } : undefined}
+        // Android deja el cursor al final y un nombre largo se vería sin su comienzo. Con foco, el cursor es de quien edita.
+        selection={lugar && !foco ? { start: 0, end: 0 } : undefined}
+        onFocus={() => setFoco(true)}
+        onBlur={() => setFoco(false)}
         onChangeText={(v) => {
+          edicion.current += 1;
           setTexto(v);
           setResultados(null);
           setAviso(undefined);
           if (lugar) alElegir(null);
         }}
         onSubmitEditing={() => void buscar()}
-        // Lo que respondió la última búsqueda dice más que el "elige una opción" de haber tocado Publicar.
-        error={aviso ?? error}
+        // Lo que respondió la última búsqueda dice más que el "elige una opción" de haber tocado Publicar;
+        // con un lugar elegido, esa búsqueda ya no cuenta.
+        error={lugar ? error : (aviso ?? error)}
       />
       {!lugar && (
         <Boton
@@ -83,33 +102,36 @@ export function SelectorLugar({
           alPresionar={() => void buscar()}
         />
       )}
-      {resultados?.map((r) => (
-        <Pressable
-          key={`${r.lat},${r.lng},${r.detalle}`}
-          accessibilityRole="button"
-          accessibilityLabel={r.detalle}
-          onPress={() => {
-            alElegir(r);
-            setResultados(null);
-          }}
-          style={({ pressed }) => [
-            estilos.fila,
-            pressed && { backgroundColor: colores.primarioSuave },
-          ]}
-        >
-          <Icono
-            nombre="location_on"
-            color={colores.textoSecundario}
-            tamano={20}
-          />
-          <View style={estilos.textos}>
-            <Text style={estilos.nombre}>{r.nombre}</Text>
-            <Text style={estilos.detalle} numberOfLines={2}>
-              {r.detalle}
-            </Text>
-          </View>
-        </Pressable>
-      ))}
+      {!lugar &&
+        resultados?.map((r) => (
+          <Pressable
+            key={`${r.lat},${r.lng},${r.detalle}`}
+            accessibilityRole="button"
+            accessibilityLabel={r.detalle}
+            onPress={() => {
+              // Sin foco vuelve el cursor al inicio: el nombre elegido se lee desde su comienzo.
+              Keyboard.dismiss();
+              alElegir(r);
+              setResultados(null);
+            }}
+            style={({ pressed }) => [
+              estilos.fila,
+              pressed && { backgroundColor: colores.primarioSuave },
+            ]}
+          >
+            <Icono
+              nombre="location_on"
+              color={colores.textoSecundario}
+              tamano={20}
+            />
+            <View style={estilos.textos}>
+              <Text style={estilos.nombre}>{r.nombre}</Text>
+              <Text style={estilos.detalle} numberOfLines={2}>
+                {r.detalle}
+              </Text>
+            </View>
+          </Pressable>
+        ))}
     </View>
   );
 }

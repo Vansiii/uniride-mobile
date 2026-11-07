@@ -398,6 +398,7 @@
       "precio": "Precio por asiento (URC)",
       "precio_ayuda": "Entre {minimo} y {maximo} URC, el máximo de {organizacion}.",
       "precio_invalido": "El precio debe estar entre {minimo} y {maximo} URC.",
+      "lugares_iguales": "El punto de encuentro y el destino no pueden ser el mismo lugar.",
       "viaje_solapado_titulo": "Choca con otro viaje tuyo",
       "viaje_solapado": "Ya tienes uno para {dia} a las {hora}. Deja al menos {horas} horas entre tus viajes.",
       "publicar": "Publicar viaje",

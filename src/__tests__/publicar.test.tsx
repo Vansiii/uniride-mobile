@@ -355,6 +355,49 @@ describe('HU-17 · búsqueda de lugar', () => {
     ).toBeTruthy();
   });
 
+  it('un lugar elegido se lee desde el inicio, pero con foco el cursor es de quien edita', async () => {
+    await abrir();
+    await elegirLugar('Destino', UAGRM);
+    const campo = () => screen.getByLabelText('Destino');
+    expect(campo().props.selection).toEqual({ start: 0, end: 0 });
+    await fireEvent(campo(), 'focus');
+    expect(campo().props.selection).toBeUndefined();
+    await fireEvent(campo(), 'blur');
+    expect(campo().props.selection).toEqual({ start: 0, end: 0 });
+  });
+
+  it('una búsqueda en camino no se repite, y si cambió el texto su respuesta no se muestra', async () => {
+    await abrir();
+    let responder = (_: (typeof PLAZA)[]) => {};
+    buscar.mockReturnValueOnce(new Promise((ok) => (responder = ok)));
+    const campo = await screen.findByLabelText('Destino');
+    await fireEvent.changeText(campo, 'plaza');
+    await fireEvent(campo, 'submitEditing');
+    await fireEvent(campo, 'submitEditing');
+    expect(buscar).toHaveBeenCalledTimes(1);
+    await fireEvent.changeText(campo, 'plazuela');
+    await act(async () => responder([PLAZA]));
+    expect(screen.queryByLabelText(PLAZA.detalle)).toBeNull();
+  });
+
+  it('al intercambiar, lo que dijo la búsqueda anterior no queda sobre el lugar que llega', async () => {
+    await abrir();
+    await elegirLugar('Destino', UAGRM);
+    const origen = screen.getByLabelText('Punto de encuentro');
+    await fireEvent.changeText(origen, 'zzz');
+    buscar.mockResolvedValueOnce([]);
+    await fireEvent(origen, 'submitEditing');
+    const aviso = 'No encontramos ese lugar. Prueba con otro nombre.';
+    expect(await screen.findByText(aviso)).toBeTruthy();
+    await fireEvent.press(
+      screen.getByLabelText('Intercambiar origen y destino'),
+    );
+    expect(screen.getByLabelText('Punto de encuentro').props.value).toBe(
+      UAGRM.nombre,
+    );
+    expect(screen.queryByText(aviso)).toBeNull();
+  });
+
   it('tras tocar Publicar sin lugar, lo que respondió la búsqueda se ve sobre el error', async () => {
     await abrir();
     const campo = await screen.findByLabelText('Destino');
@@ -424,6 +467,87 @@ describe('HU-17 · rechazos del servidor', () => {
     await act(async () => mockFoco.efecto?.());
     expect(screen.queryByText(aviso)).toBeNull();
     expect(screen.getByLabelText('Destino').props.value).toBe(UAGRM.nombre);
+  });
+
+  it('origen y destino en el mismo lugar: lo dice sin pedir huella', async () => {
+    const { llamadas } = await abrir();
+    await llenar();
+    await elegirLugar('Destino', PLAZA);
+    await publicar();
+    expect(
+      await screen.findByText(
+        'El punto de encuentro y el destino no pueden ser el mismo lugar.',
+      ),
+    ).toBeTruthy();
+    expect(mockFirmar).not.toHaveBeenCalled();
+    expect(envios(llamadas)).toHaveLength(0);
+  });
+
+  it('si cambió a un vehículo más chico, no ofrece más asientos de los que caben', async () => {
+    await abrir();
+    await llenar();
+    const dos = {
+      estado: 200,
+      cuerpo: { ...(v.mio.cuerpo as object), capacidad: 2 },
+    };
+    const { llamadas } = simularFetch({
+      ...REQUISITOS_OK,
+      'GET /vehiculos/mio': dos,
+      'POST /viajes': vj.publicado,
+    });
+    await act(async () => mockFoco.efecto?.());
+    await publicar();
+    await waitFor(() => expect(envios(llamadas)).toHaveLength(1));
+    expect(
+      llamadas.find((l) => l.ruta === 'POST /viajes')?.cuerpo,
+    ).toMatchObject({ cuposTotales: 2 });
+  });
+
+  it('un rechazo por precio vuelve a leer los límites: la ayuda no se queda con el tope viejo', async () => {
+    const { llamadas } = await abrir({
+      'POST /viajes': {
+        estado: 400,
+        cuerpo: {
+          codigo: 'PRECIO_FUERA_DE_RANGO',
+          mensaje: 'viajes.publicar.precio_invalido',
+          minimo: 1,
+          maximo: 15,
+        },
+      },
+    });
+    await llenar();
+    const lecturas = () =>
+      llamadas.filter((l) => l.ruta === 'GET /viajes/limites').length;
+    const antes = lecturas();
+    await publicar();
+    await waitFor(() => expect(lecturas()).toBe(antes + 1));
+  });
+
+  it('al volver otro día, la fecha que ya pasó vuelve a la de por omisión', async () => {
+    await abrir();
+    await screen.findByLabelText('Hoy');
+    const elegidos = () => screen.getAllByRole('radio', { selected: true });
+    expect(elegidos()).toHaveLength(2);
+    jest.useFakeTimers({
+      now: Date.now() + 2 * 24 * 3_600_000,
+      advanceTimers: true,
+    });
+    try {
+      await act(async () => mockFoco.efecto?.());
+      // Una fecha y un número de asientos: la fecha sigue entre las opciones.
+      expect(elegidos()).toHaveLength(2);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('la hora admite "730": no la deja como 73:0', async () => {
+    await abrir();
+    const hora = await screen.findByLabelText('Hora de salida');
+    await fireEvent.changeText(hora, '730');
+    expect(screen.getByLabelText('Hora de salida').props.value).toBe('07:30');
+    await fireEvent.changeText(hora, '130');
+    expect(screen.getByLabelText('Hora de salida').props.value).toBe('13:0');
   });
 
   it('CA-2 con un solo asiento: en singular', async () => {
