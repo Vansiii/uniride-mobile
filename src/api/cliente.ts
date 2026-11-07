@@ -356,7 +356,8 @@ export async function consultarMiDispositivo(): Promise<MiDispositivo | null> {
 
 /**
  * Petición sensible (billetera, publicar viaje, reservar, handshakes): lleva la firma del dispositivo (A-08).
- * Cada intento se firma de nuevo: el nonce es de un solo uso y la ventana es de 30 s.
+ * Una huella por petición: si solo venció la sesión, el servidor la rechaza antes de mirar la firma y gastar su
+ * nonce, así que la misma firma vale al reenviarla. Otro 401 es de la firma y va tal cual a la pantalla.
  */
 export async function solicitarFirmado<T>(
   ruta: string,
@@ -367,16 +368,23 @@ export async function solicitarFirmado<T>(
   if (!id) throw new ErrorApi(0, 'DISPOSITIVO_NO_VINCULADO');
   const url = new URL(`${BASE}${ruta}`);
   const texto = cuerpo === undefined ? '' : JSON.stringify(cuerpo);
-  const intentar = async () =>
-    enviar(
-      ruta,
-      metodo,
-      cuerpo,
-      await cabecerasFirma(id, metodo, url.pathname + url.search, texto),
-    );
-  let respuesta = await intentar();
-  if (respuesta.status === 401 && tokenAcceso && (await renovarSesion()))
-    respuesta = await intentar();
+  const firma = await cabecerasFirma(
+    id,
+    metodo,
+    url.pathname + url.search,
+    texto,
+  );
+  let respuesta = await enviar(ruta, metodo, cuerpo, firma);
+  if (
+    respuesta.status === 401 &&
+    tokenAcceso &&
+    (await respuesta
+      .clone()
+      .json()
+      .catch(() => ({}))).codigo === 'NO_AUTENTICADO' &&
+    (await renovarSesion())
+  )
+    respuesta = await enviar(ruta, metodo, cuerpo, firma);
   return leer<T>(respuesta);
 }
 

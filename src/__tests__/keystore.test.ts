@@ -27,7 +27,7 @@ describe('Keystore sin módulo nativo (web y Jest)', () => {
 
   it('no crea llave ni firma: falla de forma segura', async () => {
     expect(await codigoDe(k().crearLlave())).toBe('KEYSTORE_NO_DISPONIBLE');
-    expect(await codigoDe(k().firmar('m'))).toBe('KEYSTORE_NO_DISPONIBLE');
+    expect(await codigoDe(k().firmar('m', 'n'))).toBe('KEYSTORE_NO_DISPONIBLE');
     expect(() => k().nonceAleatorio()).toThrow('KEYSTORE_NO_DISPONIBLE');
   });
 });
@@ -42,18 +42,21 @@ describe('Keystore con módulo nativo', () => {
 
   it('devuelve la llave pública y la firma tal como salen del Keystore', async () => {
     nativo.crearLlave.mockResolvedValue('PEM');
-    nativo.firmar.mockResolvedValue('RklSTUE=');
+    nativo.firmar.mockResolvedValue({ firma: 'RklSTUE=', marca: '1' });
     nativo.nonceAleatorio.mockReturnValue('ab'.repeat(16));
     const k = cargar(nativo);
     expect(await k.crearLlave()).toBe('PEM');
-    expect(await k.firmar('mensaje')).toBe('RklSTUE=');
+    expect(await k.firmar('antes', 'despues')).toEqual({
+      firma: 'RklSTUE=',
+      marca: '1',
+    });
     expect(k.nonceAleatorio()).toBe('ab'.repeat(16));
   });
 
   it('el diálogo de huella recibe los textos de es-BO y el mensaje exacto', async () => {
-    nativo.firmar.mockResolvedValue('RklSTUE=');
-    await cargar(nativo).firmar('GET\n/ruta');
-    expect(nativo.firmar).toHaveBeenCalledWith('GET\n/ruta', {
+    nativo.firmar.mockResolvedValue({ firma: 'RklSTUE=', marca: '1' });
+    await cargar(nativo).firmar('GET\n/ruta\n', '\nnonce');
+    expect(nativo.firmar).toHaveBeenCalledWith('GET\n/ruta\n', '\nnonce', {
       titulo: 'Confirma que eres tú',
       subtitulo: 'Usa tu huella o rostro para continuar.',
       cancelar: 'Cancelar',
@@ -64,7 +67,7 @@ describe('Keystore con módulo nativo', () => {
     nativo.firmar.mockRejectedValue(
       Object.assign(new Error('x'), { code: 'BIOMETRIA_CANCELADA' }),
     );
-    expect(await codigoDe(cargar(nativo).firmar('m'))).toBe(
+    expect(await codigoDe(cargar(nativo).firmar('m', 'n'))).toBe(
       'BIOMETRIA_CANCELADA',
     );
   });
@@ -78,7 +81,7 @@ describe('Keystore con módulo nativo', () => {
         }),
       );
       const falla = await cargar(nativo)
-        [funcion]('m')
+        [funcion]('m', 'n')
         .catch((e: Error) => e);
       expect((falla as Keystore.ErrorKeystore).codigo).toBe(
         'KEYSTORE_NO_DISPONIBLE',

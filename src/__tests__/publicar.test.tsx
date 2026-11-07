@@ -5,7 +5,7 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react-native';
-import { ScrollView } from 'react-native';
+import { AccessibilityInfo, Keyboard, ScrollView } from 'react-native';
 import PublicarPantalla from '@/app/(pestanas)/publicar';
 import { zoomParaVer } from '@/componentes/MapaRuta';
 import { ProveedorSesion } from '@/contexto/sesion';
@@ -116,6 +116,8 @@ const envios = (llamadas: { ruta: string }[]) =>
   llamadas.filter((l) => l.ruta === 'POST /viajes');
 
 beforeEach(() => {
+  // La animación de la ilustración deja un temporizador que sobrevive a la prueba y rompe la siguiente suite.
+  jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
   jest.clearAllMocks();
   mockFirmar.mockResolvedValue({ 'X-Firma': 'firma-de-prueba' });
 });
@@ -502,6 +504,7 @@ describe('HU-17 · rechazos del servidor', () => {
 
   it('cancelar la huella no es un error y no publica', async () => {
     mockFirmar.mockRejectedValue(new ErrorKeystore('BIOMETRIA_CANCELADA'));
+    const soltar = jest.spyOn(Keyboard, 'dismiss');
     const { llamadas } = await abrir();
     await llenar();
     await publicar();
@@ -511,6 +514,8 @@ describe('HU-17 · rechazos del servidor', () => {
       ),
     ).toBeTruthy();
     expect(envios(llamadas)).toHaveLength(0);
+    // Con el foco en un campo, Android deja el aviso fuera de la vista.
+    expect(soltar).toHaveBeenCalled();
   });
 
   it('dos toques seguidos piden una sola huella', async () => {

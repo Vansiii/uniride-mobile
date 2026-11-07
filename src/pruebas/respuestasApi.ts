@@ -1171,11 +1171,13 @@ export function simularFetch(
     if (!cola?.length) throw new TypeError('Network request failed');
     // La última respuesta se repite, como un servidor que responde igual.
     const { estado, cuerpo } = cola.length > 1 ? cola.shift()! : cola[0];
-    return {
+    const respuesta = {
       ok: estado >= 200 && estado < 300,
       status: estado,
       json: async () => cuerpo,
+      clone: () => respuesta,
     };
+    return respuesta;
   });
   globalThis.fetch = falso as unknown as typeof fetch;
   return { llamadas, falso };

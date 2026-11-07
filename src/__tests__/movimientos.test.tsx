@@ -131,7 +131,7 @@ const filtro = (nombre: string) => screen.getByRole('radio', { name: nombre });
 beforeEach(async () => {
   jest.clearAllMocks();
   await cerrarSesion().catch(() => undefined);
-  firma.mockResolvedValue('firma-de-prueba');
+  firma.mockResolvedValue({ firma: 'firma-de-prueba', marca: '1' });
 });
 
 describe('Movimientos · CA-2: lista cronológica inversa con todos sus datos', () => {
