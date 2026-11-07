@@ -591,6 +591,7 @@ export interface DetalleViaje {
   fechaHoraSalida: string;
   conductor: { nombre: string };
   vehiculo: VehiculoPublico;
+  cuposTotales: number;
   cuposDisponibles: number;
   precioPorAsiento: number;
   estado: string;

@@ -1192,6 +1192,7 @@ export const viajeReal = {
       modelo: 'Swift',
       color: 'rojo',
     },
+    cuposTotales: 3,
     cuposDisponibles: 2,
     precioPorAsiento: 10,
     estado: 'publicado',

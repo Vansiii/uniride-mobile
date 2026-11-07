@@ -182,7 +182,8 @@ describe('Inicio según la sesión y la membresía', () => {
       ]),
     );
     await conSesion(<Inicio />);
-    expect(await screen.findByText('Hola, Ana Pérez.')).toBeTruthy();
+    // Nombre de pila, como lo ven los demás (RN-4 de HU-18).
+    expect(await screen.findByText('Hola, Ana.')).toBeTruthy();
   });
 
   it('cerrar sesión devuelve a iniciar sesión', async () => {

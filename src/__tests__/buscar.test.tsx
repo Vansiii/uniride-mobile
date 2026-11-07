@@ -184,6 +184,15 @@ describe('HU-18 · formulario de búsqueda', () => {
     expect(JSON.stringify(llamada?.[1]?.headers ?? {})).not.toMatch(/firma/i);
   });
 
+  it('la voz está en su lugar pero desactivada hasta HU-27', async () => {
+    await abrir(<Inicio />);
+    const voz = await screen.findByRole('button', {
+      name: 'Hablar con UniRide, disponible pronto',
+    });
+    expect(voz.props.accessibilityState.disabled).toBe(true);
+    expect(screen.getByText('¿A dónde vas hoy?')).toBeTruthy();
+  });
+
   it('sin saldo legible no hay fila de saldo', async () => {
     await abrir(<Inicio />);
     await screen.findByRole('button', { name: 'Buscar viajes' });
@@ -494,6 +503,8 @@ describe('HU-18 · detalle', () => {
     expect(screen.getByText('3021 KLM')).toBeTruthy();
     expect(screen.getByText('Suzuki Swift rojo')).toBeTruthy();
     expect(screen.getByText('10,00 URC')).toBeTruthy();
+    expect(screen.getByText('Asientos libres')).toBeTruthy();
+    expect(screen.getByText('2 de 3')).toBeTruthy();
     expect(screen.getByText(/solo se paga a Carlos/)).toBeTruthy();
     const reservar = screen.getByRole('button', {
       name: 'Reservar · disponible pronto',

@@ -235,7 +235,12 @@ const estilos = StyleSheet.create({
     backgroundColor: colores.superficie,
     elevation: 3,
   },
-  acciones: { flexDirection: 'row', flexWrap: 'wrap', gap: espacio(1) },
+  // El relleno de los botones de texto sale del borde: así caben los dos en una fila a 360.
+  acciones: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -espacio(3),
+  },
   saldo: {
     minHeight: 64,
     flexDirection: 'row',

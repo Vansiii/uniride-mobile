@@ -80,20 +80,25 @@ export function BotonIcono({
   etiqueta,
   alPresionar,
   color = colores.textoSecundario,
+  deshabilitado = false,
 }: {
   icono: NombreIcono;
   /** Nombre accesible obligatorio. */
   etiqueta: string;
   alPresionar: () => void;
   color?: string;
+  deshabilitado?: boolean;
 }) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={etiqueta}
+      accessibilityState={{ disabled: deshabilitado }}
+      disabled={deshabilitado}
       onPress={alPresionar}
       style={({ pressed }) => [
         estilos.icono,
+        deshabilitado && { opacity: 0.5 },
         pressed && { backgroundColor: colores.fondoSutil },
       ]}
     >

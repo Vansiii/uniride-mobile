@@ -94,6 +94,7 @@
     }
   },
   "inicio": {
+    "voz_pronto": "Hablar con UniRide, disponible pronto",
     "cuenta": "Tu cuenta",
     "nombre": "Nombre",
     "correo": "Correo",
@@ -452,10 +453,11 @@
       "tarjeta_accesible": "Viaje a las {hora} de {origen}, a {distancia}, a {destino}, {precio}, {asientos}, conductor {conductor}, {vehiculo}, placa {placa}",
       "titulo_detalle": "Detalle del viaje",
       "precio_asiento": "Precio por asiento",
-      "disponibles": "Disponibles",
+      "disponibles": "Asientos libres",
+      "de_total": "{libres} de {total}",
       "garantia": "Al reservar, el pasaje queda en garantía y solo se paga a {conductor} cuando el viaje se verifica.",
       "reservar_pronto": "Reservar · disponible pronto",
-      "subtitulo": "Busca viajes de tu comunidad cerca de ti"
+      "subtitulo": "¿A dónde vas hoy?"
     }
   }
 }

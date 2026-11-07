@@ -20,7 +20,6 @@ import { Icono } from '@/componentes/Icono';
 import { MapaRuta } from '@/componentes/MapaRuta';
 import { Aviso, EtiquetaEstado } from '@/componentes/Mensajes';
 import {
-  asientosLibres,
   Avatar,
   InsigniasConductor,
   nombreVehiculo,
@@ -177,7 +176,10 @@ export default function DetalleViajePantalla() {
                   {t('viajes.buscar.disponibles')}
                 </Text>
                 <Text style={estilos.enfasis}>
-                  {asientosLibres(viaje.cuposDisponibles)}
+                  {con('viajes.buscar.de_total', {
+                    libres: viaje.cuposDisponibles,
+                    total: viaje.cuposTotales,
+                  })}
                 </Text>
               </View>
             </View>

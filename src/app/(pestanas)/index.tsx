@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import { useSesion } from '@/contexto/sesion';
-import { Boton } from '@/componentes/Boton';
+import { Boton, BotonIcono } from '@/componentes/Boton';
 import { BandaMarca } from '@/componentes/Estructura';
 import { FormularioBusqueda } from '@/componentes/FormularioBusqueda';
 import { Icono } from '@/componentes/Icono';
@@ -45,25 +45,36 @@ export default function Inicio() {
     <View style={estilos.raiz}>
       <ScrollView contentContainerStyle={estilos.desplazable}>
         <BandaMarca>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`${t('inicio.organizacion')}: ${organizacion ?? '—'}`}
-            onPress={() => router.push('/organizaciones')}
-            style={estilos.chipOrganizacion}
-          >
-            <Icono
-              nombre="corporate_fare"
+          <View style={estilos.filaBanda}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${t('inicio.organizacion')}: ${organizacion ?? '—'}`}
+              onPress={() => router.push('/organizaciones')}
+              style={estilos.chipOrganizacion}
+            >
+              <Icono
+                nombre="corporate_fare"
+                color={colores.sobreMarca}
+                tamano={16}
+              />
+              <Text style={estilos.textoChip} numberOfLines={1}>
+                {organizacion ?? '—'}
+              </Text>
+            </Pressable>
+            {/* ponytail: la voz llega con HU-27; hasta entonces el botón está en su lugar, desactivado (DESIGN_SYSTEM §8). */}
+            <BotonIcono
+              icono="mic"
+              etiqueta={t('inicio.voz_pronto')}
               color={colores.sobreMarca}
-              tamano={16}
+              deshabilitado
+              alPresionar={() => {}}
             />
-            <Text style={estilos.textoChip} numberOfLines={1}>
-              {organizacion ?? '—'}
-            </Text>
-          </Pressable>
+          </View>
           <Text style={estilos.saludo} accessibilityRole="header">
             {t('autenticacion.sesion.bienvenida').replace(
               '{nombre}',
-              usuario.nombreCompleto,
+              // Nombre de pila, como lo ven los demás (RN-4 de HU-18).
+              usuario.nombreCompleto.trim().split(/\s+/)[0],
             )}
           </Text>
           <Text style={estilos.eslogan}>{t('viajes.buscar.subtitulo')}</Text>
@@ -137,7 +148,14 @@ const estilos = StyleSheet.create({
   desplazable: { flexGrow: 1, paddingBottom: espacio(6) },
   saludo: { ...tipografia.pantalla, color: colores.sobreMarca },
   eslogan: { ...tipografia.cuerpo, color: colores.sobreMarcaSecundario },
+  filaBanda: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: espacio(2),
+  },
   chipOrganizacion: {
+    flexShrink: 1,
     alignSelf: 'flex-start',
     minHeight: 32,
     maxWidth: '100%',
