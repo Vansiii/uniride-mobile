@@ -50,12 +50,15 @@ export function FilaAjuste({
   detalle,
   alPresionar,
   peligro = false,
+  estado,
 }: {
   icono: NombreIcono;
   titulo: string;
   detalle?: string;
   alPresionar: () => void;
   peligro?: boolean;
+  /** Etiqueta de situación a la derecha (p. ej. «Verificada» / «Pendiente»). */
+  estado?: { texto: string; listo: boolean };
 }) {
   return (
     <Toque
@@ -89,6 +92,27 @@ export function FilaAjuste({
         </Text>
         {detalle ? <Text style={estilos.detalle}>{detalle}</Text> : null}
       </View>
+      {estado && (
+        <View
+          style={[
+            estilos.etiquetaEstado,
+            {
+              backgroundColor: estado.listo
+                ? colores.exitoSuave
+                : colores.avisoSuave,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              estilos.textoEstado,
+              { color: estado.listo ? colores.exitoTexto : colores.avisoTexto },
+            ]}
+          >
+            {estado.texto}
+          </Text>
+        </View>
+      )}
       {!peligro && (
         <Icono nombre="chevron_right" color={colores.textoPlaceholder} />
       )}
@@ -112,6 +136,12 @@ const estilos = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: radio.m,
   },
+  etiquetaEstado: {
+    paddingHorizontal: espacio(2),
+    paddingVertical: 2,
+    borderRadius: radio.completo,
+  },
+  textoEstado: { ...tipografia.pequeno },
   textos: { flex: 1, gap: 2 },
   titulo: { ...tipografia.cuerpoEnfasis, color: colores.texto },
   detalle: { ...tipografia.secundario, color: colores.textoSecundario },

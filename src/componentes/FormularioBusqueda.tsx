@@ -4,19 +4,15 @@ import { Linking, StyleSheet, Text, View } from 'react-native';
 import { consultarSaldo, Saldo } from '@/api/cliente';
 import { Entra, Esqueleto, Toque, useConteo } from '@/componentes/Animado';
 import { Boton } from '@/componentes/Boton';
+import { AjusteHora } from '@/componentes/AjusteHora';
 import { Campo } from '@/componentes/Campo';
 import { Icono } from '@/componentes/Icono';
 import { Aviso } from '@/componentes/Mensajes';
 import { SelectorFecha } from '@/componentes/SelectorFecha';
 import { SelectorLugar } from '@/componentes/SelectorLugar';
-import { SelectorMapa } from '@/componentes/SelectorMapa';
 import { formatearMonto } from '@/formato';
 import { con, t } from '@/i18n';
-import {
-  CENTRO_POR_OMISION,
-  Lugar,
-  nombreDePunto,
-} from '@/servicios/geocoding';
+import { Lugar } from '@/servicios/geocoding';
 import { obtenerUbicacion } from '@/servicios/ubicacion';
 import {
   colores,
@@ -82,7 +78,6 @@ export function FormularioBusqueda() {
   const [errorHora, setErrorHora] = useState<string>();
   const [avisoUbicacion, setAvisoUbicacion] = useState<AvisoUbicacion>();
   const [ubicando, setUbicando] = useState(false);
-  const [enMapa, setEnMapa] = useState(false);
   const [saldo, setSaldo] = useState<Saldo | null | undefined>(undefined);
 
   const usarUbicacion = async () => {
@@ -166,6 +161,7 @@ export function FormularioBusqueda() {
     <>
       <Entra indice={1} style={estilos.tarjeta}>
         <SelectorLugar
+          soloMapa
           etiqueta={t('viajes.buscar.desde')}
           lugar={origen}
           error={errorOrigen}
@@ -181,12 +177,6 @@ export function FormularioBusqueda() {
             cargando={ubicando}
             etiqueta={t('viajes.buscar.usar_ubicacion')}
             alPresionar={() => void usarUbicacion()}
-          />
-          <Boton
-            variante="suave"
-            icono="map"
-            etiqueta={t('viajes.buscar.elegir_mapa')}
-            alPresionar={() => setEnMapa(true)}
           />
         </View>
         {avisoUbicacion && (
@@ -221,6 +211,14 @@ export function FormularioBusqueda() {
           }}
           error={errorHora}
         />
+        <AjusteHora
+          fecha={fecha}
+          hora={hora}
+          alCambiar={(h) => {
+            setSalida((x) => ({ ...x, hora: h }));
+            setErrorHora(undefined);
+          }}
+        />
         <Boton
           anchoCompleto
           icono="search"
@@ -239,21 +237,6 @@ export function FormularioBusqueda() {
         <Entra indice={2}>
           <TarjetaSaldoMini saldo={saldo} />
         </Entra>
-      )}
-      {enMapa && (
-        <SelectorMapa
-          inicial={origen ?? CENTRO_POR_OMISION}
-          alCancelar={() => setEnMapa(false)}
-          alElegir={({ lat, lng }) => {
-            setEnMapa(false);
-            setErrorOrigen(undefined);
-            setOrigen(lugarDe(t('viajes.buscar.punto_mapa'), lat, lng));
-            // El nombre de la calle llega después; si falla queda «Punto en el mapa».
-            void nombreDePunto(lat, lng).then((n) => {
-              if (n) setOrigen(lugarDe(n, lat, lng));
-            });
-          }}
-        />
       )}
     </>
   );

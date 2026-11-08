@@ -77,7 +77,11 @@ export default function Inicio() {
   // ponytail: Tu cuenta sigue aquí hasta que llegue la pestaña Perfil (DESIGN_SYSTEM §6.1).
   return (
     <View style={estilos.raiz}>
-      <ScrollView contentContainerStyle={estilos.desplazable}>
+      <ScrollView
+        contentContainerStyle={estilos.desplazable}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+      >
         <BandaMarca>
           <View style={estilos.filaBanda}>
             <Toque

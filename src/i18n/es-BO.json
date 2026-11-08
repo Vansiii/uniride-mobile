@@ -94,7 +94,16 @@
     }
   },
   "perfil": {
-    "pestana": "Perfil"
+    "pestana": "Perfil",
+    "progreso_titulo": "Completa tu perfil",
+    "progreso": "{hechos} de {total} pasos listos",
+    "progreso_completo": "Todo listo para viajar",
+    "estado": {
+      "registrado": "Registrado",
+      "vinculado": "Vinculado",
+      "verificada": "Verificada",
+      "pendiente": "Pendiente"
+    }
   },
   "inicio": {
     "voz_pronto": "Hablar con UniRide, disponible pronto",
@@ -397,6 +406,8 @@
       "atribucion_mapa": "© OpenStreetMap",
       "fecha": "Fecha",
       "hora": "Hora de salida",
+      "hora_menos": "15 min antes",
+      "hora_mas": "15 min después",
       "hora_ayuda": "En 24 horas, por ejemplo 07:30.",
       "hora_invalida": "Escribe la hora en 24 horas, por ejemplo 07:30.",
       "horario_invalido": "Elige una salida con al menos 15 minutos de anticipación y hasta dentro de 7 días.",
@@ -433,6 +444,7 @@
       "ver_relieve": "Ver el relieve",
       "ver_calles": "Ver las calles",
       "buscar_lugar": "Buscar un lugar",
+      "elegir_en_mapa": "Toca para elegir en el mapa",
       "buscar_en_mapa": "Buscar en el mapa",
       "sin_resultados": "No encontramos ese lugar",
       "mueve_mapa": "Mueve el mapa para ajustar el punto",

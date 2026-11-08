@@ -67,6 +67,8 @@ export function Campo({
           ref={refEntrada}
           accessibilityLabel={etiqueta}
           placeholderTextColor={colores.textoPlaceholder}
+          // «Siguiente» deja el teclado abierto y pasa al campo que sigue en lugar de cerrarlo.
+          submitBehavior={resto.returnKeyType === 'next' ? 'submit' : undefined}
           {...resto}
           secureTextEntry={secureTextEntry && !ver}
           onFocus={(e) => {

@@ -26,6 +26,7 @@ import {
   Vehiculo,
 } from '@/api/cliente';
 import { Entra } from '@/componentes/Animado';
+import { AjusteHora } from '@/componentes/AjusteHora';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { Campo } from '@/componentes/Campo';
 import { BandaMarca, ZonaAccion } from '@/componentes/Estructura';
@@ -685,6 +686,14 @@ function Contenido() {
                 setErrores((e) => ({ ...e, hora: undefined }));
               }}
               error={errores.hora}
+            />
+            <AjusteHora
+              fecha={fecha}
+              hora={hora}
+              alCambiar={(h) => {
+                setSalida((x) => ({ ...x, hora: h }));
+                setErrores((e) => ({ ...e, hora: undefined }));
+              }}
             />
           </View>
         </Entra>
