@@ -156,12 +156,17 @@ export function MapaRuta({
         >
           <Camera
             bounds={recuadro}
-            padding={{
-              top: MARGEN,
-              bottom: MARGEN,
-              left: MARGEN,
-              right: MARGEN,
-            }}
+            padding={
+              alto > 200
+                ? // Portada: deja libre la cabecera flotante arriba y la hoja que sube abajo.
+                  { top: 180, bottom: 100, left: 72, right: 72 }
+                : {
+                    top: MARGEN,
+                    bottom: MARGEN,
+                    left: MARGEN,
+                    right: MARGEN,
+                  }
+            }
             maxZoom={ZOOM_MAXIMO}
             duration={0}
           />

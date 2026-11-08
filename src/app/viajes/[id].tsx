@@ -1,3 +1,4 @@
+import { StatusBar } from 'expo-status-bar';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -86,6 +87,7 @@ export default function DetalleViajePantalla() {
 
   return (
     <View style={estilos.raiz}>
+      <StatusBar style="dark" />
       <View style={[estilos.encabezado, { paddingTop: top + espacio(2) }]}>
         <View style={estilos.botonVolver}>
           <BotonIcono
@@ -134,9 +136,6 @@ export default function DetalleViajePantalla() {
             contentContainerStyle={estilos.contenido}
             showsVerticalScrollIndicator={false}
           >
-            {!disponible && (
-              <Aviso tono="info">{t('viajes.buscar.no_encontrado')}</Aviso>
-            )}
             <View style={estilos.portada}>
               <MapaRuta
                 origen={viaje.origen}
@@ -146,6 +145,9 @@ export default function DetalleViajePantalla() {
               />
             </View>
             <View style={estilos.hoja}>
+              {!disponible && (
+                <Aviso tono="info">{t('viajes.buscar.no_encontrado')}</Aviso>
+              )}
               <Entra indice={0} style={estilos.tarjeta}>
                 <View style={estilos.fila}>
                   <Text style={estilos.subtitulo}>

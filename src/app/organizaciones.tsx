@@ -1,3 +1,4 @@
+import { StatusBar } from 'expo-status-bar';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -107,6 +108,7 @@ export default function Organizaciones() {
 
   return (
     <View style={estilos.raiz}>
+      <StatusBar style="dark" />
       <View style={[estilos.encabezado, { paddingTop: top }]}>
         <BotonIcono
           icono="arrow_back"

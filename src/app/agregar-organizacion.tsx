@@ -1,3 +1,4 @@
+import { StatusBar } from 'expo-status-bar';
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -109,6 +110,7 @@ export default function AgregarOrganizacion() {
       style={estilos.raiz}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      <StatusBar style="dark" />
       <View style={[estilos.encabezado, { paddingTop: top }]}>
         <BotonIcono
           icono="close"

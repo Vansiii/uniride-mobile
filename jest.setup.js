@@ -34,3 +34,9 @@ jest.mock('react-native-reanimated', () => {
     ReduceMotion: { System: 'system' },
   };
 });
+
+// La barra de estado es del sistema: en Jest no hay nada que dibujar.
+jest.mock('expo-status-bar', () => ({
+  StatusBar: () => null,
+  setStatusBarStyle: jest.fn(),
+}));

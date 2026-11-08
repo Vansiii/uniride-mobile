@@ -6,6 +6,7 @@ import {
   type MapRef,
   NativeUserLocation,
 } from '@maplibre/maplibre-react-native';
+import { StatusBar } from 'expo-status-bar';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import {
   Keyboard,
@@ -195,6 +196,7 @@ export function MapaCompleto({
   return (
     <Modal animationType="slide" onRequestClose={alCerrar}>
       <View style={estilos.raiz}>
+        <StatusBar style="dark" />
         {/* La vista nativa trae su propia descripción: ocultarla exige un contenedor. Los botones dan las mismas acciones. */}
         <View
           style={StyleSheet.absoluteFill}

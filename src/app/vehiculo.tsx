@@ -1,3 +1,4 @@
+import { StatusBar } from 'expo-status-bar';
 import { Image } from 'expo-image';
 import * as SelectorImagen from 'expo-image-picker';
 import { Redirect, router } from 'expo-router';
@@ -256,6 +257,7 @@ export default function VehiculoPantalla() {
       style={estilos.raiz}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      <StatusBar style="dark" />
       <View style={[estilos.encabezado, { paddingTop: top }]}>
         <BotonIcono
           icono="arrow_back"

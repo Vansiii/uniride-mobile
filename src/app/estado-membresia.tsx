@@ -1,3 +1,4 @@
+import { StatusBar } from 'expo-status-bar';
 import { Image } from 'expo-image';
 import { Redirect, router } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -23,6 +24,7 @@ export default function EstadoMembresia() {
   const rechazada = usuario.membresias.every((m) => m.estado === 'rechazada');
   return (
     <View style={estilos.raiz}>
+      <StatusBar style="dark" />
       <View style={[estilos.encabezado, { paddingTop: top }]}>
         <Image
           source={require('../../assets/marca/firma-horizontal.svg')}

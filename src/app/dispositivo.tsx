@@ -1,3 +1,4 @@
+import { StatusBar } from 'expo-status-bar';
 import * as Dispositivo from 'expo-device';
 import { Redirect, router } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -127,6 +128,7 @@ export default function DispositivoPantalla() {
 
   return (
     <View style={estilos.raiz}>
+      <StatusBar style="dark" />
       <View style={[estilos.encabezado, { paddingTop: top }]}>
         <BotonIcono
           icono="arrow_back"

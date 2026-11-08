@@ -100,25 +100,27 @@ export function SelectorLugar({
         error={lugar ? error : (aviso ?? error)}
       />
       {!lugar && (
-        <Boton
-          variante="suave"
-          icono="search"
-          cargando={buscando}
-          etiqueta={t(
-            buscando
-              ? 'viajes.publicar.buscando'
-              : 'viajes.publicar.buscar_lugar',
+        <View style={estilos.acciones}>
+          <Boton
+            variante="suave"
+            icono="search"
+            cargando={buscando}
+            etiqueta={t(
+              buscando
+                ? 'viajes.publicar.buscando'
+                : 'viajes.publicar.buscar_lugar',
+            )}
+            alPresionar={() => void buscar()}
+          />
+          {conMapa && (
+            <Boton
+              variante="suave"
+              icono="map"
+              etiqueta={t('viajes.buscar.elegir_mapa')}
+              alPresionar={() => setEnMapa(true)}
+            />
           )}
-          alPresionar={() => void buscar()}
-        />
-      )}
-      {!lugar && conMapa && (
-        <Boton
-          variante="suave"
-          icono="map"
-          etiqueta={t('viajes.buscar.elegir_mapa')}
-          alPresionar={() => setEnMapa(true)}
-        />
+        </View>
       )}
       {enMapa && (
         <SelectorMapa
@@ -182,6 +184,7 @@ const estilos = StyleSheet.create({
     borderColor: colores.borde,
     backgroundColor: colores.superficie,
   },
+  acciones: { flexDirection: 'row', flexWrap: 'wrap', gap: espacio(2) },
   textos: { flex: 1, gap: 2 },
   nombre: { ...tipografia.cuerpoEnfasis, color: colores.texto },
   detalle: { ...tipografia.secundario, color: colores.textoSecundario },

@@ -1,4 +1,5 @@
 import { Tabs } from 'expo-router';
+import { setStatusBarStyle } from 'expo-status-bar';
 import { BarraPestanas } from '@/componentes/BarraPestanas';
 import { Icono } from '@/componentes/Icono';
 import { t } from '@/i18n';
@@ -13,6 +14,11 @@ export default function Pestanas() {
     <Tabs
       tabBar={(props) => <BarraPestanas {...props} />}
       screenOptions={{ headerShown: false, animation: 'fade' }}
+      // Publicar tiene fondo claro; las demás pestañas abren con la banda de marca.
+      screenListeners={({ route }) => ({
+        focus: () =>
+          setStatusBarStyle(route.name === 'publicar' ? 'dark' : 'light'),
+      })}
     >
       <Tabs.Screen
         name="index"

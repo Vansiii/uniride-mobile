@@ -5,13 +5,13 @@ export type TipoMapa = 'calles' | 'relieve';
 
 // Paleta del mapa: tierra casi blanca con un velo índigo, parques y agua suaves, vías principales cálidas
 // (como Google o Apple Maps) para que el trayecto de la marca sea lo que más resalta.
-const TIERRA = '#F4F5FB';
+const TIERRA = '#EEF0F8';
 const AGUA = '#BFD4F8';
 const VERDE = '#D6EBD9';
-const EDIFICIO = '#E7E9F2';
-const EDIFICIO_BORDE = '#D9DCEA';
+const EDIFICIO = '#E0E3EF';
+const EDIFICIO_BORDE = '#CDD1E3';
 const CALLE = '#FFFFFF';
-const CALLE_BORDE = '#DCDFEC';
+const CALLE_BORDE = '#C9CEE2';
 const VIA_PRINCIPAL = '#FFE3A6';
 const VIA_PRINCIPAL_BORDE = '#F0C46A';
 const CAMPUS = '#E4E8FF';

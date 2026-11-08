@@ -1,3 +1,4 @@
+import { StatusBar } from 'expo-status-bar';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
@@ -85,6 +86,7 @@ export default function ResultadosPantalla() {
 
   return (
     <View style={[estilos.raiz, { paddingTop: top }]}>
+      <StatusBar style="dark" />
       <View style={estilos.encabezado}>
         <BotonIcono
           icono="arrow_back"
