@@ -13,7 +13,13 @@ import { formatearMonto } from '@/formato';
 import { con, t } from '@/i18n';
 import { Lugar } from '@/servicios/geocoding';
 import { obtenerUbicacion } from '@/servicios/ubicacion';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import {
+  colores,
+  espacio,
+  radio,
+  tipografia,
+  sombraElevada,
+} from '@/tema/tokens';
 import {
   escribirHora,
   leerSalida,
@@ -138,14 +144,14 @@ export function FormularioBusqueda() {
         />
         <View style={estilos.acciones}>
           <Boton
-            variante="texto"
+            variante="suave"
             icono="my_location"
             cargando={ubicando}
             etiqueta={t('viajes.buscar.usar_ubicacion')}
             alPresionar={() => void usarUbicacion()}
           />
           <Boton
-            variante="texto"
+            variante="suave"
             icono="map"
             etiqueta={t('viajes.buscar.elegir_mapa')}
             alPresionar={() => setEnMapa(true)}
@@ -237,14 +243,10 @@ const estilos = StyleSheet.create({
     gap: espacio(3),
     borderRadius: radio.l,
     backgroundColor: colores.superficie,
-    elevation: 3,
+    ...sombraElevada,
   },
   // El relleno de los botones de texto sale del borde: así caben los dos en una fila a 360.
-  acciones: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -espacio(3),
-  },
+  acciones: { flexDirection: 'row', flexWrap: 'wrap', gap: espacio(2) },
   saldo: {
     minHeight: 64,
     flexDirection: 'row',

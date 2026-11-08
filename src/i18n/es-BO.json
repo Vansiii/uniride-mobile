@@ -93,6 +93,9 @@
       "confirmando": "Confirmando…"
     }
   },
+  "perfil": {
+    "pestana": "Perfil"
+  },
   "inicio": {
     "voz_pronto": "Hablar con UniRide, disponible pronto",
     "cuenta": "Tu cuenta",

@@ -39,7 +39,13 @@ import { ErrorKeystore } from '@/dispositivo/keystore';
 import { formatearDia, formatearHoraLocal, formatearMonto } from '@/formato';
 import { con, t } from '@/i18n';
 import { Lugar } from '@/servicios/geocoding';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import {
+  colores,
+  espacio,
+  radio,
+  tipografia,
+  sombraElevada,
+} from '@/tema/tokens';
 import {
   ANTICIPACION_MAXIMA_DIAS,
   escribirHora,
@@ -820,7 +826,7 @@ const estilos = StyleSheet.create({
     gap: espacio(4),
     borderRadius: radio.l,
     backgroundColor: colores.superficie,
-    elevation: 3,
+    ...sombraElevada,
   },
   paso: { flexDirection: 'row', gap: espacio(3) },
   numero: {

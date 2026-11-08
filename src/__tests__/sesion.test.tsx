@@ -8,6 +8,7 @@ import { ReactNode } from 'react';
 import * as api from '@/api/cliente';
 import EstadoMembresia from '@/app/estado-membresia';
 import Inicio from '@/app/(pestanas)/index';
+import Perfil from '@/app/(pestanas)/perfil';
 import IniciarSesion from '@/app/iniciar-sesion';
 import { ProveedorSesion } from '@/contexto/sesion';
 import { t } from '@/i18n';
@@ -197,7 +198,7 @@ describe('Inicio según la sesión y la membresía', () => {
         },
       ]),
     );
-    await conSesion(<Inicio />);
+    await conSesion(<Perfil />);
     await fireEvent.press(
       await screen.findByRole('button', { name: 'Cerrar sesión' }),
     );

@@ -31,7 +31,13 @@ import { useSesion } from '@/contexto/sesion';
 import { ErrorKeystore } from '@/dispositivo/keystore';
 import { formatearMonto } from '@/formato';
 import { t } from '@/i18n';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import {
+  colores,
+  espacio,
+  radio,
+  tipografia,
+  sombraElevada,
+} from '@/tema/tokens';
 
 const MONTOS_RAPIDOS = [20, 50, 100, 200];
 const MINIMO = 10;
@@ -574,7 +580,7 @@ const estilos = StyleSheet.create({
     padding: espacio(3),
     borderRadius: radio.l,
     backgroundColor: colores.superficie,
-    elevation: 3,
+    ...sombraElevada,
   },
   filaResumen: {
     flexDirection: 'row',

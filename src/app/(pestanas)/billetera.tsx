@@ -31,7 +31,13 @@ import { ErrorKeystore } from '@/dispositivo/keystore';
 import { abrirHttps } from '@/enlaces';
 import { formatearMonto } from '@/formato';
 import { t } from '@/i18n';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import {
+  colores,
+  espacio,
+  radio,
+  tipografia,
+  sombraElevada,
+} from '@/tema/tokens';
 
 type Vista =
   | { tipo: 'cargando' }
@@ -479,7 +485,7 @@ const estilos = StyleSheet.create({
     padding: espacio(3),
     borderRadius: radio.l,
     backgroundColor: colores.superficie,
-    elevation: 3,
+    ...sombraElevada,
   },
   // Dos acciones lado a lado; si la letra del sistema crece, pasan a otra fila.
   acciones: { flexDirection: 'row', flexWrap: 'wrap' },

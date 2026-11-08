@@ -51,6 +51,15 @@ export const sombraTarjeta = {
   elevation: 1,
 } as const;
 
+/** Tarjeta que flota sobre la banda de marca o sobre el contenido (nivel 0,5): sombra visible en Android, iOS y web. */
+export const sombraElevada = {
+  shadowColor: '#101828',
+  shadowOpacity: 0.1,
+  shadowRadius: 12,
+  shadowOffset: { width: 0, height: 4 },
+  elevation: 4,
+} as const;
+
 export const tamano = {
   altoControl: 48,
   tactilMinimo: 48,

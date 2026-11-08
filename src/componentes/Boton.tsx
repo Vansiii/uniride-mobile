@@ -9,7 +9,8 @@ interface Props {
   /** Texto ya traducido con t(); en gerundio cuando `cargando` ("Entrando…"). */
   etiqueta: string;
   alPresionar: () => void;
-  variante?: 'primario' | 'secundario' | 'texto';
+  /** `suave`: píldora tonal para acciones rápidas junto a un formulario. */
+  variante?: 'primario' | 'secundario' | 'texto' | 'suave';
   icono?: NombreIcono;
   /** Bloquea toques repetidos mientras se llama a la API. */
   cargando?: boolean;
@@ -22,6 +23,7 @@ const colorTexto = {
   primario: colores.sobrePrimario,
   secundario: colores.primario,
   texto: colores.primario,
+  suave: colores.primarioTexto,
 } as const;
 
 export function Boton({
@@ -131,6 +133,14 @@ const estilos = StyleSheet.create({
     backgroundColor: colores.primarioSuave,
     borderColor: colores.primario,
   },
+  suave: {
+    alignSelf: 'flex-start',
+    minHeight: 40,
+    paddingHorizontal: espacio(4),
+    borderRadius: radio.completo,
+    backgroundColor: colores.primarioSuave,
+  },
+  suavePresionado: { backgroundColor: colores.borde },
   texto: { paddingHorizontal: espacio(3) },
   textoPresionado: { backgroundColor: colores.primarioSuave },
   etiqueta: { ...tipografia.cuerpoEnfasis, textAlign: 'center' },

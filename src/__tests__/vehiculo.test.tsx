@@ -5,7 +5,7 @@ import {
   waitFor,
 } from '@testing-library/react-native';
 import * as SelectorImagen from 'expo-image-picker';
-import Inicio from '@/app/(pestanas)/index';
+import Perfil from '@/app/(pestanas)/perfil';
 import VehiculoPantalla from '@/app/vehiculo';
 import { ProveedorSesion } from '@/contexto/sesion';
 import {
@@ -567,9 +567,9 @@ describe('Mi vehículo', () => {
     expect(mockRouter.back).toHaveBeenCalled();
   });
 
-  it('el inicio ofrece entrar a Mi vehículo', async () => {
+  it('el perfil ofrece entrar a Mi vehículo', async () => {
     simularFetch(CON_SESION);
-    await abrir(<Inicio />);
+    await abrir(<Perfil />);
     await fireEvent.press(
       await screen.findByRole('button', { name: 'Mi vehículo' }),
     );

@@ -91,7 +91,7 @@ export function SelectorLugar({
       />
       {!lugar && (
         <Boton
-          variante="secundario"
+          variante="suave"
           icono="search"
           cargando={buscando}
           etiqueta={t(
@@ -137,7 +137,7 @@ export function SelectorLugar({
 }
 
 const estilos = StyleSheet.create({
-  raiz: { gap: espacio(2) },
+  raiz: { gap: espacio(2), alignItems: 'stretch' },
   fila: {
     minHeight: 48,
     flexDirection: 'row',

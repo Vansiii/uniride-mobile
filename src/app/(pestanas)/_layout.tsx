@@ -17,13 +17,14 @@ export default function Pestanas() {
         headerShown: false,
         tabBarActiveTintColor: colores.primario,
         tabBarInactiveTintColor: colores.textoSecundario,
-        tabBarLabelStyle: tipografia.pequeno,
+        tabBarLabelStyle: { ...tipografia.pequeno, fontWeight: '600' },
         // 64 + área segura, con aire arriba y abajo para que ícono y etiqueta no se peguen al borde.
         tabBarStyle: {
           backgroundColor: colores.fondo,
-          height: tamano.altoBarraPestanas + bottom,
+          height: tamano.altoBarraPestanas + espacio(3) + bottom,
           paddingTop: espacio(2),
-          paddingBottom: bottom + espacio(2),
+          paddingBottom: bottom + espacio(3),
+          borderTopColor: colores.borde,
         },
       }}
     >
@@ -51,6 +52,15 @@ export default function Pestanas() {
           title: t('billetera.pantalla.titulo'),
           tabBarIcon: ({ color }) => (
             <Icono nombre="account_balance_wallet" color={color as string} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="perfil"
+        options={{
+          title: t('perfil.pestana'),
+          tabBarIcon: ({ color }) => (
+            <Icono nombre="person" color={color as string} />
           ),
         }}
       />

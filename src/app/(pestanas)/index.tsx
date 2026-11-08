@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import { useSesion } from '@/contexto/sesion';
-import { Boton, BotonIcono } from '@/componentes/Boton';
+import { BotonIcono } from '@/componentes/Boton';
 import { BandaMarca } from '@/componentes/Estructura';
 import { FormularioBusqueda } from '@/componentes/FormularioBusqueda';
 import { Icono } from '@/componentes/Icono';
@@ -16,7 +16,7 @@ import { t } from '@/i18n';
 import { colores, espacio, radio, tipografia } from '@/tema/tokens';
 
 export default function Inicio() {
-  const { cargando, usuario, cerrar } = useSesion();
+  const { cargando, usuario } = useSesion();
   if (cargando) {
     return (
       <View style={estilos.cargando}>
@@ -80,56 +80,6 @@ export default function Inicio() {
           <Text style={estilos.eslogan}>{t('viajes.buscar.subtitulo')}</Text>
         </BandaMarca>
         <FormularioBusqueda key={usuario.id} />
-        <View style={[estilos.tarjeta, estilos.cuenta]}>
-          <Text style={estilos.subtitulo}>{t('inicio.cuenta')}</Text>
-          <View style={estilos.dato}>
-            <Text style={estilos.etiqueta}>{t('inicio.nombre')}</Text>
-            <Text style={estilos.valor}>{usuario.nombreCompleto}</Text>
-          </View>
-          <View style={estilos.dato}>
-            <Text style={estilos.etiqueta}>{t('inicio.correo')}</Text>
-            <Text style={estilos.valor}>{usuario.correo}</Text>
-          </View>
-          <View style={estilos.dato}>
-            <Text style={estilos.etiqueta}>{t('inicio.organizacion')}</Text>
-            <Text style={estilos.valor}>
-              {usuario.membresias.find(
-                (m) => m.organizacionId === usuario.organizacionActiva,
-              )?.organizacion ?? '—'}
-            </Text>
-          </View>
-          <Boton
-            variante="texto"
-            icono="corporate_fare"
-            etiqueta={t('membresias.lista.ver')}
-            alPresionar={() => router.push('/organizaciones')}
-          />
-          <Boton
-            variante="texto"
-            icono="directions_car"
-            etiqueta={t('vehiculos.registro.ver')}
-            alPresionar={() => router.push('/vehiculo')}
-          />
-          <Boton
-            variante="texto"
-            icono="smartphone"
-            etiqueta={t('dispositivo.vinculacion.ver')}
-            alPresionar={() => router.push('/dispositivo')}
-          />
-          <Boton
-            variante="texto"
-            icono="verified_user"
-            etiqueta={t('identidad.verificacion.ver')}
-            alPresionar={() => router.push('/identidad')}
-          />
-          <Boton
-            variante="secundario"
-            icono="logout"
-            anchoCompleto
-            etiqueta={t('autenticacion.sesion.salir')}
-            alPresionar={cerrar}
-          />
-        </View>
       </ScrollView>
     </View>
   );
@@ -172,17 +122,4 @@ const estilos = StyleSheet.create({
     flexShrink: 1,
     color: colores.sobreMarca,
   },
-  cuenta: { marginTop: espacio(3) },
-  tarjeta: {
-    marginHorizontal: espacio(4),
-    padding: espacio(4),
-    gap: espacio(3),
-    borderRadius: radio.l,
-    backgroundColor: colores.superficie,
-    elevation: 3,
-  },
-  subtitulo: { ...tipografia.subtitulo, color: colores.texto },
-  dato: { gap: 2 },
-  etiqueta: { ...tipografia.etiqueta, color: colores.textoSecundario },
-  valor: { ...tipografia.cuerpo, color: colores.texto },
 });
