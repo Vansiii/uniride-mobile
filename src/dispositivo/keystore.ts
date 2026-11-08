@@ -10,12 +10,20 @@ export class ErrorKeystore extends Error {
   }
 }
 
+export interface FirmaConMarca {
+  /** Firma DER en Base64. */
+  firma: string;
+  /** Milisegundos del momento de firmar, tomados después de la huella. */
+  marca: string;
+}
+
 interface ModuloLlave {
   crearLlave(): Promise<string>;
   firmar(
-    mensaje: string,
+    antes: string,
+    despues: string,
     textos: { titulo: string; subtitulo: string; cancelar: string },
-  ): Promise<string>;
+  ): Promise<FirmaConMarca>;
   nonceAleatorio(): string;
 }
 
@@ -48,10 +56,13 @@ export async function crearLlave(): Promise<string> {
   }
 }
 
-/** Firma `mensaje` (UTF-8) con la llave privada, tras pedir la biometría; devuelve la firma DER en Base64. */
-export async function firmar(mensaje: string): Promise<string> {
+/** Tras pedir la biometría, firma `antes + marca + despues` (UTF-8) con la llave privada y devuelve firma y marca. */
+export async function firmar(
+  antes: string,
+  despues: string,
+): Promise<FirmaConMarca> {
   try {
-    return await modulo().firmar(mensaje, {
+    return await modulo().firmar(antes, despues, {
       titulo: t('dispositivo.autenticacion.titulo'),
       subtitulo: t('dispositivo.autenticacion.subtitulo'),
       cancelar: t('dispositivo.autenticacion.cancelar'),

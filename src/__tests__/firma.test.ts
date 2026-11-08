@@ -1,5 +1,7 @@
-import { solicitarFirmado } from '@/api/cliente';
+import { getItemAsync } from 'expo-secure-store';
+import { iniciarSesion, solicitarFirmado } from '@/api/cliente';
 import { cabecerasFirma, mensajeCanonico } from '@/dispositivo/firma';
+import { firmar } from '@/dispositivo/keystore';
 import { sha256Hex } from '@/dispositivo/sha256';
 import { dispositivoReal as d, simularFetch } from '@/pruebas/respuestasApi';
 
@@ -26,12 +28,20 @@ const mockPar = nodo().generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
 
 // Lo que haría el Keystore: ECDSA P-256 con SHA-256, firma en DER y Base64 (lo que acepta el servidor).
 jest.mock('@/dispositivo/keystore', () => ({
-  firmar: jest.fn(async (mensaje: string) =>
-    jest
-      .requireActual('node:crypto')
-      .sign('sha256', new TextEncoder().encode(mensaje), mockPar.privateKey)
-      .toString('base64'),
-  ),
+  firmar: jest.fn(async (antes: string, despues: string) => {
+    const marca = String(Date.now());
+    return {
+      marca,
+      firma: jest
+        .requireActual('node:crypto')
+        .sign(
+          'sha256',
+          new TextEncoder().encode(antes + marca + despues),
+          mockPar.privateKey,
+        )
+        .toString('base64'),
+    };
+  }),
   nonceAleatorio: () =>
     jest.requireActual('node:crypto').randomBytes(16).toString('hex'),
 }));
@@ -63,6 +73,57 @@ describe('SHA-256 del cuerpo firmado (HU-09 RN-4)', () => {
 
 describe('Firma de peticiones sensibles', () => {
   const RUTA = '/api/v1/billetera/recargas';
+
+  describe('una sola huella por petición', () => {
+    const rechazo = (codigo: string) => ({ estado: 401, cuerpo: { codigo } });
+    const sesion = {
+      estado: 200,
+      cuerpo: { tokenAcceso: 'a', tokenRefresco: 'r' },
+    };
+    const abrir = async (respuestas: { estado: number; cuerpo: object }[]) => {
+      const { llamadas, falso } = simularFetch({
+        'POST /autenticacion/iniciar-sesion': sesion,
+        'POST /autenticacion/refrescar': sesion,
+        'GET /dispositivos/mi-dispositivo': d.vinculado,
+        'POST /billetera/recargas': respuestas,
+      });
+      await iniciarSesion('a@b.c', 'clave');
+      jest.mocked(getItemAsync).mockResolvedValue('r');
+      jest.mocked(firmar).mockClear();
+      return { llamadas, falso };
+    };
+
+    it('si solo venció la sesión, la renueva y reenvía la misma firma', async () => {
+      const { llamadas, falso } = await abrir([
+        rechazo('NO_AUTENTICADO'),
+        { estado: 200, cuerpo: {} },
+      ]);
+      await solicitarFirmado('/billetera/recargas', 'POST', { monto: 10 });
+      expect(firmar).toHaveBeenCalledTimes(1);
+      expect(llamadas.map((l) => l.ruta)).toContain(
+        'POST /autenticacion/refrescar',
+      );
+      const firmas = falso.mock.calls
+        .filter(([u]) => u.endsWith('/billetera/recargas'))
+        .map(([, i]) => (i?.headers as Record<string, string>)['X-Firma']);
+      expect(firmas).toHaveLength(2);
+      expect(firmas[1]).toBe(firmas[0]);
+    });
+
+    it.each(['PETICION_EXPIRADA', 'FIRMA_DISPOSITIVO_INVALIDA'])(
+      '%s no se reintenta solo: no renueva la sesión ni pide otra huella',
+      async (codigo) => {
+        const { llamadas } = await abrir([rechazo(codigo)]);
+        await expect(
+          solicitarFirmado('/billetera/recargas', 'POST', { monto: 10 }),
+        ).rejects.toMatchObject({ codigo });
+        expect(firmar).toHaveBeenCalledTimes(1);
+        expect(llamadas.map((l) => l.ruta)).not.toContain(
+          'POST /autenticacion/refrescar',
+        );
+      },
+    );
+  });
 
   it('el mensaje canónico es METODO, RUTA, TIMESTAMP, NONCE y hash del cuerpo', () => {
     const nonce = 'n'.repeat(16);

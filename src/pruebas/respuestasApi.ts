@@ -1113,6 +1113,49 @@ export const recargaReal = {
   }),
 };
 
+// Contrato de `backend/src/viajes/dto/viaje.dto.ts` (HU-17), con los `codigo` que devuelve `viajes.service.ts`.
+export const viajeReal = {
+  /** GET /viajes/limites → 200 */
+  limites: ok(200, { precioMinimo: 1, precioMaximo: 20 }),
+  /** POST /viajes → 201 */
+  publicado: ok(201, {
+    id: '3f6b1c2e-9d4a-4e7b-8a10-2c5d7e9f1b34',
+    estado: 'publicado',
+    cuposDisponibles: 3,
+  }),
+  cuposExceden: ok(400, {
+    codigo: 'CUPOS_EXCEDEN_CAPACIDAD',
+    mensaje: 'viajes.publicar.cupos_exceden_capacidad',
+    maximo: 2,
+  }),
+  precioFuera: ok(400, {
+    codigo: 'PRECIO_FUERA_DE_RANGO',
+    mensaje: 'viajes.publicar.precio_invalido',
+    minimo: 1,
+    maximo: 15,
+  }),
+  horarioInvalido: ok(400, {
+    codigo: 'HORARIO_INVALIDO',
+    mensaje: 'viajes.publicar.horario_invalido',
+    minimoMinutos: 15,
+    maximoDias: 7,
+  }),
+  solapado: ok(409, {
+    codigo: 'VIAJE_SOLAPADO',
+    mensaje: 'viajes.publicar.viaje_solapado',
+    margenHoras: 2,
+    salidaExistente: '2099-03-10T12:15:00.000Z',
+  }),
+  sinVehiculo: ok(403, {
+    codigo: 'CONDUCTOR_SIN_VEHICULO',
+    mensaje: 'viajes.publicar.requisito_incompleto',
+  }),
+  firmaInvalida: ok(401, {
+    codigo: 'FIRMA_DISPOSITIVO_INVALIDA',
+    mensaje: 'La firma del dispositivo no es válida.',
+  }),
+};
+
 /** `fetch` falso que responde según "MÉTODO /ruta"; lo que no está en `rutas` falla como una caída de red. */
 export function simularFetch(
   rutas: Record<string, RespuestaSimulada | RespuestaSimulada[]>,
@@ -1128,11 +1171,13 @@ export function simularFetch(
     if (!cola?.length) throw new TypeError('Network request failed');
     // La última respuesta se repite, como un servidor que responde igual.
     const { estado, cuerpo } = cola.length > 1 ? cola.shift()! : cola[0];
-    return {
+    const respuesta = {
       ok: estado >= 200 && estado < 300,
       status: estado,
       json: async () => cuerpo,
+      clone: () => respuesta,
     };
+    return respuesta;
   });
   globalThis.fetch = falso as unknown as typeof fetch;
   return { llamadas, falso };

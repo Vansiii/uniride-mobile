@@ -356,7 +356,8 @@ export async function consultarMiDispositivo(): Promise<MiDispositivo | null> {
 
 /**
  * Petición sensible (billetera, publicar viaje, reservar, handshakes): lleva la firma del dispositivo (A-08).
- * Cada intento se firma de nuevo: el nonce es de un solo uso y la ventana es de 30 s.
+ * Una huella por petición: si solo venció la sesión, el servidor la rechaza antes de mirar la firma y gastar su
+ * nonce, así que la misma firma vale al reenviarla. Otro 401 es de la firma y va tal cual a la pantalla.
  */
 export async function solicitarFirmado<T>(
   ruta: string,
@@ -367,16 +368,25 @@ export async function solicitarFirmado<T>(
   if (!id) throw new ErrorApi(0, 'DISPOSITIVO_NO_VINCULADO');
   const url = new URL(`${BASE}${ruta}`);
   const texto = cuerpo === undefined ? '' : JSON.stringify(cuerpo);
-  const intentar = async () =>
-    enviar(
-      ruta,
-      metodo,
-      cuerpo,
-      await cabecerasFirma(id, metodo, url.pathname + url.search, texto),
-    );
-  let respuesta = await intentar();
-  if (respuesta.status === 401 && tokenAcceso && (await renovarSesion()))
-    respuesta = await intentar();
+  const firma = await cabecerasFirma(
+    id,
+    metodo,
+    url.pathname + url.search,
+    texto,
+  );
+  let respuesta = await enviar(ruta, metodo, cuerpo, firma);
+  if (
+    respuesta.status === 401 &&
+    tokenAcceso &&
+    (
+      await respuesta
+        .clone()
+        .json()
+        .catch(() => ({}))
+    ).codigo === 'NO_AUTENTICADO' &&
+    (await renovarSesion())
+  )
+    respuesta = await enviar(ruta, metodo, cuerpo, firma);
   return leer<T>(respuesta);
 }
 
@@ -525,3 +535,33 @@ export const confirmarRecarga = (id: string) =>
 /** Sin firma: consultar el estado nunca pide la huella. */
 export const consultarRecarga = (id: string) =>
   solicitar<OrdenRecarga>(`/billetera/recargas/${id}`, 'GET');
+
+/** Precio por asiento de la organización activa (HU-17), en URC. Solo para avisar: decide `POST /viajes`. */
+export interface LimitesViaje {
+  precioMinimo: number;
+  precioMaximo: number;
+}
+
+export const consultarLimitesViaje = () =>
+  solicitar<LimitesViaje>('/viajes/limites', 'GET');
+
+export interface DatosViaje {
+  origenNombre: string;
+  origenLat: number;
+  origenLng: number;
+  destinoNombre: string;
+  destinoLat: number;
+  destinoLng: number;
+  /** ISO 8601 con zona. */
+  fechaHoraSalida: string;
+  cuposTotales: number;
+  precioPorAsiento: number;
+}
+
+/** Pide la huella (CA-7); se publica en la organización activa, que el cliente no envía (A-13). */
+export const publicarViaje = (datos: DatosViaje) =>
+  solicitarFirmado<{ id: string; estado: string; cuposDisponibles: number }>(
+    '/viajes',
+    'POST',
+    datos,
+  );

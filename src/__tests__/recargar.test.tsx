@@ -86,7 +86,7 @@ beforeEach(async () => {
   jest.clearAllMocks();
   await cerrarSesion().catch(() => undefined);
   firma.mockReset();
-  firma.mockResolvedValue('firma-de-prueba');
+  firma.mockResolvedValue({ firma: 'firma-de-prueba', marca: '1' });
   jest.useFakeTimers({
     doNotFake: ['nextTick', 'setImmediate', 'queueMicrotask'],
     now: AHORA,
@@ -314,7 +314,8 @@ describe('Recargar · confirmación (CA-1, CA-3, CA-4, RN-6)', () => {
   });
 
   it('dos toques a Simular pago piden una sola huella', async () => {
-    let soltar: (valor: string) => void = () => undefined;
+    let soltar: (valor: { firma: string; marca: string }) => void = () =>
+      undefined;
     firma.mockImplementationOnce(
       () =>
         new Promise((resolver) => {
@@ -324,7 +325,7 @@ describe('Recargar · confirmación (CA-1, CA-3, CA-4, RN-6)', () => {
     const { llamadas } = await abrirQr({ [CONFIRMAR]: o.procesando() });
     await fireEvent.press(boton('Simular pago'));
     await fireEvent.press(boton('Simular pago'));
-    soltar('firma-de-prueba');
+    soltar({ firma: 'firma-de-prueba', marca: '1' });
     await screen.findByText('Recarga en camino');
     expect(firma).toHaveBeenCalledTimes(1);
     expect(veces(llamadas, CONFIRMAR)).toBe(1);

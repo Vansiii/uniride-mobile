@@ -55,8 +55,8 @@ class LlaveDispositivoModule : Module() {
 
     AsyncFunction("crearLlave") { crearLlave() }
 
-    AsyncFunction("firmar") { mensaje: String, textos: TextosHuella, promesa: Promise ->
-      firmar(mensaje, textos, promesa)
+    AsyncFunction("firmar") { antes: String, despues: String, textos: TextosHuella, promesa: Promise ->
+      firmar(antes, despues, textos, promesa)
     }.runOnQueue(Queues.MAIN)
 
     // Hermes no trae `crypto.getRandomValues`.
@@ -107,7 +107,11 @@ class LlaveDispositivoModule : Module() {
       generateKeyPair()
     }
 
-  private fun firmar(mensaje: String, textos: TextosHuella, promesa: Promise) {
+  /**
+   * Firma `antes + hora + despues`. La hora se toma tras la huella: el tiempo con el diálogo abierto no gasta
+   * la ventana de 30 s del servidor.
+   */
+  private fun firmar(antes: String, despues: String, textos: TextosHuella, promesa: Promise) {
     val actividad = appContext.currentActivity as? FragmentActivity
       ?: return promesa.reject(noDisponible("La app no está en primer plano"))
     val firma = try {
@@ -134,8 +138,11 @@ class LlaveDispositivoModule : Module() {
           try {
             val autenticada = resultado.cryptoObject?.signature
               ?: return promesa.reject(noDisponible("Sin operación autenticada"))
-            autenticada.update(mensaje.toByteArray(Charsets.UTF_8))
-            promesa.resolve(Base64.encodeToString(autenticada.sign(), Base64.NO_WRAP))
+            val marca = System.currentTimeMillis().toString()
+            autenticada.update((antes + marca + despues).toByteArray(Charsets.UTF_8))
+            promesa.resolve(
+              mapOf("firma" to Base64.encodeToString(autenticada.sign(), Base64.NO_WRAP), "marca" to marca)
+            )
           } catch (error: Exception) {
             promesa.reject(noDisponible("El Keystore no firmó", error))
           }

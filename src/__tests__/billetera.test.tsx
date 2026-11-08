@@ -98,7 +98,7 @@ beforeEach(async () => {
   jest.clearAllMocks();
   // El dispositivo de la sesión anterior no debe quedar en memoria entre pruebas.
   await cerrarSesion().catch(() => undefined);
-  firma.mockResolvedValue('firma-de-prueba');
+  firma.mockResolvedValue({ firma: 'firma-de-prueba', marca: '1' });
   copiar.mockResolvedValue(true);
 });
 
@@ -277,7 +277,10 @@ describe('Billetera · creación y lectura firmada', () => {
   it('un toque en actualizar mientras la huella está en curso no abre una segunda lectura', async () => {
     // La huella tarda: la primera lectura sigue en curso cuando la persona toca actualizar.
     firma.mockImplementation(
-      () => new Promise((resolver) => setTimeout(() => resolver('firma'), 150)),
+      () =>
+        new Promise((resolver) =>
+          setTimeout(() => resolver({ firma: 'firma', marca: '1' }), 150),
+        ),
     );
     const { llamadas } = await abrir({ 'GET /billetera/mia': b.conSaldo });
     await fireEvent.press(
@@ -452,19 +455,15 @@ describe('Billetera · estados', () => {
   it('PETICION_EXPIRADA: mensaje y, al reintentar, la lectura se firma de nuevo', async () => {
     const { llamadas } = await abrir({
       'GET /billetera/saldo': h.saldo,
-      // El cliente reintenta una vez ante un 401 (renueva la sesión y firma otra vez): las dos primeras fallan.
-      'GET /billetera/mia': [
-        b.peticionExpirada,
-        b.peticionExpirada,
-        b.conSaldo,
-      ],
+      // Un rechazo de la firma no se reintenta solo: nunca sale otra huella sin que la persona lo pida.
+      'GET /billetera/mia': [b.peticionExpirada, b.conSaldo],
     });
     expect(
       await screen.findByText(/comprobación de tu teléfono venció/),
     ).toBeTruthy();
     await fireEvent.press(reintentar());
     expect(await screen.findByText('Saldo disponible')).toBeTruthy();
-    expect(lecturas(llamadas)).toBe(3);
+    expect(lecturas(llamadas)).toBe(2);
   });
   it('huella cancelada: aviso tranquilo (no alarmante) con reintentar', async () => {
     firma.mockRejectedValueOnce(new ErrorKeystore('BIOMETRIA_CANCELADA'));

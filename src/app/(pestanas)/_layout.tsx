@@ -6,8 +6,8 @@ import { colores, espacio, tamano, tipografia } from '@/tema/tokens';
 
 /**
  * Barra de pestañas (DESIGN_SYSTEM §6.1): ícono y etiqueta siempre. Solo están las pestañas que ya existen; Buscar,
- * Mis viajes, Publicar y Perfil se suman con sus historias. Cada pestaña se monta al entrar por primera vez y se
- * queda montada: cambiar de pestaña no vuelve a cargar nada (en Billetera cada lectura pide la huella).
+ * Mis viajes y Perfil se suman con sus historias. Cada pestaña se monta al entrar por primera vez y se
+ * queda montada: cambiar de pestaña no la reinicia (en Billetera cada lectura pide la huella). Publicar relee sus requisitos al volver.
  */
 export default function Pestanas() {
   const { bottom } = useSafeAreaInsets();
@@ -33,6 +33,15 @@ export default function Pestanas() {
           title: t('inicio.pestana'),
           tabBarIcon: ({ color }) => (
             <Icono nombre="home" color={color as string} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="publicar"
+        options={{
+          title: t('viajes.publicar.pestana'),
+          tabBarIcon: ({ color }) => (
+            <Icono nombre="add_circle" color={color as string} />
           ),
         }}
       />
