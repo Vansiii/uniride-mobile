@@ -1,3 +1,4 @@
+import * as Haptics from 'expo-haptics';
 import { ReactNode, useEffect, useState } from 'react';
 import {
   Pressable,
@@ -63,6 +64,8 @@ export function Toque({
       {...resto}
       onPressIn={(e) => {
         valor.set(withSpring(escala, resorte));
+        // Vibración leve de selección: confirma el toque sin mirar la pantalla.
+        Haptics.selectionAsync().catch(() => undefined);
         resto.onPressIn?.(e);
       }}
       onPressOut={(e) => {

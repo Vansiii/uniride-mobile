@@ -20,6 +20,7 @@ import {
   Vehiculo,
 } from '@/api/cliente';
 import { useSesion } from '@/contexto/sesion';
+import { Entra, Esqueleto } from '@/componentes/Animado';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { Campo } from '@/componentes/Campo';
 import { Casilla } from '@/componentes/Casilla';
@@ -28,6 +29,7 @@ import { Aviso } from '@/componentes/Mensajes';
 import { t } from '@/i18n';
 import {
   colores,
+  degradadoSaldo,
   espacio,
   radio,
   sombraTarjeta,
@@ -277,7 +279,13 @@ export default function VehiculoPantalla() {
         )}
         {falla && <Aviso tono="peligro">{falla.texto}</Aviso>}
         {consultando ? (
-          <Text style={estilos.texto}>{t('comun.estados.cargando')}</Text>
+          <View
+            accessibilityLabel={t('comun.estados.cargando')}
+            style={estilos.contenido}
+          >
+            <Esqueleto alto={120} redondeo={radio.xl} />
+            <Esqueleto alto={150} redondeo={radio.l} />
+          </View>
         ) : sinConsulta ? (
           <Boton
             variante="secundario"
@@ -288,7 +296,7 @@ export default function VehiculoPantalla() {
           />
         ) : vehiculo ? (
           <>
-            <View style={estilos.tarjeta}>
+            <Entra style={estilos.tarjeta}>
               <Dato
                 destacado
                 etiqueta={t('vehiculos.registro.placa')}
@@ -319,7 +327,7 @@ export default function VehiculoPantalla() {
                   }
                 />
               </View>
-            </View>
+            </Entra>
             <Text style={estilos.texto}>
               {t('vehiculos.registro.privacidad')}
             </Text>
@@ -465,7 +473,9 @@ function Dato({
 }) {
   return (
     <View style={destacado ? estilos.datoDestacado : estilos.dato}>
-      <Text style={estilos.etiqueta}>{etiqueta}</Text>
+      <Text style={destacado ? estilos.etiquetaPlaca : estilos.etiqueta}>
+        {etiqueta}
+      </Text>
       <Text style={destacado ? estilos.placa : estilos.valor}>{valor}</Text>
     </View>
   );
@@ -506,20 +516,26 @@ const estilos = StyleSheet.create({
   },
   rejilla: { flexDirection: 'row', flexWrap: 'wrap', rowGap: espacio(4) },
   dato: { gap: 2, width: '50%' },
+  // Placa: banda de marca con la matrícula en grande, como en la carrocería.
   datoDestacado: {
     gap: espacio(1),
-    paddingBottom: espacio(4),
-    borderBottomWidth: 1,
-    borderBottomColor: colores.borde,
+    padding: espacio(4),
+    borderRadius: radio.m,
+    backgroundColor: colores.primario,
+    experimental_backgroundImage: degradadoSaldo,
   },
   placa: {
     ...tipografia.titulo,
     fontSize: 26,
     lineHeight: 32,
-    letterSpacing: 2,
-    color: colores.texto,
+    letterSpacing: 4,
+    color: colores.sobreMarca,
   },
   etiqueta: { ...tipografia.etiqueta, color: colores.textoSecundario },
+  etiquetaPlaca: {
+    ...tipografia.etiqueta,
+    color: colores.sobreMarcaSecundario,
+  },
   valor: { ...tipografia.cuerpo, color: colores.texto },
   foto: { gap: espacio(2) },
   etiquetaFoto: { ...tipografia.etiqueta, color: colores.texto },

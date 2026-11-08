@@ -40,3 +40,10 @@ jest.mock('expo-status-bar', () => ({
   StatusBar: () => null,
   setStatusBarStyle: jest.fn(),
 }));
+
+// La vibración es del dispositivo: en Jest no hay motor háptico.
+jest.mock('expo-haptics', () => ({
+  selectionAsync: () => Promise.resolve(),
+  notificationAsync: () => Promise.resolve(),
+  NotificationFeedbackType: { Success: 'success', Error: 'error' },
+}));
