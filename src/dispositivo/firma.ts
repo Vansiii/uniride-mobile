@@ -1,4 +1,4 @@
-import { firmar } from './keystore';
+import { firmar, nonceAleatorio } from './keystore';
 import { sha256Hex } from './sha256';
 
 /**
@@ -16,13 +16,6 @@ export function mensajeCanonico(
   return `${metodo.toUpperCase()}\n${ruta}\n${marca}\n${nonce}\n${sha256Hex(cuerpo)}`;
 }
 
-/** 16 bytes aleatorios en hexadecimal (el servidor pide de 16 a 128 caracteres). */
-function nuevoNonce(): string {
-  const bytes = new Uint8Array(16);
-  globalThis.crypto.getRandomValues(bytes);
-  return [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
-}
-
 /** Encabezados de una petición sensible: la firma la hace el Keystore, con biometría del dueño (A-04, A-08). */
 export async function cabecerasFirma(
   dispositivoId: string,
@@ -31,7 +24,7 @@ export async function cabecerasFirma(
   cuerpo: string,
 ): Promise<Record<string, string>> {
   const marca = String(Date.now());
-  const nonce = nuevoNonce();
+  const nonce = nonceAleatorio();
   return {
     'X-Dispositivo-Id': dispositivoId,
     'X-Timestamp': marca,
