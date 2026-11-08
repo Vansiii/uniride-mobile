@@ -404,19 +404,19 @@ const estilos = StyleSheet.create({
   // 4 chips en una fila a 360 dp (prototipo); si la letra del sistema crece, pasan a otra fila.
   filtros: { flexDirection: 'row', flexWrap: 'wrap', gap: espacio(1) },
   chip: {
-    height: 32,
-    paddingHorizontal: espacio(2),
-    borderRadius: radio.s,
+    height: 36,
+    paddingHorizontal: espacio(3),
+    borderRadius: radio.completo,
     borderWidth: 1,
-    borderColor: colores.bordeCampo,
+    borderColor: colores.borde,
     justifyContent: 'center',
   },
   chipActivo: {
-    backgroundColor: colores.primarioSuave,
+    backgroundColor: colores.primario,
     borderColor: colores.primario,
   },
   textoChip: { ...tipografia.etiqueta, color: colores.texto },
-  textoChipActivo: { color: colores.primarioTexto },
+  textoChipActivo: { color: colores.sobrePrimario },
   dia: {
     ...tipografia.pequeno,
     letterSpacing: 0.7,

@@ -45,6 +45,7 @@ import {
   radio,
   tipografia,
   sombraElevada,
+  sombraTarjeta,
 } from '@/tema/tokens';
 import {
   ANTICIPACION_MAXIMA_DIAS,
@@ -584,7 +585,7 @@ function Contenido() {
 
   return (
     <KeyboardAvoidingView
-      style={estilos.raiz}
+      style={estilos.raizSutil}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={[estilos.encabezado, { paddingTop: top }]}>
@@ -612,138 +613,157 @@ function Contenido() {
         )}
 
         {origen && destino && <MapaRuta origen={origen} destino={destino} />}
-        <View onLayout={(e) => ubicar('origen', e)}>
-          <SelectorLugar
-            refEntrada={entradaOrigen}
-            etiqueta={t('viajes.publicar.origen')}
-            lugar={origen}
-            error={errores.origen}
-            alElegir={(l) => {
-              setOrigen(l);
-              setErrores((e) => ({ ...e, origen: undefined }));
-            }}
-          />
-        </View>
-        <View style={estilos.intercambiar}>
-          <BotonIcono
-            icono="swap_vert"
-            etiqueta={t('viajes.publicar.intercambiar')}
-            alPresionar={() => {
-              setOrigen(destino);
-              setDestino(origen);
-              setErrores((e) => ({
-                ...e,
-                origen: undefined,
-                destino: undefined,
-              }));
-            }}
-          />
-        </View>
-        <View onLayout={(e) => ubicar('destino', e)}>
-          <SelectorLugar
-            refEntrada={entradaDestino}
-            etiqueta={t('viajes.publicar.destino')}
-            lugar={destino}
-            error={errores.destino}
-            alElegir={(l) => {
-              setDestino(l);
-              setErrores((e) => ({ ...e, destino: undefined }));
-            }}
-          />
+        <View style={estilos.seccion}>
+          <Text style={estilos.tituloSeccion} accessibilityRole="header">
+            {t('viajes.publicar.seccion_ruta')}
+          </Text>
+          <View onLayout={(e) => ubicar('origen', e)}>
+            <SelectorLugar
+              refEntrada={entradaOrigen}
+              etiqueta={t('viajes.publicar.origen')}
+              lugar={origen}
+              error={errores.origen}
+              alElegir={(l) => {
+                setOrigen(l);
+                setErrores((e) => ({ ...e, origen: undefined }));
+              }}
+            />
+          </View>
+          <View style={estilos.intercambiar}>
+            <BotonIcono
+              icono="swap_vert"
+              etiqueta={t('viajes.publicar.intercambiar')}
+              alPresionar={() => {
+                setOrigen(destino);
+                setDestino(origen);
+                setErrores((e) => ({
+                  ...e,
+                  origen: undefined,
+                  destino: undefined,
+                }));
+              }}
+            />
+          </View>
+          <View onLayout={(e) => ubicar('destino', e)}>
+            <SelectorLugar
+              refEntrada={entradaDestino}
+              etiqueta={t('viajes.publicar.destino')}
+              lugar={destino}
+              error={errores.destino}
+              alElegir={(l) => {
+                setDestino(l);
+                setErrores((e) => ({ ...e, destino: undefined }));
+              }}
+            />
+          </View>
         </View>
 
-        <SelectorFecha
-          fecha={fecha}
-          alElegir={(f) => {
-            setSalida((s) => ({ ...s, fecha: f }));
-            setErrores((e) => ({ ...e, hora: undefined }));
-          }}
-        />
-        <View onLayout={(e) => ubicar('hora', e)}>
-          <Campo
-            refEntrada={entradaHora}
-            etiqueta={t('viajes.publicar.hora')}
-            ayuda={t('viajes.publicar.hora_ayuda')}
-            keyboardType="number-pad"
-            maxLength={5}
-            value={hora}
-            onChangeText={(v) => {
-              setSalida((s) => ({ ...s, hora: escribirHora(v) }));
+        <View style={estilos.seccion}>
+          <Text style={estilos.tituloSeccion} accessibilityRole="header">
+            {t('viajes.publicar.seccion_cuando')}
+          </Text>
+          <SelectorFecha
+            fecha={fecha}
+            alElegir={(f) => {
+              setSalida((s) => ({ ...s, fecha: f }));
               setErrores((e) => ({ ...e, hora: undefined }));
             }}
-            error={errores.hora}
           />
+          <View onLayout={(e) => ubicar('hora', e)}>
+            <Campo
+              refEntrada={entradaHora}
+              etiqueta={t('viajes.publicar.hora')}
+              ayuda={t('viajes.publicar.hora_ayuda')}
+              keyboardType="number-pad"
+              maxLength={5}
+              value={hora}
+              onChangeText={(v) => {
+                setSalida((s) => ({ ...s, hora: escribirHora(v) }));
+                setErrores((e) => ({ ...e, hora: undefined }));
+              }}
+              error={errores.hora}
+            />
+          </View>
         </View>
 
-        <View style={estilos.grupo}>
-          <Text style={estilos.etiqueta}>{t('viajes.publicar.asientos')}</Text>
-          <View style={estilos.asientos} accessibilityRole="radiogroup">
-            {Array.from({ length: CAPACIDAD_MAXIMA }, (_, i) => i + 1).map(
-              (n) => {
-                const disponible = n <= capacidad;
-                const elegido = n === asientos;
-                return (
-                  <Pressable
-                    key={n}
-                    accessibilityRole="radio"
-                    accessibilityLabel={
-                      n === 1
-                        ? t('viajes.publicar.asiento_opcion_uno')
-                        : con('viajes.publicar.asiento_opcion', { cantidad: n })
-                    }
-                    accessibilityState={{
-                      selected: elegido,
-                      disabled: !disponible,
-                    }}
-                    disabled={!disponible}
-                    onPress={() => setCupos(n)}
-                    style={[
-                      estilos.asiento,
-                      elegido && estilos.chipElegido,
-                      !disponible && estilos.asientoNo,
-                    ]}
-                  >
-                    <Text
+        <View style={estilos.seccion}>
+          <Text style={estilos.tituloSeccion} accessibilityRole="header">
+            {t('viajes.publicar.seccion_precio')}
+          </Text>
+          <View style={estilos.grupo}>
+            <Text style={estilos.etiqueta}>
+              {t('viajes.publicar.asientos')}
+            </Text>
+            <View style={estilos.asientos} accessibilityRole="radiogroup">
+              {Array.from({ length: CAPACIDAD_MAXIMA }, (_, i) => i + 1).map(
+                (n) => {
+                  const disponible = n <= capacidad;
+                  const elegido = n === asientos;
+                  return (
+                    <Pressable
+                      key={n}
+                      accessibilityRole="radio"
+                      accessibilityLabel={
+                        n === 1
+                          ? t('viajes.publicar.asiento_opcion_uno')
+                          : con('viajes.publicar.asiento_opcion', {
+                              cantidad: n,
+                            })
+                      }
+                      accessibilityState={{
+                        selected: elegido,
+                        disabled: !disponible,
+                      }}
+                      disabled={!disponible}
+                      onPress={() => setCupos(n)}
                       style={[
-                        estilos.textoChip,
-                        elegido && estilos.textoChipElegido,
-                        !disponible && estilos.textoAsientoNo,
+                        estilos.asiento,
+                        elegido && estilos.chipElegido,
+                        !disponible && estilos.asientoNo,
                       ]}
                     >
-                      {n}
-                    </Text>
-                  </Pressable>
-                );
-              },
-            )}
+                      <Text
+                        style={[
+                          estilos.textoChip,
+                          elegido && estilos.textoChipElegido,
+                          !disponible && estilos.textoAsientoNo,
+                        ]}
+                      >
+                        {n}
+                      </Text>
+                    </Pressable>
+                  );
+                },
+              )}
+            </View>
+            <Text style={estilos.secundario}>
+              {con(
+                capacidad === 1
+                  ? 'viajes.publicar.asientos_ayuda_uno'
+                  : 'viajes.publicar.asientos_ayuda',
+                { vehiculo: nombreVehiculo, capacidad },
+              )}
+            </Text>
           </View>
-          <Text style={estilos.secundario}>
-            {con(
-              capacidad === 1
-                ? 'viajes.publicar.asientos_ayuda_uno'
-                : 'viajes.publicar.asientos_ayuda',
-              { vehiculo: nombreVehiculo, capacidad },
-            )}
-          </Text>
-        </View>
 
-        <View onLayout={(e) => ubicar('precio', e)}>
-          <Campo
-            refEntrada={entradaPrecio}
-            etiqueta={t('viajes.publicar.precio')}
-            ayuda={con('viajes.publicar.precio_ayuda', {
-              minimo: urc(limites.precioMinimo),
-              maximo: urc(limites.precioMaximo),
-              organizacion,
-            })}
-            keyboardType="decimal-pad"
-            value={precio}
-            onChangeText={(v) => {
-              setPrecio(v);
-              setErrores((e) => ({ ...e, precio: undefined }));
-            }}
-            error={errores.precio}
-          />
+          <View onLayout={(e) => ubicar('precio', e)}>
+            <Campo
+              refEntrada={entradaPrecio}
+              etiqueta={t('viajes.publicar.precio')}
+              ayuda={con('viajes.publicar.precio_ayuda', {
+                minimo: urc(limites.precioMinimo),
+                maximo: urc(limites.precioMaximo),
+                organizacion,
+              })}
+              keyboardType="decimal-pad"
+              value={precio}
+              onChangeText={(v) => {
+                setPrecio(v);
+                setErrores((e) => ({ ...e, precio: undefined }));
+              }}
+              error={errores.precio}
+            />
+          </View>
         </View>
       </ScrollView>
       <ZonaAccion enPestanas>
@@ -788,14 +808,24 @@ const estilos = StyleSheet.create({
     paddingBottom: espacio(4),
   },
   intercambiar: { alignItems: 'flex-end', marginVertical: -espacio(3) },
+  seccion: {
+    gap: espacio(3),
+    padding: espacio(4),
+    borderRadius: radio.l,
+    borderWidth: 1,
+    borderColor: colores.borde,
+    backgroundColor: colores.superficie,
+    ...sombraTarjeta,
+  },
+  tituloSeccion: { ...tipografia.subtitulo, color: colores.texto },
   grupo: { gap: espacio(2) },
   etiqueta: { ...tipografia.etiqueta, color: colores.texto },
   chipElegido: {
-    backgroundColor: colores.primarioSuave,
+    backgroundColor: colores.primario,
     borderColor: colores.primario,
   },
   textoChip: { ...tipografia.etiqueta, color: colores.texto },
-  textoChipElegido: { color: colores.primarioTexto },
+  textoChipElegido: { color: colores.sobrePrimario },
   asientos: { flexDirection: 'row', gap: espacio(2) },
   asiento: {
     flex: 1,

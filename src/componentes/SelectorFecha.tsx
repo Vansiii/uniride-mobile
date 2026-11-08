@@ -75,16 +75,16 @@ const estilos = StyleSheet.create({
   chip: {
     minHeight: 40,
     justifyContent: 'center',
-    paddingHorizontal: espacio(3),
-    borderRadius: radio.s,
+    paddingHorizontal: espacio(4),
+    borderRadius: radio.completo,
     borderWidth: 1,
-    borderColor: colores.bordeCampo,
+    borderColor: colores.borde,
     backgroundColor: colores.superficie,
   },
   chipElegido: {
-    backgroundColor: colores.primarioSuave,
+    backgroundColor: colores.primario,
     borderColor: colores.primario,
   },
   textoChip: { ...tipografia.etiqueta, color: colores.texto },
-  textoElegido: { color: colores.primarioTexto },
+  textoElegido: { color: colores.sobrePrimario },
 });

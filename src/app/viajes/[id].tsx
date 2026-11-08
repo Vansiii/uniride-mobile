@@ -33,7 +33,13 @@ import {
   formatearHoraLocal,
 } from '@/formato';
 import { con, t } from '@/i18n';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import {
+  colores,
+  espacio,
+  radio,
+  tipografia,
+  sombraTarjeta,
+} from '@/tema/tokens';
 
 /** Detalle del viaje (HU-18): solo nombre de pila y datos públicos del vehículo (RN-4). Reservar llega con HU-19. */
 export default function DetalleViajePantalla() {
@@ -128,8 +134,10 @@ export default function DetalleViajePantalla() {
             {!disponible && (
               <Aviso tono="info">{t('viajes.buscar.no_encontrado')}</Aviso>
             )}
-            <View style={estilos.tarjeta}>
+            <View style={estilos.mapa}>
               <MapaRuta origen={viaje.origen} destino={viaje.destino} />
+            </View>
+            <View style={estilos.tarjeta}>
               <View style={estilos.fila}>
                 <Text style={estilos.subtitulo}>
                   {formatearDia(viaje.fechaHoraSalida)} ·{' '}
@@ -160,10 +168,9 @@ export default function DetalleViajePantalla() {
                 <InsigniasConductor conductor={encontrado.conductor} />
               )}
               <View style={estilos.conductor}>
-                <Icono
-                  nombre="directions_car"
-                  color={colores.textoSecundario}
-                />
+                <View style={estilos.baldosa}>
+                  <Icono nombre="directions_car" color={colores.primario} />
+                </View>
                 <View style={estilos.encoge}>
                   <Text style={estilos.enfasis}>
                     {nombreVehiculo(viaje.vehiculo)}
@@ -178,7 +185,7 @@ export default function DetalleViajePantalla() {
                 <Text style={estilos.secundario}>
                   {t('viajes.buscar.precio_asiento')}
                 </Text>
-                <Text style={estilos.enfasis}>
+                <Text style={estilos.precio}>
                   {precioUrc(viaje.precioPorAsiento)}
                 </Text>
               </View>
@@ -243,6 +250,29 @@ const estilos = StyleSheet.create({
     borderWidth: 1,
     borderColor: colores.borde,
     backgroundColor: colores.superficie,
+    ...sombraTarjeta,
+  },
+  mapa: {
+    overflow: 'hidden',
+    borderRadius: radio.l,
+    borderWidth: 1,
+    borderColor: colores.borde,
+    ...sombraTarjeta,
+  },
+  baldosa: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radio.m,
+    backgroundColor: colores.primarioSuave,
+  },
+  precio: {
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: '700',
+    letterSpacing: -0.4,
+    color: colores.primarioTexto,
   },
   fila: {
     flexDirection: 'row',

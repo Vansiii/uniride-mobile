@@ -359,6 +359,9 @@
     "publicar": {
       "pestana": "Publicar",
       "titulo": "Publicar viaje",
+      "seccion_ruta": "Ruta",
+      "seccion_cuando": "Cuándo sales",
+      "seccion_precio": "Asientos y precio",
       "requisitos_titulo": "Para ofrecer viajes en {organizacion} te falta:",
       "requisito_vehiculo": "Registra tu vehículo",
       "requisito_vehiculo_texto": "Los pasajeros verán la placa, la marca, el modelo y el color",
