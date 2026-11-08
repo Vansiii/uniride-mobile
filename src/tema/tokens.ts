@@ -2,12 +2,12 @@
 // Solo tema claro hasta HU-31.
 export const colores = {
   fondo: '#FFFFFF',
-  fondoSutil: '#F6F7F9',
+  fondoSutil: '#F7F8FA',
   superficie: '#FFFFFF',
-  borde: '#DDE1E8',
+  borde: '#E4E7EC',
   bordeCampo: '#7A8396',
-  texto: '#1A1F27',
-  textoSecundario: '#535B6C',
+  texto: '#0F1729',
+  textoSecundario: '#475467',
   textoPlaceholder: '#6B7385',
   textoDeshabilitado: '#8F98A8',
   fondoDeshabilitado: '#EEF0F4',
@@ -41,6 +41,15 @@ export const degradadoMarca =
 export const espacio = (n: number) => n * 4;
 
 export const radio = { s: 8, m: 12, l: 16, xl: 24, completo: 999 } as const;
+
+/** Sombra de tarjeta (igual a `--sombra-tarjeta` de la web): sutil, para separar la superficie del fondo. */
+export const sombraTarjeta = {
+  shadowColor: '#101828',
+  shadowOpacity: 0.05,
+  shadowRadius: 2,
+  shadowOffset: { width: 0, height: 1 },
+  elevation: 1,
+} as const;
 
 export const tamano = {
   altoControl: 48,

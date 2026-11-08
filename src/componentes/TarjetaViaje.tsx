@@ -6,7 +6,13 @@ import {
   formatearMonto,
 } from '@/formato';
 import { con, t } from '@/i18n';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import {
+  colores,
+  espacio,
+  radio,
+  tipografia,
+  sombraTarjeta,
+} from '@/tema/tokens';
 import { EtiquetaEstado } from './Mensajes';
 
 export const precioUrc = (precio: number) =>
@@ -146,6 +152,7 @@ const estilos = StyleSheet.create({
     borderWidth: 1,
     borderColor: colores.borde,
     backgroundColor: colores.superficie,
+    ...sombraTarjeta,
   },
   cabecera: {
     flexDirection: 'row',

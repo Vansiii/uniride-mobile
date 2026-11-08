@@ -25,7 +25,13 @@ import { Casilla } from '@/componentes/Casilla';
 import { ZonaAccion } from '@/componentes/Estructura';
 import { Aviso } from '@/componentes/Mensajes';
 import { t } from '@/i18n';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import {
+  colores,
+  espacio,
+  radio,
+  sombraTarjeta,
+  tipografia,
+} from '@/tema/tokens';
 
 type Campos =
   | 'placa'
@@ -282,32 +288,35 @@ export default function VehiculoPantalla() {
           <>
             <View style={estilos.tarjeta}>
               <Dato
+                destacado
                 etiqueta={t('vehiculos.registro.placa')}
                 valor={vehiculo.placa}
               />
-              <Dato
-                etiqueta={t('vehiculos.registro.marca')}
-                valor={vehiculo.marca}
-              />
-              <Dato
-                etiqueta={t('vehiculos.registro.modelo')}
-                valor={vehiculo.modelo}
-              />
-              <Dato
-                etiqueta={t('vehiculos.registro.color')}
-                valor={vehiculo.color}
-              />
-              <Dato
-                etiqueta={t('vehiculos.registro.capacidad')}
-                valor={
-                  vehiculo.capacidad === 1
-                    ? t('vehiculos.registro.asiento')
-                    : t('vehiculos.registro.asientos').replace(
-                        '{cantidad}',
-                        String(vehiculo.capacidad),
-                      )
-                }
-              />
+              <View style={estilos.rejilla}>
+                <Dato
+                  etiqueta={t('vehiculos.registro.marca')}
+                  valor={vehiculo.marca}
+                />
+                <Dato
+                  etiqueta={t('vehiculos.registro.modelo')}
+                  valor={vehiculo.modelo}
+                />
+                <Dato
+                  etiqueta={t('vehiculos.registro.color')}
+                  valor={vehiculo.color}
+                />
+                <Dato
+                  etiqueta={t('vehiculos.registro.capacidad')}
+                  valor={
+                    vehiculo.capacidad === 1
+                      ? t('vehiculos.registro.asiento')
+                      : t('vehiculos.registro.asientos').replace(
+                          '{cantidad}',
+                          String(vehiculo.capacidad),
+                        )
+                  }
+                />
+              </View>
             </View>
             <Text style={estilos.texto}>
               {t('vehiculos.registro.privacidad')}
@@ -443,11 +452,19 @@ export default function VehiculoPantalla() {
   );
 }
 
-function Dato({ etiqueta, valor }: { etiqueta: string; valor: string }) {
+function Dato({
+  etiqueta,
+  valor,
+  destacado,
+}: {
+  etiqueta: string;
+  valor: string;
+  destacado?: boolean;
+}) {
   return (
-    <View style={estilos.dato}>
+    <View style={destacado ? estilos.datoDestacado : estilos.dato}>
       <Text style={estilos.etiqueta}>{etiqueta}</Text>
-      <Text style={estilos.valor}>{valor}</Text>
+      <Text style={destacado ? estilos.placa : estilos.valor}>{valor}</Text>
     </View>
   );
 }
@@ -476,8 +493,23 @@ const estilos = StyleSheet.create({
     borderWidth: 1,
     borderColor: colores.borde,
     backgroundColor: colores.superficie,
+    ...sombraTarjeta,
   },
-  dato: { gap: 2 },
+  rejilla: { flexDirection: 'row', flexWrap: 'wrap', rowGap: espacio(4) },
+  dato: { gap: 2, width: '50%' },
+  datoDestacado: {
+    gap: espacio(1),
+    paddingBottom: espacio(4),
+    borderBottomWidth: 1,
+    borderBottomColor: colores.borde,
+  },
+  placa: {
+    ...tipografia.titulo,
+    fontSize: 26,
+    lineHeight: 32,
+    letterSpacing: 2,
+    color: colores.texto,
+  },
   etiqueta: { ...tipografia.etiqueta, color: colores.textoSecundario },
   valor: { ...tipografia.cuerpo, color: colores.texto },
   foto: { gap: espacio(2) },
