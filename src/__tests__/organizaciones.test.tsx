@@ -8,6 +8,7 @@ import AgregarOrganizacion from '@/app/agregar-organizacion';
 import Codigo from '@/app/codigo';
 import EstadoMembresia from '@/app/estado-membresia';
 import Inicio from '@/app/(pestanas)/index';
+import Perfil from '@/app/(pestanas)/perfil';
 import Organizaciones from '@/app/organizaciones';
 import { ProveedorSesion } from '@/contexto/sesion';
 import {
@@ -481,10 +482,21 @@ describe('Entradas a las pantallas de organizaciones', () => {
   it('el inicio muestra la organización activa y lleva a Mis organizaciones', async () => {
     simularFetch({ ...CON_SESION, 'GET /yo': o.yoVarias });
     await abrir(<Inicio />);
-    expect(await screen.findByText('Organización activa')).toBeTruthy();
-    expect(screen.getAllByText('P7MOB A')).toHaveLength(2);
     await fireEvent.press(
-      screen.getByRole('button', { name: 'Mis organizaciones' }),
+      await screen.findByRole('button', {
+        name: 'Organización activa: P7MOB A',
+      }),
+    );
+    expect(mockRouter.push).toHaveBeenCalledWith('/organizaciones');
+  });
+
+  it('el perfil muestra la organización activa y lleva a Mis organizaciones', async () => {
+    simularFetch({ ...CON_SESION, 'GET /yo': o.yoVarias });
+    await abrir(<Perfil />);
+    await fireEvent.press(
+      await screen.findByRole('button', {
+        name: 'Mis organizaciones. P7MOB A',
+      }),
     );
     expect(mockRouter.push).toHaveBeenCalledWith('/organizaciones');
   });

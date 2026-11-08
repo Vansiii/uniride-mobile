@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  Pressable,
   StyleSheet,
   Text,
   View,
@@ -19,6 +18,7 @@ import {
   PaginaMovimientos,
   TipoMovimiento,
 } from '@/api/cliente';
+import { Entra, Toque } from '@/componentes/Animado';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { FilaMovimiento } from '@/componentes/FilaMovimiento';
 import { Ilustracion } from '@/componentes/Ilustracion';
@@ -230,7 +230,7 @@ function Contenido() {
         accessibilityLabel={t('billetera.historial.filtros')}
       >
         {(Object.keys(FILTROS) as Filtro[]).map((f) => (
-          <Pressable
+          <Toque
             key={f}
             accessibilityRole="radio"
             accessibilityLabel={t(`billetera.historial.filtro.${f}`)}
@@ -247,7 +247,7 @@ function Contenido() {
             >
               {t(`billetera.historial.filtro.${f}`)}
             </Text>
-          </Pressable>
+          </Toque>
         ))}
       </View>
       {saldoSinSincronizar && (
@@ -317,11 +317,13 @@ function Contenido() {
               {item.dia}
             </Text>
           ) : (
-            <FilaMovimiento
-              movimiento={item.movimiento}
-              primero={item.primero}
-              ultimo={item.ultimo}
-            />
+            <Entra indice={0}>
+              <FilaMovimiento
+                movimiento={item.movimiento}
+                primero={item.primero}
+                ultimo={item.ultimo}
+              />
+            </Entra>
           )
         }
         ListHeaderComponent={encabezado}
@@ -387,7 +389,7 @@ function Contenido() {
 }
 
 const estilos = StyleSheet.create({
-  raiz: { flex: 1, backgroundColor: colores.fondo },
+  raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   barra: {
     minHeight: 56,
     flexDirection: 'row',
@@ -395,7 +397,13 @@ const estilos = StyleSheet.create({
     gap: espacio(1),
     paddingHorizontal: espacio(2),
   },
-  tituloBarra: { ...tipografia.titulo, color: colores.texto },
+  tituloBarra: {
+    ...tipografia.pantalla,
+    width: '100%',
+    paddingHorizontal: espacio(2),
+    paddingBottom: espacio(2),
+    color: colores.texto,
+  },
   contenido: {
     flexGrow: 1,
     paddingHorizontal: espacio(4),
@@ -404,19 +412,19 @@ const estilos = StyleSheet.create({
   // 4 chips en una fila a 360 dp (prototipo); si la letra del sistema crece, pasan a otra fila.
   filtros: { flexDirection: 'row', flexWrap: 'wrap', gap: espacio(1) },
   chip: {
-    height: 32,
-    paddingHorizontal: espacio(2),
-    borderRadius: radio.s,
+    height: 36,
+    paddingHorizontal: espacio(3),
+    borderRadius: radio.completo,
     borderWidth: 1,
-    borderColor: colores.bordeCampo,
+    borderColor: colores.borde,
     justifyContent: 'center',
   },
   chipActivo: {
-    backgroundColor: colores.primarioSuave,
+    backgroundColor: colores.primario,
     borderColor: colores.primario,
   },
   textoChip: { ...tipografia.etiqueta, color: colores.texto },
-  textoChipActivo: { color: colores.primarioTexto },
+  textoChipActivo: { color: colores.sobrePrimario },
   dia: {
     ...tipografia.pequeno,
     letterSpacing: 0.7,

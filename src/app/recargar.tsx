@@ -1,3 +1,4 @@
+import * as Haptics from 'expo-haptics';
 import { Redirect, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -5,7 +6,6 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -20,6 +20,7 @@ import {
   OrdenRecarga,
   OrdenRecargaCreada,
 } from '@/api/cliente';
+import { Entra, Toque } from '@/componentes/Animado';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { Campo } from '@/componentes/Campo';
 import { ZonaAccion } from '@/componentes/Estructura';
@@ -31,7 +32,15 @@ import { useSesion } from '@/contexto/sesion';
 import { ErrorKeystore } from '@/dispositivo/keystore';
 import { formatearMonto } from '@/formato';
 import { t } from '@/i18n';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import {
+  colores,
+  espacio,
+  radio,
+  tipografia,
+  degradadoSaldo,
+  sombraElevada,
+  sombraTarjeta,
+} from '@/tema/tokens';
 
 const MONTOS_RAPIDOS = [20, 50, 100, 200];
 const MINIMO = 10;
@@ -107,6 +116,29 @@ const restanteDe = (expiraEn: string, ahora: number) =>
 
 const relojDe = (segundos: number) =>
   `${String(Math.floor(segundos / 60)).padStart(2, '0')}:${String(segundos % 60).padStart(2, '0')}`;
+
+/** Tarjeta de marca con lo que se paga y lo que se recibe: entra con un resorte. */
+function Resumen({ monto }: { monto: number }) {
+  const animado = formatearMonto(monto.toFixed(2));
+  return (
+    <Entra style={estilos.resumen}>
+      <Text style={estilos.resumenRotulo}>
+        {t('billetera.recarga.recibes')}
+      </Text>
+      <Text style={estilos.resumenCifra}>
+        {animado} <Text style={estilos.resumenUnidad}>URC</Text>
+      </Text>
+      <View style={estilos.resumenLinea}>
+        <Text style={estilos.resumenRotulo}>
+          {t('billetera.recarga.pagas')}
+        </Text>
+        <Text style={estilos.resumenPago}>
+          {formatearMonto(monto.toFixed(2))} Bs
+        </Text>
+      </View>
+    </Entra>
+  );
+}
 
 /** Recarga de saldo (HU-13): monto → QR con 15 minutos → pago simulado con huella → acreditación. */
 export default function RecargarPantalla() {
@@ -193,6 +225,15 @@ function Contenido() {
       setDemorada(false);
     };
   }, [procesando]);
+
+  // Vibración de éxito al acreditarse: confirma sin mirar la pantalla.
+  const acreditada = paso.tipo === 'acreditada';
+  useEffect(() => {
+    if (acreditada)
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
+        () => undefined,
+      );
+  }, [acreditada]);
 
   if (cargando) return null;
   if (!usuario) return <Redirect href="/iniciar-sesion" />;
@@ -305,7 +346,7 @@ function Contenido() {
               {MONTOS_RAPIDOS.map((m) => {
                 const elegido = !conOtro && rapido === m;
                 return (
-                  <Pressable
+                  <Toque
                     key={m}
                     accessibilityRole="radio"
                     accessibilityLabel={`${m} Bs`}
@@ -325,7 +366,8 @@ function Contenido() {
                     >
                       {m}
                     </Text>
-                  </Pressable>
+                    <Text style={estilos.unidad}>Bs</Text>
+                  </Toque>
                 );
               })}
             </View>
@@ -340,26 +382,7 @@ function Contenido() {
               }}
               error={errorCampo ?? undefined}
             />
-            {monto !== null && (
-              <View style={estilos.tarjeta}>
-                <View style={estilos.filaResumen}>
-                  <Text style={estilos.secundario}>
-                    {t('billetera.recarga.pagas')}
-                  </Text>
-                  <Text style={estilos.enfasis}>
-                    {formatearMonto(monto.toFixed(2))} Bs
-                  </Text>
-                </View>
-                <View style={estilos.filaResumen}>
-                  <Text style={estilos.secundario}>
-                    {t('billetera.recarga.recibes')}
-                  </Text>
-                  <Text style={estilos.enfasis}>
-                    {formatearMonto(monto.toFixed(2))} URC
-                  </Text>
-                </View>
-              </View>
-            )}
+            {monto !== null && <Resumen monto={monto} />}
             <Text style={estilos.pequeno}>
               {t('billetera.recarga.simulado')}
             </Text>
@@ -541,7 +564,7 @@ function Contenido() {
 }
 
 const estilos = StyleSheet.create({
-  raiz: { flex: 1, backgroundColor: colores.fondo },
+  raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   filaEnCamino: { alignSelf: 'stretch' },
   barra: {
     minHeight: 56,
@@ -550,31 +573,68 @@ const estilos = StyleSheet.create({
     gap: espacio(1),
     paddingHorizontal: espacio(2),
   },
-  tituloBarra: { ...tipografia.titulo, color: colores.texto },
+  tituloBarra: {
+    ...tipografia.pantalla,
+    width: '100%',
+    paddingHorizontal: espacio(2),
+    paddingBottom: espacio(2),
+    color: colores.texto,
+  },
   contenido: { flexGrow: 1, gap: espacio(3), padding: espacio(4) },
   etiqueta: { ...tipografia.etiqueta, color: colores.texto },
   montos: { flexDirection: 'row', gap: espacio(2) },
   monto: {
     flex: 1,
-    minHeight: 48,
+    minHeight: 68,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radio.m,
-    borderWidth: 1,
+    borderRadius: radio.l,
+    borderWidth: 1.5,
     borderColor: colores.bordeCampo,
+    backgroundColor: colores.superficie,
   },
+  unidad: { ...tipografia.pequeno, color: colores.textoSecundario },
+  resumen: {
+    gap: espacio(1),
+    padding: espacio(5),
+    borderRadius: radio.xl,
+    backgroundColor: colores.primario,
+    experimental_backgroundImage: degradadoSaldo,
+    ...sombraElevada,
+  },
+  resumenRotulo: {
+    ...tipografia.secundario,
+    color: colores.sobreMarcaSecundario,
+  },
+  resumenCifra: {
+    fontSize: 40,
+    lineHeight: 46,
+    fontWeight: '800',
+    letterSpacing: -1,
+    color: colores.sobrePrimario,
+  },
+  resumenUnidad: { fontSize: 18, fontWeight: '600' },
+  resumenLinea: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: espacio(2),
+    paddingTop: espacio(3),
+    borderTopWidth: 1,
+    borderTopColor: colores.vidrioBorde,
+  },
+  resumenPago: { ...tipografia.cuerpoEnfasis, color: colores.sobreMarca },
   montoElegido: {
     backgroundColor: colores.primarioSuave,
     borderColor: colores.primario,
   },
-  textoMonto: { ...tipografia.cuerpoEnfasis, color: colores.texto },
+  textoMonto: { fontSize: 22, fontWeight: '800', color: colores.texto },
   textoMontoElegido: { color: colores.primarioTexto },
   tarjeta: {
     gap: espacio(2),
     padding: espacio(3),
     borderRadius: radio.l,
     backgroundColor: colores.superficie,
-    elevation: 3,
+    ...sombraElevada,
   },
   filaResumen: {
     flexDirection: 'row',
@@ -591,7 +651,14 @@ const estilos = StyleSheet.create({
   centrado: { alignItems: 'center' },
   textoCentrado: { textAlign: 'center' },
   cifra: { ...tipografia.pantalla, color: colores.texto },
-  qr: { alignItems: 'center', gap: espacio(2) },
+  qr: {
+    alignItems: 'center',
+    gap: espacio(2),
+    padding: espacio(5),
+    borderRadius: radio.xl,
+    backgroundColor: colores.superficie,
+    ...sombraTarjeta,
+  },
   imagenQr: { width: 220, height: 220 },
   sello: {
     flexDirection: 'row',

@@ -1,15 +1,24 @@
+import { StatusBar } from 'expo-status-bar';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ErrorApi, Membresia } from '@/api/cliente';
 import { useSesion } from '@/contexto/sesion';
+import { Entra, Toque } from '@/componentes/Animado';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { ZonaAccion } from '@/componentes/Estructura';
 import { Icono } from '@/componentes/Icono';
 import { Aviso, EtiquetaEstado } from '@/componentes/Mensajes';
 import { t } from '@/i18n';
-import { colores, espacio, radio, tamano, tipografia } from '@/tema/tokens';
+import {
+  colores,
+  espacio,
+  radio,
+  sombraTarjeta,
+  tamano,
+  tipografia,
+} from '@/tema/tokens';
 
 interface Mensaje {
   tono: 'exito' | 'aviso' | 'peligro';
@@ -99,6 +108,7 @@ export default function Organizaciones() {
 
   return (
     <View style={estilos.raiz}>
+      <StatusBar style="dark" />
       <View style={[estilos.encabezado, { paddingTop: top }]}>
         <BotonIcono
           icono="arrow_back"
@@ -112,73 +122,70 @@ export default function Organizaciones() {
       <ScrollView contentContainerStyle={estilos.contenido}>
         <Text style={estilos.texto}>{t('membresias.lista.explicacion')}</Text>
         {mensaje && <Aviso tono={mensaje.tono}>{mensaje.texto}</Aviso>}
-        <View style={estilos.tarjeta}>
+        <View style={estilos.lista}>
           {membresias.map((m, i) => {
             const activa = m.organizacionId === usuario.organizacionActiva;
             const elegible = m.estado === 'aprobada' && !activa;
             const ocupada = cambiando === m.organizacionId;
             return (
-              <Pressable
-                key={m.organizacionId}
-                disabled={!elegible || cambiando !== null}
-                onPress={() => elegir(m)}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  elegible
-                    ? textoDe('membresias.lista.cambiar_a', m.organizacion)
-                    : m.organizacion
-                }
-                accessibilityState={{
-                  selected: activa,
-                  disabled: !elegible,
-                  busy: ocupada,
-                }}
-                style={({ pressed }) => [
-                  estilos.fila,
-                  i > 0 && estilos.separada,
-                  activa && estilos.filaActiva,
-                  pressed && elegible && estilos.filaPresionada,
-                ]}
-              >
-                <View style={estilos.icono}>
-                  <Icono
-                    nombre="corporate_fare"
-                    color={
-                      m.estado === 'aprobada'
-                        ? colores.primario
-                        : colores.textoDeshabilitado
-                    }
-                  />
-                </View>
-                <View style={estilos.textos}>
-                  <Text
-                    style={[
-                      estilos.nombre,
-                      m.estado !== 'aprobada' && estilos.nombreInactivo,
-                    ]}
-                  >
-                    {m.organizacion}
-                  </Text>
-                  {m.estado !== 'aprobada' && (
-                    <Text style={estilos.detalle}>
-                      {t('membresias.lista.no_activable')}
+              <Entra key={m.organizacionId} indice={i}>
+                <Toque
+                  escala={0.98}
+                  disabled={!elegible || cambiando !== null}
+                  onPress={() => elegir(m)}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    elegible
+                      ? textoDe('membresias.lista.cambiar_a', m.organizacion)
+                      : m.organizacion
+                  }
+                  accessibilityState={{
+                    selected: activa,
+                    disabled: !elegible,
+                    busy: ocupada,
+                  }}
+                  style={[estilos.fila, activa && estilos.filaActiva]}
+                >
+                  <View style={estilos.icono}>
+                    <Icono
+                      nombre="corporate_fare"
+                      color={
+                        m.estado === 'aprobada'
+                          ? colores.primario
+                          : colores.textoDeshabilitado
+                      }
+                    />
+                  </View>
+                  <View style={estilos.textos}>
+                    <Text
+                      style={[
+                        estilos.nombre,
+                        m.estado !== 'aprobada' && estilos.nombreInactivo,
+                      ]}
+                    >
+                      {m.organizacion}
                     </Text>
+                    {m.estado !== 'aprobada' && (
+                      <Text style={estilos.detalle}>
+                        {t('membresias.lista.no_activable')}
+                      </Text>
+                    )}
+                  </View>
+                  {activa ? (
+                    <EtiquetaEstado
+                      dominio="membresia"
+                      estado="activa"
+                      texto={t('membresias.lista.activa')}
+                    />
+                  ) : (
+                    <EtiquetaEstado
+                      dominio="membresia"
+                      estado={m.estado}
+                      texto={t(`membresias.lista.${m.estado}`)}
+                    />
                   )}
-                </View>
-                {activa ? (
-                  <EtiquetaEstado
-                    dominio="membresia"
-                    estado="activa"
-                    texto={t('membresias.lista.activa')}
-                  />
-                ) : (
-                  <EtiquetaEstado
-                    dominio="membresia"
-                    estado={m.estado}
-                    texto={t(`membresias.lista.${m.estado}`)}
-                  />
-                )}
-              </Pressable>
+                </Toque>
+              </Entra>
             );
           })}
         </View>
@@ -196,15 +203,22 @@ export default function Organizaciones() {
 }
 
 const estilos = StyleSheet.create({
-  raiz: { flex: 1, backgroundColor: colores.fondo },
+  raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   encabezado: {
     minHeight: 56,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: espacio(1),
     paddingHorizontal: espacio(2),
   },
-  tituloBarra: { ...tipografia.titulo, color: colores.texto },
+  tituloBarra: {
+    ...tipografia.pantalla,
+    width: '100%',
+    paddingHorizontal: espacio(2),
+    paddingBottom: espacio(2),
+    color: colores.texto,
+  },
   contenido: {
     flexGrow: 1,
     gap: espacio(4),
@@ -212,13 +226,7 @@ const estilos = StyleSheet.create({
     paddingVertical: espacio(4),
   },
   texto: { ...tipografia.cuerpo, color: colores.textoSecundario },
-  tarjeta: {
-    overflow: 'hidden',
-    borderRadius: radio.l,
-    borderWidth: 1,
-    borderColor: colores.borde,
-    backgroundColor: colores.superficie,
-  },
+  lista: { gap: espacio(3) },
   fila: {
     minHeight: tamano.tactilMinimo + espacio(4),
     flexDirection: 'row',
@@ -226,10 +234,17 @@ const estilos = StyleSheet.create({
     gap: espacio(3),
     paddingHorizontal: espacio(4),
     paddingVertical: espacio(3),
+    borderRadius: radio.l,
+    borderWidth: 1,
+    borderColor: colores.borde,
+    backgroundColor: colores.superficie,
+    ...sombraTarjeta,
   },
-  separada: { borderTopWidth: 1, borderTopColor: colores.borde },
-  filaActiva: { backgroundColor: colores.primarioSuave },
-  filaPresionada: { backgroundColor: colores.fondoSutil },
+  filaActiva: {
+    borderColor: colores.primario,
+    borderWidth: 2,
+    backgroundColor: colores.primarioSuave,
+  },
   icono: {
     width: 40,
     height: 40,

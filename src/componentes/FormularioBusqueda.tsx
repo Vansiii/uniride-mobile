@@ -1,19 +1,27 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Linking, StyleSheet, Text, View } from 'react-native';
 import { consultarSaldo, Saldo } from '@/api/cliente';
+import { Entra, Esqueleto, Toque, useConteo } from '@/componentes/Animado';
 import { Boton } from '@/componentes/Boton';
+import { AjusteHora } from '@/componentes/AjusteHora';
 import { Campo } from '@/componentes/Campo';
 import { Icono } from '@/componentes/Icono';
 import { Aviso } from '@/componentes/Mensajes';
 import { SelectorFecha } from '@/componentes/SelectorFecha';
 import { SelectorLugar } from '@/componentes/SelectorLugar';
-import { SelectorMapa } from '@/componentes/SelectorMapa';
 import { formatearMonto } from '@/formato';
 import { con, t } from '@/i18n';
 import { Lugar } from '@/servicios/geocoding';
 import { obtenerUbicacion } from '@/servicios/ubicacion';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import {
+  colores,
+  degradadoSaldo,
+  espacio,
+  radio,
+  tipografia,
+  sombraElevada,
+} from '@/tema/tokens';
 import {
   escribirHora,
   leerSalida,
@@ -22,10 +30,36 @@ import {
   ventanaDe,
   ventanaPasada,
 } from '@/viajes/salida';
-// Donde abre el mapa si todavía no se sabe dónde está la persona.
-const CENTRO_POR_OMISION = { lat: -17.783327, lng: -63.182129 };
 
 type AvisoUbicacion = 'sin_permiso' | 'ir_a_ajustes' | 'fallo';
+
+/** Saldo en grande: la cifra sube hasta su valor y la tarjeta se hunde al tocarla. */
+function TarjetaSaldoMini({ saldo }: { saldo: Saldo }) {
+  const valor = useConteo(Number(saldo.saldoDisponible));
+  const unidad = t('billetera.pantalla.unidad');
+  return (
+    <Toque
+      accessibilityRole="button"
+      accessibilityLabel={`${t('billetera.pantalla.saldo')}: ${formatearMonto(saldo.saldoDisponible)} ${unidad}`}
+      onPress={() => router.push('/billetera')}
+      style={estilos.saldo}
+    >
+      <View style={estilos.iconoSaldo}>
+        <Icono nombre="account_balance_wallet" color={colores.sobreMarca} />
+      </View>
+      <View style={estilos.textosSaldo}>
+        <Text style={estilos.etiquetaSaldo}>
+          {t('billetera.pantalla.saldo')}
+        </Text>
+        <Text style={estilos.cifraSaldo}>
+          {formatearMonto(valor.toFixed(2))}{' '}
+          <Text style={estilos.unidadSaldo}>{unidad}</Text>
+        </Text>
+      </View>
+      <Icono nombre="chevron_right" color={colores.sobreMarca} />
+    </Toque>
+  );
+}
 
 const lugarDe = (nombre: string, lat: number, lng: number): Lugar => ({
   nombre,
@@ -44,8 +78,7 @@ export function FormularioBusqueda() {
   const [errorHora, setErrorHora] = useState<string>();
   const [avisoUbicacion, setAvisoUbicacion] = useState<AvisoUbicacion>();
   const [ubicando, setUbicando] = useState(false);
-  const [enMapa, setEnMapa] = useState(false);
-  const [saldo, setSaldo] = useState<Saldo | null>(null);
+  const [saldo, setSaldo] = useState<Saldo | null | undefined>(undefined);
 
   const usarUbicacion = async () => {
     setUbicando(true);
@@ -126,8 +159,9 @@ export function FormularioBusqueda() {
 
   return (
     <>
-      <View style={estilos.tarjeta}>
+      <Entra indice={1} style={estilos.tarjeta}>
         <SelectorLugar
+          soloMapa
           etiqueta={t('viajes.buscar.desde')}
           lugar={origen}
           error={errorOrigen}
@@ -138,17 +172,11 @@ export function FormularioBusqueda() {
         />
         <View style={estilos.acciones}>
           <Boton
-            variante="texto"
+            variante="suave"
             icono="my_location"
             cargando={ubicando}
             etiqueta={t('viajes.buscar.usar_ubicacion')}
             alPresionar={() => void usarUbicacion()}
-          />
-          <Boton
-            variante="texto"
-            icono="map"
-            etiqueta={t('viajes.buscar.elegir_mapa')}
-            alPresionar={() => setEnMapa(true)}
           />
         </View>
         {avisoUbicacion && (
@@ -183,46 +211,32 @@ export function FormularioBusqueda() {
           }}
           error={errorHora}
         />
+        <AjusteHora
+          fecha={fecha}
+          hora={hora}
+          alCambiar={(h) => {
+            setSalida((x) => ({ ...x, hora: h }));
+            setErrorHora(undefined);
+          }}
+        />
         <Boton
           anchoCompleto
           icono="search"
           etiqueta={t('viajes.buscar.buscar')}
           alPresionar={buscar}
         />
-      </View>
-      {saldo && (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`${t('billetera.pantalla.saldo')}: ${formatearMonto(saldo.saldoDisponible)} ${t('billetera.pantalla.unidad')}`}
-          onPress={() => router.push('/billetera')}
-          style={({ pressed }) => [
-            estilos.saldo,
-            pressed && { backgroundColor: colores.primarioSuave },
-          ]}
-        >
-          <Icono nombre="account_balance_wallet" color={colores.primario} />
-          <View style={estilos.textosSaldo}>
-            <Text style={estilos.secundario}>
-              {t('billetera.pantalla.saldo')}
-            </Text>
-            <Text style={estilos.enfasis}>
-              {formatearMonto(saldo.saldoDisponible)}{' '}
-              {t('billetera.pantalla.unidad')}
-            </Text>
-          </View>
-          <Icono nombre="chevron_right" color={colores.textoSecundario} />
-        </Pressable>
-      )}
-      {enMapa && (
-        <SelectorMapa
-          inicial={origen ?? CENTRO_POR_OMISION}
-          alCancelar={() => setEnMapa(false)}
-          alElegir={({ lat, lng }) => {
-            setEnMapa(false);
-            setErrorOrigen(undefined);
-            setOrigen(lugarDe(t('viajes.buscar.punto_mapa'), lat, lng));
-          }}
+      </Entra>
+      {saldo === undefined && (
+        <Esqueleto
+          alto={76}
+          redondeo={radio.l}
+          style={estilos.saldoEsqueleto}
         />
+      )}
+      {saldo && (
+        <Entra indice={2}>
+          <TarjetaSaldoMini saldo={saldo} />
+        </Entra>
       )}
     </>
   );
@@ -235,18 +249,16 @@ const estilos = StyleSheet.create({
     marginHorizontal: espacio(4),
     padding: espacio(4),
     gap: espacio(3),
-    borderRadius: radio.l,
+    borderRadius: radio.xl,
+    borderWidth: 1,
+    borderColor: colores.vidrioBorde,
     backgroundColor: colores.superficie,
-    elevation: 3,
+    ...sombraElevada,
   },
   // El relleno de los botones de texto sale del borde: así caben los dos en una fila a 360.
-  acciones: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -espacio(3),
-  },
+  acciones: { flexDirection: 'row', flexWrap: 'wrap', gap: espacio(2) },
   saldo: {
-    minHeight: 64,
+    minHeight: 76,
     flexDirection: 'row',
     alignItems: 'center',
     gap: espacio(3),
@@ -254,9 +266,24 @@ const estilos = StyleSheet.create({
     marginHorizontal: espacio(4),
     paddingHorizontal: espacio(4),
     borderRadius: radio.l,
-    backgroundColor: colores.superficie,
-    elevation: 1,
+    backgroundColor: colores.primario,
+    experimental_backgroundImage: degradadoSaldo,
   },
+  saldoEsqueleto: { marginTop: espacio(3), marginHorizontal: espacio(4) },
+  iconoSaldo: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radio.m,
+    backgroundColor: colores.vidrio,
+  },
+  etiquetaSaldo: {
+    ...tipografia.secundario,
+    color: colores.sobreMarcaSecundario,
+  },
+  cifraSaldo: { ...tipografia.subtitulo, color: colores.sobreMarca },
+  unidadSaldo: { ...tipografia.etiqueta, color: colores.sobreMarcaSecundario },
   textosSaldo: { flex: 1, gap: 2 },
   secundario: { ...tipografia.secundario, color: colores.textoSecundario },
   enfasis: { ...tipografia.cuerpoEnfasis, color: colores.texto },

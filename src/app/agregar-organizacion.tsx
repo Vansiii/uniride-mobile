@@ -1,3 +1,4 @@
+import { StatusBar } from 'expo-status-bar';
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -109,6 +110,7 @@ export default function AgregarOrganizacion() {
       style={estilos.raiz}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      <StatusBar style="dark" />
       <View style={[estilos.encabezado, { paddingTop: top }]}>
         <BotonIcono
           icono="close"
@@ -170,15 +172,22 @@ export default function AgregarOrganizacion() {
 }
 
 const estilos = StyleSheet.create({
-  raiz: { flex: 1, backgroundColor: colores.fondo },
+  raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   encabezado: {
     minHeight: 56,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: espacio(1),
     paddingHorizontal: espacio(2),
   },
-  tituloBarra: { ...tipografia.titulo, color: colores.texto },
+  tituloBarra: {
+    ...tipografia.pantalla,
+    width: '100%',
+    paddingHorizontal: espacio(2),
+    paddingBottom: espacio(2),
+    color: colores.texto,
+  },
   contenido: {
     flexGrow: 1,
     gap: espacio(4),

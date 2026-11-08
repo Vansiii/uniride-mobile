@@ -1,8 +1,8 @@
 import { Tabs } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { setStatusBarStyle } from 'expo-status-bar';
+import { BarraPestanas } from '@/componentes/BarraPestanas';
 import { Icono } from '@/componentes/Icono';
 import { t } from '@/i18n';
-import { colores, espacio, tamano, tipografia } from '@/tema/tokens';
 
 /**
  * Barra de pestañas (DESIGN_SYSTEM §6.1): ícono y etiqueta siempre. Solo están las pestañas que ya existen; Mis viajes
@@ -10,22 +10,15 @@ import { colores, espacio, tamano, tipografia } from '@/tema/tokens';
  * queda montada: cambiar de pestaña no la reinicia (en Billetera cada lectura pide la huella). Publicar relee sus requisitos al volver.
  */
 export default function Pestanas() {
-  const { bottom } = useSafeAreaInsets();
   return (
     <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colores.primario,
-        tabBarInactiveTintColor: colores.textoSecundario,
-        tabBarLabelStyle: tipografia.pequeno,
-        // 64 + área segura, con aire arriba y abajo para que ícono y etiqueta no se peguen al borde.
-        tabBarStyle: {
-          backgroundColor: colores.fondo,
-          height: tamano.altoBarraPestanas + bottom,
-          paddingTop: espacio(2),
-          paddingBottom: bottom + espacio(2),
-        },
-      }}
+      tabBar={(props) => <BarraPestanas {...props} />}
+      screenOptions={{ headerShown: false, animation: 'fade' }}
+      // Publicar tiene fondo claro; las demás pestañas abren con la banda de marca.
+      screenListeners={({ route }) => ({
+        focus: () =>
+          setStatusBarStyle(route.name === 'publicar' ? 'dark' : 'light'),
+      })}
     >
       <Tabs.Screen
         name="index"
@@ -51,6 +44,15 @@ export default function Pestanas() {
           title: t('billetera.pantalla.titulo'),
           tabBarIcon: ({ color }) => (
             <Icono nombre="account_balance_wallet" color={color as string} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="perfil"
+        options={{
+          title: t('perfil.pestana'),
+          tabBarIcon: ({ color }) => (
+            <Icono nombre="person" color={color as string} />
           ),
         }}
       />

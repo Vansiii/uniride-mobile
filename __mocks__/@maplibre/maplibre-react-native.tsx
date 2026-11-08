@@ -46,3 +46,7 @@ export const Marker = ({
   children?: ReactNode;
 }) => <View testID={`marcador ${lngLat.join(',')}`}>{children}</View>;
 export const NativeUserLocation = () => null;
+export const GeoJSONSource = ({ children }: { children?: ReactNode }) => (
+  <View>{children}</View>
+);
+export const Layer = () => null;

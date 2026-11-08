@@ -93,13 +93,32 @@
       "confirmando": "Confirmando…"
     }
   },
+  "perfil": {
+    "pestana": "Perfil",
+    "progreso_titulo": "Completa tu perfil",
+    "progreso": "{hechos} de {total} pasos listos",
+    "progreso_completo": "Todo listo para viajar",
+    "estado": {
+      "registrado": "Registrado",
+      "vinculado": "Vinculado",
+      "verificada": "Verificada",
+      "pendiente": "Pendiente"
+    }
+  },
   "inicio": {
     "voz_pronto": "Hablar con UniRide, disponible pronto",
     "cuenta": "Tu cuenta",
     "nombre": "Nombre",
     "correo": "Correo",
     "organizacion": "Organización activa",
-    "pestana": "Buscar"
+    "pestana": "Buscar",
+    "publica_titulo": "¿Tienes auto?",
+    "publica_texto": "Publica tu viaje, comparte los gastos y llega con compañía.",
+    "publica_boton": "Publicar un viaje",
+    "atajos": "Atajos",
+    "atajo_movimientos": "Movimientos",
+    "atajo_vehiculo": "Mi vehículo",
+    "atajo_identidad": "Mi identidad"
   },
   "membresias": {
     "lista": {
@@ -356,6 +375,9 @@
     "publicar": {
       "pestana": "Publicar",
       "titulo": "Publicar viaje",
+      "seccion_ruta": "Ruta",
+      "seccion_cuando": "Cuándo sales",
+      "seccion_precio": "Asientos y precio",
       "requisitos_titulo": "Para ofrecer viajes en {organizacion} te falta:",
       "requisito_vehiculo": "Registra tu vehículo",
       "requisito_vehiculo_texto": "Los pasajeros verán la placa, la marca, el modelo y el color",
@@ -384,6 +406,8 @@
       "atribucion_mapa": "© OpenStreetMap",
       "fecha": "Fecha",
       "hora": "Hora de salida",
+      "hora_menos": "15 min antes",
+      "hora_mas": "15 min después",
       "hora_ayuda": "En 24 horas, por ejemplo 07:30.",
       "hora_invalida": "Escribe la hora en 24 horas, por ejemplo 07:30.",
       "horario_invalido": "Elige una salida con al menos 15 minutos de anticipación y hasta dentro de 7 días.",
@@ -419,6 +443,12 @@
       "creditos": "Ver los créditos del mapa",
       "ver_relieve": "Ver el relieve",
       "ver_calles": "Ver las calles",
+      "buscar_lugar": "Buscar un lugar",
+      "elegir_en_mapa": "Toca para elegir en el mapa",
+      "buscar_en_mapa": "Buscar en el mapa",
+      "sin_resultados": "No encontramos ese lugar",
+      "mueve_mapa": "Mueve el mapa para ajustar el punto",
+      "ubicando": "Buscando la dirección…",
       "atribucion": "OpenFreeMap © OpenMapTiles © OpenStreetMap",
       "atribucion_relieve": "© OpenStreetMap · Relieve: Mapzen, USGS, NOAA y otros"
     },

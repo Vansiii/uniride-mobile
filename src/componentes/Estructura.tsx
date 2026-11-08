@@ -2,7 +2,48 @@ import { StatusBar } from 'expo-status-bar';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
+import { useEffect } from 'react';
 import { colores, degradadoMarca, espacio, radio } from '@/tema/tokens';
+
+/** Esfera lima que flota despacio: da vida a la cabecera sin competir con el contenido. */
+function Orbe({
+  estilo,
+  desplazamiento,
+  ms,
+}: {
+  estilo: object;
+  desplazamiento: number;
+  ms: number;
+}) {
+  const valor = useSharedValue(0);
+  useEffect(() => {
+    valor.set(
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: ms, easing: Easing.inOut(Easing.sin) }),
+          withTiming(0, { duration: ms, easing: Easing.inOut(Easing.sin) }),
+        ),
+        -1,
+      ),
+    );
+  }, [valor, ms]);
+  const animado = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: valor.value * desplazamiento },
+      { translateX: valor.value * -desplazamiento * 0.6 },
+      { scale: 1 + valor.value * 0.12 },
+    ],
+  }));
+  return <Animated.View pointerEvents="none" style={[estilo, animado]} />;
+}
 
 /**
  * Encabezado expresivo de las zonas de marca (8.12): degradado índigo, esquinas inferiores
@@ -18,6 +59,8 @@ export function BandaMarca({ children }: { children: ReactNode }) {
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
       />
+      <Orbe estilo={estilos.orbeA} desplazamiento={18} ms={4200} />
+      <Orbe estilo={estilos.orbeB} desplazamiento={-14} ms={5600} />
       {children}
     </View>
   );
@@ -53,8 +96,8 @@ const estilos = StyleSheet.create({
     gap: espacio(3),
     paddingHorizontal: espacio(5),
     paddingBottom: espacio(8),
-    borderBottomLeftRadius: radio.xl,
-    borderBottomRightRadius: radio.xl,
+    borderBottomLeftRadius: radio.xl + 8,
+    borderBottomRightRadius: radio.xl + 8,
     backgroundColor: colores.primario,
     experimental_backgroundImage: degradadoMarca,
   },
@@ -71,6 +114,26 @@ const estilos = StyleSheet.create({
     borderBottomLeftRadius: 75,
     borderBottomRightRadius: 75,
     opacity: 0.12,
+  },
+  orbeA: {
+    position: 'absolute',
+    top: -60,
+    right: -50,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: colores.marcaBrillante,
+    opacity: 0.35,
+  },
+  orbeB: {
+    position: 'absolute',
+    bottom: -40,
+    left: -60,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: colores.sobreMarca,
+    opacity: 0.08,
   },
   zona: {
     gap: espacio(2),

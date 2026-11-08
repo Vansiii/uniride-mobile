@@ -1,3 +1,4 @@
+import { StatusBar } from 'expo-status-bar';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -168,6 +169,7 @@ export default function Codigo() {
 
   return (
     <View style={estilos.raiz}>
+      <StatusBar style="dark" />
       <View style={[estilos.encabezado, { paddingTop: top }]}>
         <BotonIcono
           icono="arrow_back"
@@ -239,15 +241,22 @@ export default function Codigo() {
 }
 
 const estilos = StyleSheet.create({
-  raiz: { flex: 1, backgroundColor: colores.fondo },
+  raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   encabezado: {
     minHeight: 56,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: espacio(1),
     paddingHorizontal: espacio(2),
   },
-  tituloBarra: { ...tipografia.titulo, color: colores.texto },
+  tituloBarra: {
+    ...tipografia.pantalla,
+    width: '100%',
+    paddingHorizontal: espacio(2),
+    paddingBottom: espacio(2),
+    color: colores.texto,
+  },
   contenido: {
     flexGrow: 1,
     gap: espacio(4),

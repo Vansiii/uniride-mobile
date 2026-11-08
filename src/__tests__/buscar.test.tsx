@@ -109,19 +109,19 @@ describe('HU-18 · formulario de búsqueda', () => {
     permiso.mockResolvedValue(dado(true));
     jest.mocked(Location.hasServicesEnabledAsync).mockResolvedValue(false);
     await abrir(<Inicio />);
-    await screen.findByText('Buscar lugar');
+    await screen.findByText('Toca para elegir en el mapa');
     await waitFor(() =>
       expect(Location.hasServicesEnabledAsync).toHaveBeenCalled(),
     );
     expect(actual).not.toHaveBeenCalled();
-    expect(screen.queryByDisplayValue('Tu ubicación')).toBeNull();
+    expect(screen.queryByText('Tu ubicación')).toBeNull();
   });
 
   it('con permiso ya dado, el origen sale del GPS y la búsqueda lleva sus coordenadas', async () => {
     permiso.mockResolvedValue(dado(true));
     ultima.mockResolvedValue(posicion(-17.7, -63.1));
     await abrir(<Inicio />);
-    expect(await screen.findByDisplayValue('Tu ubicación')).toBeTruthy();
+    expect(await screen.findByText('Tu ubicación')).toBeTruthy();
     expect(pedirPermiso).not.toHaveBeenCalled();
     await fireEvent.press(
       screen.getByRole('button', { name: 'Buscar viajes' }),
@@ -147,7 +147,7 @@ describe('HU-18 · formulario de búsqueda', () => {
   it('una hora mal escrita no busca', async () => {
     permiso.mockResolvedValue(dado(true));
     await abrir(<Inicio />);
-    await screen.findByDisplayValue('Tu ubicación');
+    await screen.findByText('Tu ubicación');
     await fireEvent.changeText(screen.getByLabelText('Hora de salida'), '25');
     await fireEvent.press(
       screen.getByRole('button', { name: 'Buscar viajes' }),
@@ -163,7 +163,7 @@ describe('HU-18 · formulario de búsqueda', () => {
     try {
       permiso.mockResolvedValue(dado(true));
       await abrir(<Inicio />);
-      await screen.findByDisplayValue('Tu ubicación');
+      await screen.findByText('Tu ubicación');
       await fireEvent.changeText(
         screen.getByLabelText('Hora de salida'),
         '0920',
@@ -236,17 +236,17 @@ describe('HU-18 · formulario de búsqueda', () => {
   it('elegir en el mapa deja un punto como origen', async () => {
     await abrir(<Inicio />);
     await fireEvent.press(
-      await screen.findByRole('button', { name: 'En el mapa' }),
+      await screen.findByRole('button', { name: /^Desde/ }),
     );
     await fireEvent.press(
       await screen.findByRole('button', { name: 'Usar este punto' }),
     );
-    expect(await screen.findByDisplayValue('Punto en el mapa')).toBeTruthy();
+    expect(await screen.findByText('Punto en el mapa')).toBeTruthy();
   });
   it('tocar el mapa deja el pin ahí y buscar usa ese punto', async () => {
     await abrir(<Inicio />);
     await fireEvent.press(
-      await screen.findByRole('button', { name: 'En el mapa' }),
+      await screen.findByRole('button', { name: /^Desde/ }),
     );
     await fireEvent(
       screen.getByTestId('mapa', { includeHiddenElements: true }),
@@ -255,11 +255,8 @@ describe('HU-18 · formulario de búsqueda', () => {
         nativeEvent: { lngLat: [-63.2, -17.79] },
       },
     );
-    expect(
-      screen.getByTestId('marcador -63.2,-17.79', {
-        includeHiddenElements: true,
-      }),
-    ).toBeTruthy();
+    // El pin es fijo al centro: tocar mueve la cámara hasta ese punto.
+    expect(mapaSimulado.camara.easeTo).toHaveBeenCalled();
     await fireEvent.press(
       screen.getByRole('button', { name: 'Usar este punto' }),
     );
@@ -277,7 +274,7 @@ describe('HU-18 · formulario de búsqueda', () => {
   it('cerrar el mapa no cambia el origen', async () => {
     await abrir(<Inicio />);
     await fireEvent.press(
-      await screen.findByRole('button', { name: 'En el mapa' }),
+      await screen.findByRole('button', { name: /^Desde/ }),
     );
     await fireEvent.press(
       await screen.findByRole('button', { name: 'Cerrar' }),
@@ -285,12 +282,12 @@ describe('HU-18 · formulario de búsqueda', () => {
     expect(
       screen.queryByRole('button', { name: 'Usar este punto' }),
     ).toBeNull();
-    expect(screen.queryByDisplayValue('Punto en el mapa')).toBeNull();
+    expect(screen.queryByText('Punto en el mapa')).toBeNull();
   });
   it('los botones del mapa acercan, alejan y cambian de tipo', async () => {
     await abrir(<Inicio />);
     await fireEvent.press(
-      await screen.findByRole('button', { name: 'En el mapa' }),
+      await screen.findByRole('button', { name: /^Desde/ }),
     );
     await fireEvent.press(
       await screen.findByRole('button', { name: 'Acercar el mapa' }),

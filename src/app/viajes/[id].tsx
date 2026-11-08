@@ -1,12 +1,7 @@
+import { StatusBar } from 'expo-status-bar';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   consultarViaje,
@@ -14,6 +9,7 @@ import {
   ErrorApi,
   viajesEncontrados,
 } from '@/api/cliente';
+import { Entra, Esqueleto } from '@/componentes/Animado';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { ZonaAccion } from '@/componentes/Estructura';
 import { Icono } from '@/componentes/Icono';
@@ -33,7 +29,13 @@ import {
   formatearHoraLocal,
 } from '@/formato';
 import { con, t } from '@/i18n';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import {
+  colores,
+  espacio,
+  radio,
+  tipografia,
+  sombraTarjeta,
+} from '@/tema/tokens';
 
 /** Detalle del viaje (HU-18): solo nombre de pila y datos públicos del vehículo (RN-4). Reservar llega con HU-19. */
 export default function DetalleViajePantalla() {
@@ -84,14 +86,17 @@ export default function DetalleViajePantalla() {
   if (!usuario) return <Redirect href="/iniciar-sesion" />;
 
   return (
-    <View style={[estilos.raiz, { paddingTop: top }]}>
-      <View style={estilos.encabezado}>
-        <BotonIcono
-          icono="arrow_back"
-          etiqueta={t('comun.acciones.volver')}
-          color={colores.texto}
-          alPresionar={() => router.back()}
-        />
+    <View style={estilos.raiz}>
+      <StatusBar style="dark" />
+      <View style={[estilos.encabezado, { paddingTop: top + espacio(2) }]}>
+        <View style={estilos.botonVolver}>
+          <BotonIcono
+            icono="arrow_back"
+            etiqueta={t('comun.acciones.volver')}
+            color={colores.texto}
+            alPresionar={() => router.back()}
+          />
+        </View>
         <Text style={estilos.titulo} accessibilityRole="header">
           {t('viajes.buscar.titulo_detalle')}
         </Text>
@@ -113,93 +118,111 @@ export default function DetalleViajePantalla() {
               />
             </>
           ) : (
-            <ActivityIndicator
-              color={colores.primario}
-              size="large"
+            <View
+              style={estilos.esqueletos}
               accessibilityLabel={t('comun.estados.cargando')}
-            />
+            >
+              <Esqueleto alto={220} redondeo={radio.xl} />
+              <Esqueleto alto={110} redondeo={radio.l} />
+              <Esqueleto alto={110} redondeo={radio.l} />
+            </View>
           )}
         </View>
       )}
 
       {viaje && (
         <>
-          <ScrollView contentContainerStyle={estilos.contenido}>
-            {!disponible && (
-              <Aviso tono="info">{t('viajes.buscar.no_encontrado')}</Aviso>
-            )}
-            <View style={estilos.tarjeta}>
-              <MapaRuta origen={viaje.origen} destino={viaje.destino} />
-              <View style={estilos.fila}>
-                <Text style={estilos.subtitulo}>
-                  {formatearDia(viaje.fechaHoraSalida)} ·{' '}
-                  {formatearHoraLocal(viaje.fechaHoraSalida)}
-                </Text>
-                {encontrado && (
-                  <EtiquetaEstado
-                    dominio="viaje"
-                    estado="distancia"
-                    texto={formatearDistancia(encontrado.distanciaKm)}
-                  />
-                )}
-              </View>
-              <Trayecto
-                origen={viaje.origen.nombre}
-                destino={viaje.destino.nombre}
+          <ScrollView
+            contentContainerStyle={estilos.contenido}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={estilos.portada}>
+              <MapaRuta
+                origen={viaje.origen}
+                destino={viaje.destino}
+                alto={300}
+                redondeo={0}
               />
             </View>
-
-            <View style={estilos.tarjeta}>
-              <View style={estilos.conductor}>
-                <Avatar nombre={viaje.conductor.nombre} />
-                <Text style={[estilos.enfasis, estilos.encoge]}>
-                  {viaje.conductor.nombre}
-                </Text>
-              </View>
-              {encontrado && (
-                <InsigniasConductor conductor={encontrado.conductor} />
+            <View style={estilos.hoja}>
+              {!disponible && (
+                <Aviso tono="info">{t('viajes.buscar.no_encontrado')}</Aviso>
               )}
-              <View style={estilos.conductor}>
-                <Icono
-                  nombre="directions_car"
-                  color={colores.textoSecundario}
-                />
-                <View style={estilos.encoge}>
-                  <Text style={estilos.enfasis}>
-                    {nombreVehiculo(viaje.vehiculo)}
+              <Entra indice={0} style={estilos.tarjeta}>
+                <View style={estilos.fila}>
+                  <Text style={estilos.subtitulo}>
+                    {formatearDia(viaje.fechaHoraSalida)} ·{' '}
+                    {formatearHoraLocal(viaje.fechaHoraSalida)}
                   </Text>
-                  <Text style={estilos.secundario}>{viaje.vehiculo.placa}</Text>
+                  {encontrado && (
+                    <EtiquetaEstado
+                      dominio="viaje"
+                      estado="distancia"
+                      texto={formatearDistancia(encontrado.distanciaKm)}
+                    />
+                  )}
                 </View>
-              </View>
-            </View>
+                <Trayecto
+                  origen={viaje.origen.nombre}
+                  destino={viaje.destino.nombre}
+                />
+              </Entra>
 
-            <View style={estilos.tarjeta}>
-              <View style={estilos.fila}>
-                <Text style={estilos.secundario}>
-                  {t('viajes.buscar.precio_asiento')}
-                </Text>
-                <Text style={estilos.enfasis}>
-                  {precioUrc(viaje.precioPorAsiento)}
-                </Text>
-              </View>
-              <View style={estilos.fila}>
-                <Text style={estilos.secundario}>
-                  {t('viajes.buscar.disponibles')}
-                </Text>
-                <Text style={estilos.enfasis}>
-                  {con('viajes.buscar.de_total', {
-                    libres: viaje.cuposDisponibles,
-                    total: viaje.cuposTotales,
+              <Entra indice={1} style={estilos.tarjeta}>
+                <View style={estilos.conductor}>
+                  <Avatar nombre={viaje.conductor.nombre} />
+                  <Text style={[estilos.enfasis, estilos.encoge]}>
+                    {viaje.conductor.nombre}
+                  </Text>
+                </View>
+                {encontrado && (
+                  <InsigniasConductor conductor={encontrado.conductor} />
+                )}
+                <View style={estilos.conductor}>
+                  <View style={estilos.baldosa}>
+                    <Icono nombre="directions_car" color={colores.primario} />
+                  </View>
+                  <View style={estilos.encoge}>
+                    <Text style={estilos.enfasis}>
+                      {nombreVehiculo(viaje.vehiculo)}
+                    </Text>
+                    <Text style={estilos.secundario}>
+                      {viaje.vehiculo.placa}
+                    </Text>
+                  </View>
+                </View>
+              </Entra>
+
+              <Entra indice={2} style={estilos.tarjeta}>
+                <View style={estilos.fila}>
+                  <Text style={estilos.secundario}>
+                    {t('viajes.buscar.precio_asiento')}
+                  </Text>
+                  <Text style={estilos.precio}>
+                    {precioUrc(viaje.precioPorAsiento)}
+                  </Text>
+                </View>
+                <View style={estilos.fila}>
+                  <Text style={estilos.secundario}>
+                    {t('viajes.buscar.disponibles')}
+                  </Text>
+                  <Text style={estilos.enfasis}>
+                    {con('viajes.buscar.de_total', {
+                      libres: viaje.cuposDisponibles,
+                      total: viaje.cuposTotales,
+                    })}
+                  </Text>
+                </View>
+              </Entra>
+
+              <Entra indice={3}>
+                <Aviso tono="info">
+                  {con('viajes.buscar.garantia', {
+                    conductor: viaje.conductor.nombre,
                   })}
-                </Text>
-              </View>
+                </Aviso>
+              </Entra>
             </View>
-
-            <Aviso tono="info">
-              {con('viajes.buscar.garantia', {
-                conductor: viaje.conductor.nombre,
-              })}
-            </Aviso>
           </ScrollView>
           <ZonaAccion>
             <Boton
@@ -217,13 +240,46 @@ export default function DetalleViajePantalla() {
 
 const estilos = StyleSheet.create({
   raiz: { flex: 1, backgroundColor: colores.fondoSutil },
+  // Flota sobre el mapa de portada.
   encabezado: {
-    minHeight: 56,
+    position: 'absolute',
+    zIndex: 2,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: espacio(1),
+    gap: espacio(2),
+    paddingHorizontal: espacio(3),
   },
-  titulo: { ...tipografia.titulo, flex: 1, color: colores.texto },
+  botonVolver: {
+    borderRadius: radio.completo,
+    backgroundColor: colores.superficie,
+    ...sombraTarjeta,
+  },
+  titulo: {
+    ...tipografia.etiqueta,
+    paddingHorizontal: espacio(3),
+    paddingVertical: espacio(2),
+    borderRadius: radio.completo,
+    color: colores.texto,
+    backgroundColor: colores.superficie,
+    overflow: 'hidden',
+  },
+  esqueletos: {
+    gap: espacio(3),
+    padding: espacio(4),
+    paddingTop: 100,
+    alignSelf: 'stretch',
+  },
+  portada: { height: 300 },
+  hoja: {
+    gap: espacio(3),
+    marginTop: -espacio(7),
+    padding: espacio(4),
+    borderTopLeftRadius: radio.xl,
+    borderTopRightRadius: radio.xl,
+    backgroundColor: colores.fondoSutil,
+  },
   centrado: {
     flex: 1,
     alignItems: 'center',
@@ -231,11 +287,7 @@ const estilos = StyleSheet.create({
     gap: espacio(3),
     padding: espacio(4),
   },
-  contenido: {
-    gap: espacio(3),
-    paddingHorizontal: espacio(4),
-    paddingBottom: espacio(4),
-  },
+  contenido: { paddingBottom: espacio(4) },
   tarjeta: {
     gap: espacio(2),
     padding: espacio(4),
@@ -243,6 +295,29 @@ const estilos = StyleSheet.create({
     borderWidth: 1,
     borderColor: colores.borde,
     backgroundColor: colores.superficie,
+    ...sombraTarjeta,
+  },
+  mapa: {
+    overflow: 'hidden',
+    borderRadius: radio.l,
+    borderWidth: 1,
+    borderColor: colores.borde,
+    ...sombraTarjeta,
+  },
+  baldosa: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radio.m,
+    backgroundColor: colores.primarioSuave,
+  },
+  precio: {
+    fontSize: 30,
+    lineHeight: 36,
+    fontWeight: '800',
+    letterSpacing: -0.4,
+    color: colores.primarioTexto,
   },
   fila: {
     flexDirection: 'row',

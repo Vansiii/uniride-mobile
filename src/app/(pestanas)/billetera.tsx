@@ -1,14 +1,8 @@
 import * as Portapapeles from 'expo-clipboard';
 import { Redirect, router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import type { ComponentProps } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   Billetera,
   consultarEstadoIdentidad,
@@ -20,6 +14,7 @@ import {
   Movimiento,
   Saldo,
 } from '@/api/cliente';
+import { Esqueleto, Toque } from '@/componentes/Animado';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { BandaMarca } from '@/componentes/Estructura';
 import { Icono } from '@/componentes/Icono';
@@ -31,7 +26,15 @@ import { ErrorKeystore } from '@/dispositivo/keystore';
 import { abrirHttps } from '@/enlaces';
 import { formatearMonto } from '@/formato';
 import { t } from '@/i18n';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import {
+  colores,
+  espacio,
+  radio,
+  degradadoBoton,
+  tipografia,
+  sombraElevada,
+  sombraTarjeta,
+} from '@/tema/tokens';
 
 type Vista =
   | { tipo: 'cargando' }
@@ -262,15 +265,15 @@ function Contenido() {
         </BandaMarca>
 
         {vista.tipo === 'cargando' && (
-          <View style={estilos.centro}>
-            <ActivityIndicator
-              color={colores.primario}
-              size="large"
-              accessibilityLabel={t('comun.estados.cargando')}
-            />
-            <Text style={estilos.secundario}>
-              {t('comun.estados.cargando')}
-            </Text>
+          <View
+            style={estilos.esqueletos}
+            accessibilityLabel={t('comun.estados.cargando')}
+          >
+            <View style={estilos.acciones}>
+              <Esqueleto alto={96} redondeo={radio.l} style={estilos.mitad} />
+              <Esqueleto alto={96} redondeo={radio.l} style={estilos.mitad} />
+            </View>
+            <Esqueleto alto={120} redondeo={radio.l} />
           </View>
         )}
 
@@ -325,24 +328,18 @@ function Contenido() {
 
         {lista && (
           <View style={[estilos.bloque, estilos.sobreBanda]}>
-            <View style={[estilos.tarjeta, estilos.acciones]}>
-              <View style={estilos.accion}>
-                <Boton
-                  icono="add"
-                  anchoCompleto
-                  etiqueta={t('billetera.recarga.boton')}
-                  alPresionar={() => router.push('/recargar')}
-                />
-              </View>
-              <View style={estilos.accion}>
-                <Boton
-                  variante="secundario"
-                  icono="receipt_long"
-                  anchoCompleto
-                  etiqueta={t('billetera.pantalla.movimientos')}
-                  alPresionar={() => router.push('/movimientos')}
-                />
-              </View>
+            <View style={estilos.acciones}>
+              <Baldosa
+                icono="add"
+                destacada
+                etiqueta={t('billetera.recarga.boton')}
+                alPresionar={() => router.push('/recargar')}
+              />
+              <Baldosa
+                icono="receipt_long"
+                etiqueta={t('billetera.pantalla.movimientos')}
+                alPresionar={() => router.push('/movimientos')}
+              />
             </View>
             {pendientes.map((m) => (
               <Aviso key={m.id} tono="info">
@@ -437,7 +434,63 @@ function Contenido() {
   );
 }
 
+/** Acción grande en baldosa: ícono en círculo y rótulo, con respuesta al toque. */
+function Baldosa({
+  icono,
+  etiqueta,
+  alPresionar,
+  destacada = false,
+}: {
+  icono: ComponentProps<typeof Icono>['nombre'];
+  etiqueta: string;
+  alPresionar: () => void;
+  destacada?: boolean;
+}) {
+  const color = destacada ? colores.sobrePrimario : colores.primario;
+  return (
+    <Toque
+      accessibilityRole="button"
+      accessibilityLabel={etiqueta}
+      onPress={alPresionar}
+      style={[estilos.baldosa, destacada && estilos.baldosaDestacada]}
+    >
+      <View style={[estilos.circulo, destacada && estilos.circuloDestacado]}>
+        <Icono nombre={icono} color={color} />
+      </View>
+      <Text style={[estilos.textoBaldosa, destacada && { color }]}>
+        {etiqueta}
+      </Text>
+    </Toque>
+  );
+}
+
 const estilos = StyleSheet.create({
+  baldosa: {
+    flex: 1,
+    minHeight: 96,
+    justifyContent: 'space-between',
+    padding: espacio(4),
+    borderRadius: radio.l,
+    borderWidth: 1,
+    borderColor: colores.borde,
+    backgroundColor: colores.superficie,
+    ...sombraTarjeta,
+  },
+  baldosaDestacada: {
+    borderWidth: 0,
+    backgroundColor: colores.primario,
+    experimental_backgroundImage: degradadoBoton,
+  },
+  circulo: {
+    width: 40,
+    height: 40,
+    borderRadius: radio.completo,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colores.primarioSuave,
+  },
+  circuloDestacado: { backgroundColor: colores.vidrio },
+  textoBaldosa: { ...tipografia.cuerpoEnfasis, color: colores.texto },
   raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   desplazable: { flexGrow: 1, paddingBottom: espacio(6) },
   filaTitulo: {
@@ -446,6 +499,8 @@ const estilos = StyleSheet.create({
     justifyContent: 'space-between',
   },
   titulo: { ...tipografia.pantalla, color: colores.sobreMarca },
+  esqueletos: { gap: espacio(3), padding: espacio(4) },
+  mitad: { flex: 1 },
   centro: {
     alignItems: 'center',
     gap: espacio(3),
@@ -479,11 +534,10 @@ const estilos = StyleSheet.create({
     padding: espacio(3),
     borderRadius: radio.l,
     backgroundColor: colores.superficie,
-    elevation: 3,
+    ...sombraElevada,
   },
   // Dos acciones lado a lado; si la letra del sistema crece, pasan a otra fila.
-  acciones: { flexDirection: 'row', flexWrap: 'wrap' },
-  accion: { flexGrow: 1, flexBasis: 130 },
+  acciones: { flexDirection: 'row', gap: espacio(3) },
   fila: {
     flexDirection: 'row',
     alignItems: 'center',

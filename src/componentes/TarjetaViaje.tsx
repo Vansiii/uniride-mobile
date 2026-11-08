@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { ViajeEncontrado } from '@/api/cliente';
 import {
   formatearDistancia,
@@ -6,7 +6,14 @@ import {
   formatearMonto,
 } from '@/formato';
 import { con, t } from '@/i18n';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import {
+  colores,
+  espacio,
+  radio,
+  tipografia,
+  sombraTarjeta,
+} from '@/tema/tokens';
+import { Toque } from './Animado';
 import { EtiquetaEstado } from './Mensajes';
 
 export const precioUrc = (precio: number) =>
@@ -29,12 +36,13 @@ export function Trayecto({
 }) {
   return (
     <View style={estilos.trayecto}>
-      <View style={estilos.parada}>
+      <View style={estilos.riel} accessibilityElementsHidden>
         <View style={[estilos.punto, estilos.puntoOrigen]} />
-        <Text style={estilos.lugar}>{origen}</Text>
-      </View>
-      <View style={estilos.parada}>
+        <View style={estilos.linea} />
         <View style={[estilos.punto, estilos.puntoDestino]} />
+      </View>
+      <View style={estilos.paradas}>
+        <Text style={estilos.lugar}>{origen}</Text>
         <Text style={estilos.lugar}>{destino}</Text>
       </View>
     </View>
@@ -89,7 +97,8 @@ export function TarjetaViaje({
   const libres = asientosLibres(viaje.cuposDisponibles);
   const vehiculo = nombreVehiculo(viaje.vehiculo);
   return (
-    <Pressable
+    <Toque
+      escala={0.97}
       accessibilityRole="button"
       accessibilityLabel={con('viajes.buscar.tarjeta_accesible', {
         hora,
@@ -103,14 +112,13 @@ export function TarjetaViaje({
         placa: viaje.vehiculo.placa,
       })}
       onPress={alPresionar}
-      style={({ pressed }) => [
-        estilos.tarjeta,
-        pressed && { backgroundColor: colores.primarioSuave },
-      ]}
+      style={estilos.tarjeta}
     >
       <View style={estilos.cabecera}>
         <Text style={estilos.hora}>{hora}</Text>
-        <Text style={estilos.enfasis}>{precio}</Text>
+        <View style={estilos.precio}>
+          <Text style={estilos.textoPrecio}>{precio}</Text>
+        </View>
       </View>
       <Trayecto
         origen={con('viajes.buscar.origen_distancia', {
@@ -120,32 +128,47 @@ export function TarjetaViaje({
         destino={viaje.destinoNombre}
       />
       <View style={estilos.pie}>
-        <View style={estilos.conductor}>
-          <Avatar nombre={viaje.conductor.nombre} />
-          <Text style={[estilos.enfasis, estilos.encoge]}>
-            {viaje.conductor.nombre}
-          </Text>
+        <View style={estilos.cabecera}>
+          <View style={[estilos.conductor, estilos.encoge]}>
+            <Avatar nombre={viaje.conductor.nombre} />
+            <Text style={[estilos.enfasis, estilos.encoge]} numberOfLines={1}>
+              {viaje.conductor.nombre}
+            </Text>
+          </View>
+          <View
+            style={[
+              estilos.cupos,
+              viaje.cuposDisponibles === 1 && estilos.cuposUltimo,
+            ]}
+          >
+            <Text
+              style={[
+                estilos.textoCupos,
+                viaje.cuposDisponibles === 1 && estilos.textoCuposUltimo,
+              ]}
+            >
+              {libres}
+            </Text>
+          </View>
         </View>
         <InsigniasConductor conductor={viaje.conductor} />
-        <View style={estilos.cabecera}>
-          <Text style={[estilos.secundario, estilos.encoge]}>
-            {vehiculo} · {viaje.vehiculo.placa}
-          </Text>
-          <Text style={[estilos.secundario, estilos.fijo]}>{libres}</Text>
-        </View>
+        <Text style={estilos.secundario}>
+          {vehiculo} · {viaje.vehiculo.placa}
+        </Text>
       </View>
-    </Pressable>
+    </Toque>
   );
 }
 
 const estilos = StyleSheet.create({
   tarjeta: {
-    gap: espacio(3),
+    gap: espacio(4),
     padding: espacio(4),
     borderRadius: radio.l,
     borderWidth: 1,
     borderColor: colores.borde,
     backgroundColor: colores.superficie,
+    ...sombraTarjeta,
   },
   cabecera: {
     flexDirection: 'row',
@@ -153,15 +176,36 @@ const estilos = StyleSheet.create({
     justifyContent: 'space-between',
     gap: espacio(2),
   },
-  hora: { ...tipografia.titulo, color: colores.texto },
+  hora: {
+    fontSize: 26,
+    lineHeight: 32,
+    fontWeight: '700',
+    letterSpacing: -0.5,
+    color: colores.texto,
+  },
+  precio: {
+    paddingHorizontal: espacio(3),
+    paddingVertical: espacio(1),
+    borderRadius: radio.completo,
+    backgroundColor: colores.primarioSuave,
+  },
+  textoPrecio: { ...tipografia.cuerpoEnfasis, color: colores.primarioTexto },
   enfasis: { ...tipografia.cuerpoEnfasis, color: colores.texto },
   secundario: { ...tipografia.secundario, color: colores.textoSecundario },
-  trayecto: { gap: espacio(1) },
-  parada: { flexDirection: 'row', gap: espacio(2) },
-  punto: { width: 10, height: 10, marginTop: 7, borderRadius: 5 },
+  trayecto: { flexDirection: 'row', gap: espacio(3) },
+  riel: { alignItems: 'center', paddingVertical: 6 },
+  punto: { width: 10, height: 10, borderRadius: 5 },
   puntoOrigen: { backgroundColor: colores.primario },
   puntoDestino: { backgroundColor: colores.exito },
-  lugar: { ...tipografia.cuerpo, flex: 1, color: colores.texto },
+  linea: {
+    flex: 1,
+    width: 2,
+    marginVertical: 2,
+    borderRadius: 1,
+    backgroundColor: colores.borde,
+  },
+  paradas: { flex: 1, gap: espacio(3) },
+  lugar: { ...tipografia.cuerpo, color: colores.texto },
   pie: {
     gap: espacio(2),
     paddingTop: espacio(3),
@@ -170,15 +214,24 @@ const estilos = StyleSheet.create({
   },
   conductor: { flexDirection: 'row', alignItems: 'center', gap: espacio(2) },
   encoge: { flexShrink: 1 },
-  fijo: { flexShrink: 0 },
+  cupos: {
+    flexShrink: 0,
+    paddingHorizontal: espacio(2),
+    paddingVertical: 2,
+    borderRadius: radio.completo,
+    backgroundColor: colores.fondoSutil,
+  },
+  cuposUltimo: { backgroundColor: colores.avisoSuave },
+  textoCupos: { ...tipografia.pequeno, color: colores.textoSecundario },
+  textoCuposUltimo: { color: colores.avisoTexto },
   insignias: { flexDirection: 'row', flexWrap: 'wrap', gap: espacio(1) },
   avatar: {
-    width: 32,
-    height: 32,
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radio.completo,
     backgroundColor: colores.primarioSuave,
   },
-  inicial: { ...tipografia.etiqueta, color: colores.primarioTexto },
+  inicial: { ...tipografia.cuerpoEnfasis, color: colores.primarioTexto },
 });
