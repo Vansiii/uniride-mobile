@@ -1,8 +1,7 @@
 import { Tabs } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BarraPestanas } from '@/componentes/BarraPestanas';
 import { Icono } from '@/componentes/Icono';
 import { t } from '@/i18n';
-import { colores, espacio, tamano, tipografia } from '@/tema/tokens';
 
 /**
  * Barra de pestañas (DESIGN_SYSTEM §6.1): ícono y etiqueta siempre. Solo están las pestañas que ya existen; Mis viajes
@@ -10,23 +9,10 @@ import { colores, espacio, tamano, tipografia } from '@/tema/tokens';
  * queda montada: cambiar de pestaña no la reinicia (en Billetera cada lectura pide la huella). Publicar relee sus requisitos al volver.
  */
 export default function Pestanas() {
-  const { bottom } = useSafeAreaInsets();
   return (
     <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colores.primario,
-        tabBarInactiveTintColor: colores.textoSecundario,
-        tabBarLabelStyle: { ...tipografia.pequeno, fontWeight: '600' },
-        // 64 + área segura, con aire arriba y abajo para que ícono y etiqueta no se peguen al borde.
-        tabBarStyle: {
-          backgroundColor: colores.fondo,
-          height: tamano.altoBarraPestanas + espacio(3) + bottom,
-          paddingTop: espacio(2),
-          paddingBottom: bottom + espacio(3),
-          borderTopColor: colores.borde,
-        },
-      }}
+      tabBar={(props) => <BarraPestanas {...props} />}
+      screenOptions={{ headerShown: false, animation: 'fade' }}
     >
       <Tabs.Screen
         name="index"

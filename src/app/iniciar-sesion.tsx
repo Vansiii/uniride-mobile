@@ -11,12 +11,19 @@ import {
 } from 'react-native';
 import { ErrorApi } from '@/api/cliente';
 import { useSesion } from '@/contexto/sesion';
+import { Entra } from '@/componentes/Animado';
 import { Boton } from '@/componentes/Boton';
 import { Campo } from '@/componentes/Campo';
 import { BandaMarca, ZonaAccion } from '@/componentes/Estructura';
 import { Aviso } from '@/componentes/Mensajes';
 import { t } from '@/i18n';
-import { colores, espacio, tipografia } from '@/tema/tokens';
+import {
+  colores,
+  espacio,
+  radio,
+  sombraElevada,
+  tipografia,
+} from '@/tema/tokens';
 
 interface Falla {
   texto: string;
@@ -95,15 +102,19 @@ export default function IniciarSesion() {
         keyboardShouldPersistTaps="handled"
       >
         <BandaMarca>
-          <Image
-            source={require('../../assets/marca/logotipo-blanco.svg')}
-            style={estilos.logo}
-            contentFit="contain"
-            accessibilityLabel={t('aplicacion.nombre')}
-          />
-          <Text style={estilos.eslogan}>{t('aplicacion.eslogan')}</Text>
+          <Entra>
+            <Image
+              source={require('../../assets/marca/logotipo-blanco.svg')}
+              style={estilos.logo}
+              contentFit="contain"
+              accessibilityLabel={t('aplicacion.nombre')}
+            />
+          </Entra>
+          <Entra indice={1}>
+            <Text style={estilos.eslogan}>{t('aplicacion.eslogan')}</Text>
+          </Entra>
         </BandaMarca>
-        <View style={estilos.contenido}>
+        <Entra indice={2} style={estilos.contenido}>
           <View style={estilos.encabezado}>
             <Text style={estilos.titulo} accessibilityRole="header">
               {t('autenticacion.sesion.titulo')}
@@ -160,7 +171,7 @@ export default function IniciarSesion() {
               alPresionar={() => router.push('/recuperar')}
             />
           </View>
-        </View>
+        </Entra>
       </ScrollView>
       <ZonaAccion>
         <Boton
@@ -185,19 +196,28 @@ export default function IniciarSesion() {
 }
 
 const estilos = StyleSheet.create({
-  raiz: { flex: 1, backgroundColor: colores.fondo },
-  desplazable: { flexGrow: 1 },
-  logo: { width: 128, height: 31, marginBottom: espacio(2) },
+  raiz: { flex: 1, backgroundColor: colores.fondoSutil },
+  desplazable: { flexGrow: 1, paddingBottom: espacio(4) },
+  logo: { width: 150, height: 36, marginBottom: espacio(4) },
   eslogan: {
     ...tipografia.titulo,
-    fontWeight: '700',
     color: colores.sobreMarca,
-    maxWidth: 280,
+    fontSize: 32,
+    lineHeight: 38,
+    fontWeight: '800',
+    letterSpacing: -0.8,
+    maxWidth: 300,
+    paddingBottom: espacio(6),
   },
+  // Tarjeta que sube sobre la banda: el formulario "flota".
   contenido: {
-    padding: espacio(4),
-    paddingTop: espacio(6),
+    marginTop: -espacio(7),
+    marginHorizontal: espacio(4),
+    padding: espacio(5),
     gap: espacio(4),
+    borderRadius: radio.xl,
+    backgroundColor: colores.superficie,
+    ...sombraElevada,
   },
   encabezado: { gap: espacio(1) },
   enlace: { alignSelf: 'flex-start' },

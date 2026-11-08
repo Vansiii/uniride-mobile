@@ -1,6 +1,7 @@
 import type { ComponentProps } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import { Toque } from './Animado';
 import { Icono } from './Icono';
 
 type NombreIcono = ComponentProps<typeof Icono>['nombre'];
@@ -57,14 +58,12 @@ export function FilaAjuste({
   peligro?: boolean;
 }) {
   return (
-    <Pressable
+    <Toque
+      escala={0.98}
       accessibilityRole="button"
       accessibilityLabel={detalle ? `${titulo}. ${detalle}` : titulo}
       onPress={alPresionar}
-      style={({ pressed }) => [
-        estilos.fila,
-        pressed && { backgroundColor: colores.fondoSutil },
-      ]}
+      style={estilos.fila}
     >
       <View
         style={[
@@ -93,7 +92,7 @@ export function FilaAjuste({
       {!peligro && (
         <Icono nombre="chevron_right" color={colores.textoPlaceholder} />
       )}
-    </Pressable>
+    </Toque>
   );
 }
 

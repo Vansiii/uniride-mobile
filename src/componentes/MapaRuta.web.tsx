@@ -119,20 +119,25 @@ export function zoomParaVer(a: Punto, b: Punto, ancho: number): number {
 export function MapaRuta({
   origen,
   destino,
+  alto = ALTO,
+  redondeo = radio.m,
 }: {
   origen: Punto;
   destino: Punto;
+  /** Altura del mapa: 112 en tarjetas, mayor como portada. */
+  alto?: number;
+  redondeo?: number;
 }) {
   const [ancho, setAncho] = useState(0);
   const zoom = ancho ? zoomParaVer(origen, destino, ancho) : 0;
   const po = aPixel(origen, zoom);
   const pd = aPixel(destino, zoom);
   const izquierda = (po.x + pd.x) / 2 - ancho / 2;
-  const arriba = (po.y + pd.y) / 2 - ALTO / 2;
+  const arriba = (po.y + pd.y) / 2 - alto / 2;
 
   return (
     <View
-      style={estilos.mapa}
+      style={[estilos.mapa, { height: alto, borderRadius: redondeo }]}
       onLayout={(e) => setAncho(e.nativeEvent.layout.width)}
     >
       <View
@@ -145,7 +150,7 @@ export function MapaRuta({
           izquierda={izquierda}
           arriba={arriba}
           ancho={ancho}
-          alto={ALTO}
+          alto={alto}
         />
         {ancho > 0 && (
           <>

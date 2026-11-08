@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { ViajeEncontrado } from '@/api/cliente';
 import {
   formatearDistancia,
@@ -13,6 +13,7 @@ import {
   tipografia,
   sombraTarjeta,
 } from '@/tema/tokens';
+import { Toque } from './Animado';
 import { EtiquetaEstado } from './Mensajes';
 
 export const precioUrc = (precio: number) =>
@@ -96,7 +97,8 @@ export function TarjetaViaje({
   const libres = asientosLibres(viaje.cuposDisponibles);
   const vehiculo = nombreVehiculo(viaje.vehiculo);
   return (
-    <Pressable
+    <Toque
+      escala={0.97}
       accessibilityRole="button"
       accessibilityLabel={con('viajes.buscar.tarjeta_accesible', {
         hora,
@@ -110,10 +112,7 @@ export function TarjetaViaje({
         placa: viaje.vehiculo.placa,
       })}
       onPress={alPresionar}
-      style={({ pressed }) => [
-        estilos.tarjeta,
-        pressed && { backgroundColor: colores.primarioSuave },
-      ]}
+      style={estilos.tarjeta}
     >
       <View style={estilos.cabecera}>
         <Text style={estilos.hora}>{hora}</Text>
@@ -157,7 +156,7 @@ export function TarjetaViaje({
           {vehiculo} · {viaje.vehiculo.placa}
         </Text>
       </View>
-    </Pressable>
+    </Toque>
   );
 }
 

@@ -1,4 +1,10 @@
-import { Ref, useState } from 'react';
+import { Ref, useEffect, useState } from 'react';
+import Animated, {
+  interpolateColor,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import {
   StyleSheet,
   Text,
@@ -34,15 +40,28 @@ export function Campo({
 }: Props) {
   const [foco, setFoco] = useState(false);
   const [ver, setVer] = useState(false);
+  // 0 = reposo, 1 = foco: el borde y el fondo cambian con una transición, no de golpe.
+  const progreso = useSharedValue(0);
+  useEffect(() => {
+    progreso.set(withTiming(foco ? 1 : 0, { duration: 180 }));
+  }, [foco, progreso]);
+  const animada = useAnimatedStyle(() => ({
+    borderColor: interpolateColor(
+      progreso.value,
+      [0, 1],
+      ['transparent', colores.primario],
+    ),
+    backgroundColor: interpolateColor(
+      progreso.value,
+      [0, 1],
+      [colores.fondoSutil, colores.superficie],
+    ),
+  }));
   return (
     <View style={estilos.campo}>
       <Text style={estilos.etiqueta}>{etiqueta}</Text>
-      <View
-        style={[
-          estilos.caja,
-          foco && estilos.conFoco,
-          error ? estilos.conError : null,
-        ]}
+      <Animated.View
+        style={[estilos.caja, animada, error ? estilos.conError : null]}
       >
         <TextInput
           ref={refEntrada}
@@ -71,7 +90,7 @@ export function Campo({
             alPresionar={() => setVer(!ver)}
           />
         )}
-      </View>
+      </Animated.View>
       {(error || ayuda) && (
         <View style={estilos.fila}>
           {error && (
@@ -92,19 +111,18 @@ export function Campo({
 const estilos = StyleSheet.create({
   campo: { gap: espacio(2) },
   etiqueta: { ...tipografia.etiqueta, color: colores.texto },
-  // El borde activo de 2 se compensa con el margen para que el texto no se mueva.
+  // Campo relleno: sin contorno en reposo; el borde de 2 aparece con el foco sin mover el texto.
   caja: {
     minHeight: tamano.altoControl,
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: radio.m,
-    borderWidth: 1,
-    borderColor: colores.bordeCampo,
-    backgroundColor: colores.superficie,
-    padding: 1,
+    borderWidth: 2,
   },
-  conFoco: { borderWidth: 2, borderColor: colores.primario, padding: 0 },
-  conError: { borderWidth: 2, borderColor: colores.peligro, padding: 0 },
+  conError: {
+    borderColor: colores.peligro,
+    backgroundColor: colores.peligroSuave,
+  },
   entrada: {
     flex: 1,
     minHeight: tamano.altoControl - 4,

@@ -1,14 +1,9 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { buscarViajes, ErrorApi, ViajeEncontrado } from '@/api/cliente';
+import { Entra, Esqueleto } from '@/componentes/Animado';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { ZonaAccion } from '@/componentes/Estructura';
 import { Ilustracion } from '@/componentes/Ilustracion';
@@ -103,12 +98,13 @@ export default function ResultadosPantalla() {
       </View>
 
       {vista.tipo === 'cargando' && (
-        <View style={estilos.centrado}>
-          <ActivityIndicator
-            color={colores.primario}
-            size="large"
-            accessibilityLabel={t('comun.estados.cargando')}
-          />
+        <View
+          style={estilos.lista}
+          accessibilityLabel={t('comun.estados.cargando')}
+        >
+          {[0, 1, 2].map((i) => (
+            <Esqueleto key={i} alto={190} redondeo={28} />
+          ))}
         </View>
       )}
 
@@ -172,11 +168,13 @@ export default function ResultadosPantalla() {
           keyExtractor={(v) => v.id}
           contentContainerStyle={estilos.lista}
           ListHeaderComponent={<Text style={estilos.resumen}>{ventana}</Text>}
-          renderItem={({ item }) => (
-            <TarjetaViaje
-              viaje={item}
-              alPresionar={() => router.push(`/viajes/${item.id}`)}
-            />
+          renderItem={({ item, index }) => (
+            <Entra indice={Math.min(index, 6)}>
+              <TarjetaViaje
+                viaje={item}
+                alPresionar={() => router.push(`/viajes/${item.id}`)}
+              />
+            </Entra>
           )}
         />
       )}

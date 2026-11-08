@@ -418,11 +418,18 @@ const estilos = StyleSheet.create({
   encabezado: {
     minHeight: 56,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: espacio(1),
     paddingHorizontal: espacio(2),
   },
-  tituloBarra: { ...tipografia.titulo, color: colores.texto },
+  tituloBarra: {
+    ...tipografia.pantalla,
+    width: '100%',
+    paddingHorizontal: espacio(2),
+    paddingBottom: espacio(2),
+    color: colores.texto,
+  },
   contenido: {
     flexGrow: 1,
     gap: espacio(4),

@@ -50,15 +50,20 @@ function Puntos({ origen, destino }: { origen: Punto; destino: Punto }) {
 export function MapaRuta({
   origen,
   destino,
+  alto = ALTO,
+  redondeo = radio.m,
 }: {
   origen: Punto;
   destino: Punto;
+  /** Altura del mapa: 112 en tarjetas, mayor como portada. */
+  alto?: number;
+  redondeo?: number;
 }) {
   const [completo, setCompleto] = useState(false);
   const recuadro = limites(origen, destino);
 
   return (
-    <View style={estilos.mapa}>
+    <View style={[estilos.mapa, { height: alto, borderRadius: redondeo }]}>
       <View
         style={StyleSheet.absoluteFill}
         accessibilityElementsHidden

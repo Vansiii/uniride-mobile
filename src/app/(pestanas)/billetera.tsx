@@ -1,6 +1,7 @@
 import * as Portapapeles from 'expo-clipboard';
 import { Redirect, router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ComponentProps } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -20,6 +21,7 @@ import {
   Movimiento,
   Saldo,
 } from '@/api/cliente';
+import { Toque } from '@/componentes/Animado';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { BandaMarca } from '@/componentes/Estructura';
 import { Icono } from '@/componentes/Icono';
@@ -35,8 +37,10 @@ import {
   colores,
   espacio,
   radio,
+  degradadoBoton,
   tipografia,
   sombraElevada,
+  sombraTarjeta,
 } from '@/tema/tokens';
 
 type Vista =
@@ -331,24 +335,18 @@ function Contenido() {
 
         {lista && (
           <View style={[estilos.bloque, estilos.sobreBanda]}>
-            <View style={[estilos.tarjeta, estilos.acciones]}>
-              <View style={estilos.accion}>
-                <Boton
-                  icono="add"
-                  anchoCompleto
-                  etiqueta={t('billetera.recarga.boton')}
-                  alPresionar={() => router.push('/recargar')}
-                />
-              </View>
-              <View style={estilos.accion}>
-                <Boton
-                  variante="secundario"
-                  icono="receipt_long"
-                  anchoCompleto
-                  etiqueta={t('billetera.pantalla.movimientos')}
-                  alPresionar={() => router.push('/movimientos')}
-                />
-              </View>
+            <View style={estilos.acciones}>
+              <Baldosa
+                icono="add"
+                destacada
+                etiqueta={t('billetera.recarga.boton')}
+                alPresionar={() => router.push('/recargar')}
+              />
+              <Baldosa
+                icono="receipt_long"
+                etiqueta={t('billetera.pantalla.movimientos')}
+                alPresionar={() => router.push('/movimientos')}
+              />
             </View>
             {pendientes.map((m) => (
               <Aviso key={m.id} tono="info">
@@ -443,7 +441,63 @@ function Contenido() {
   );
 }
 
+/** Acción grande en baldosa: ícono en círculo y rótulo, con respuesta al toque. */
+function Baldosa({
+  icono,
+  etiqueta,
+  alPresionar,
+  destacada = false,
+}: {
+  icono: ComponentProps<typeof Icono>['nombre'];
+  etiqueta: string;
+  alPresionar: () => void;
+  destacada?: boolean;
+}) {
+  const color = destacada ? colores.sobrePrimario : colores.primario;
+  return (
+    <Toque
+      accessibilityRole="button"
+      accessibilityLabel={etiqueta}
+      onPress={alPresionar}
+      style={[estilos.baldosa, destacada && estilos.baldosaDestacada]}
+    >
+      <View style={[estilos.circulo, destacada && estilos.circuloDestacado]}>
+        <Icono nombre={icono} color={color} />
+      </View>
+      <Text style={[estilos.textoBaldosa, destacada && { color }]}>
+        {etiqueta}
+      </Text>
+    </Toque>
+  );
+}
+
 const estilos = StyleSheet.create({
+  baldosa: {
+    flex: 1,
+    minHeight: 96,
+    justifyContent: 'space-between',
+    padding: espacio(4),
+    borderRadius: radio.l,
+    borderWidth: 1,
+    borderColor: colores.borde,
+    backgroundColor: colores.superficie,
+    ...sombraTarjeta,
+  },
+  baldosaDestacada: {
+    borderWidth: 0,
+    backgroundColor: colores.primario,
+    experimental_backgroundImage: degradadoBoton,
+  },
+  circulo: {
+    width: 40,
+    height: 40,
+    borderRadius: radio.completo,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colores.primarioSuave,
+  },
+  circuloDestacado: { backgroundColor: colores.vidrio },
+  textoBaldosa: { ...tipografia.cuerpoEnfasis, color: colores.texto },
   raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   desplazable: { flexGrow: 1, paddingBottom: espacio(6) },
   filaTitulo: {
@@ -488,8 +542,7 @@ const estilos = StyleSheet.create({
     ...sombraElevada,
   },
   // Dos acciones lado a lado; si la letra del sistema crece, pasan a otra fila.
-  acciones: { flexDirection: 'row', flexWrap: 'wrap' },
-  accion: { flexGrow: 1, flexBasis: 130 },
+  acciones: { flexDirection: 'row', gap: espacio(3) },
   fila: {
     flexDirection: 'row',
     alignItems: 'center',

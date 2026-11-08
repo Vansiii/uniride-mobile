@@ -588,7 +588,7 @@ function Contenido() {
       style={estilos.raizSutil}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={[estilos.encabezado, { paddingTop: top }]}>
+      <View style={[estilos.encabezado, { paddingTop: top + espacio(3) }]}>
         <Text style={estilos.tituloBarra} accessibilityRole="header">
           {t('viajes.publicar.titulo')}
         </Text>
@@ -794,11 +794,12 @@ const estilos = StyleSheet.create({
     backgroundColor: colores.fondo,
   },
   encabezado: {
-    minHeight: 56,
+    minHeight: 72,
     justifyContent: 'center',
     paddingHorizontal: espacio(4),
+    paddingBottom: espacio(2),
   },
-  tituloBarra: { ...tipografia.titulo, color: colores.texto },
+  tituloBarra: { ...tipografia.pantalla, color: colores.texto },
   tituloBanda: { ...tipografia.pantalla, color: colores.sobreMarca },
   textoBanda: { ...tipografia.cuerpo, color: colores.sobreMarcaSecundario },
   contenido: {

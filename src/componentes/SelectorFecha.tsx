@@ -1,4 +1,5 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Toque } from './Animado';
 import { formatearDia } from '@/formato';
 import { t } from '@/i18n';
 import { colores, espacio, radio, tipografia } from '@/tema/tokens';
@@ -32,7 +33,7 @@ export function SelectorFecha({
     const elegida = f.getTime() === fecha.getTime();
     const etiqueta = etiquetaFecha(f, i);
     return (
-      <Pressable
+      <Toque
         key={f.getTime()}
         accessibilityRole="radio"
         accessibilityLabel={etiqueta}
@@ -43,7 +44,7 @@ export function SelectorFecha({
         <Text style={[estilos.textoChip, elegida && estilos.textoElegido]}>
           {etiqueta}
         </Text>
-      </Pressable>
+      </Toque>
     );
   });
   return (

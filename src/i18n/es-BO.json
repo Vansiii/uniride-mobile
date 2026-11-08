@@ -102,7 +102,14 @@
     "nombre": "Nombre",
     "correo": "Correo",
     "organizacion": "Organización activa",
-    "pestana": "Buscar"
+    "pestana": "Buscar",
+    "publica_titulo": "¿Tienes auto?",
+    "publica_texto": "Publica tu viaje, comparte los gastos y llega con compañía.",
+    "publica_boton": "Publicar un viaje",
+    "atajos": "Atajos",
+    "atajo_movimientos": "Movimientos",
+    "atajo_vehiculo": "Mi vehículo",
+    "atajo_identidad": "Mi identidad"
   },
   "membresias": {
     "lista": {
