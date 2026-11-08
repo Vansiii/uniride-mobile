@@ -96,7 +96,8 @@
     "cuenta": "Tu cuenta",
     "nombre": "Nombre",
     "correo": "Correo",
-    "organizacion": "Organización activa"
+    "organizacion": "Organización activa",
+    "pestana": "Inicio"
   },
   "membresias": {
     "lista": {
@@ -245,6 +246,31 @@
       "servicio_no_disponible": "No pudimos completar la verificación por un problema del servicio. Inténtalo de nuevo más tarde.",
       "liveness_no_disponible": "Esta versión de la app todavía no puede hacer la prueba de vida. Actualiza la app e inténtalo de nuevo.",
       "ya_verificada": "Tu identidad ya estaba verificada."
+    }
+  },
+  "billetera": {
+    "pantalla": {
+      "titulo": "Billetera",
+      "saldo": "Saldo disponible",
+      "unidad": "URC",
+      "prueba": "Saldo de prueba · sin valor real",
+      "actualizar": "Actualizar saldo",
+      "direccion": "Dirección de tu billetera",
+      "copiar": "Copiar dirección completa",
+      "copiada": "Dirección copiada.",
+      "copia_fallida": "No pudimos copiar la dirección. Inténtalo de nuevo.",
+      "explorador": "Ver en el explorador",
+      "explorador_detalle": "Polygonscan · red de prueba Amoy",
+      "sin_billetera_titulo": "Tu billetera se crea al verificar tu identidad",
+      "sin_billetera_texto": "Con ella pagas y cobras viajes. No tienes que configurar llaves ni guardar contraseñas extra.",
+      "verificar": "Verificar identidad",
+      "vincular_texto": "Para ver tu billetera, primero vincula este teléfono. Cada consulta de tu saldo pide tu huella o rostro, así nadie más puede verla.",
+      "vincular": "Vincular mi teléfono",
+      "cuenta_suspendida": "Tu cuenta está suspendida, por eso no podemos mostrar tu billetera. Comunícate con tu organización.",
+      "servicio_no_disponible": "No pudimos consultar tu saldo en este momento. No se perdió nada; inténtalo de nuevo.",
+      "biometria_cancelada": "Cancelaste la confirmación con tu huella, así que no mostramos tu billetera. Puedes volver a intentarlo cuando quieras.",
+      "keystore_no_disponible": "Esta versión de la app no puede usar la llave de seguridad de tu teléfono. Actualiza la app e inténtalo de nuevo.",
+      "peticion_expirada": "La comprobación de tu teléfono venció. Inténtalo de nuevo."
     }
   }
 }
