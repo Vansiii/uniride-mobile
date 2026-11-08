@@ -547,7 +547,7 @@ function Contenido() {
 }
 
 const estilos = StyleSheet.create({
-  raiz: { flex: 1, backgroundColor: colores.fondo },
+  raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   filaEnCamino: { alignSelf: 'stretch' },
   barra: {
     minHeight: 56,

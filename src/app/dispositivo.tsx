@@ -10,8 +10,10 @@ import {
   pedirDesafioAtestacion,
   vincularDispositivo,
 } from '@/api/cliente';
+import { Entra, Esqueleto } from '@/componentes/Animado';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { ZonaAccion } from '@/componentes/Estructura';
+import { Ilustracion } from '@/componentes/Ilustracion';
 import { Aviso } from '@/componentes/Mensajes';
 import { useSesion } from '@/contexto/sesion';
 import {
@@ -20,7 +22,13 @@ import {
   pedirTokenIntegridad,
 } from '@/dispositivo/keystore';
 import { t } from '@/i18n';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import {
+  colores,
+  espacio,
+  radio,
+  sombraTarjeta,
+  tipografia,
+} from '@/tema/tokens';
 
 /** Traduce el `codigo` de la API; nunca muestra códigos técnicos (DESIGN_SYSTEM §13.4). */
 function textoDe(error: unknown): string {
@@ -135,7 +143,9 @@ export default function DispositivoPantalla() {
         )}
         {falla && <Aviso tono="peligro">{falla}</Aviso>}
         {consultando ? (
-          <Text style={estilos.texto}>{t('comun.estados.cargando')}</Text>
+          <View accessibilityLabel={t('comun.estados.cargando')}>
+            <Esqueleto alto={120} redondeo={radio.l} />
+          </View>
         ) : sinConsulta ? (
           <Boton
             variante="secundario"
@@ -145,7 +155,7 @@ export default function DispositivoPantalla() {
             alPresionar={reintentar}
           />
         ) : dispositivo ? (
-          <View style={estilos.tarjeta}>
+          <Entra style={estilos.tarjeta}>
             <View style={estilos.dato}>
               <Text style={estilos.etiqueta}>
                 {t('dispositivo.vinculacion.modelo')}
@@ -160,16 +170,17 @@ export default function DispositivoPantalla() {
                 {new Date(dispositivo.vinculadoEn).toLocaleDateString('es-BO')}
               </Text>
             </View>
-          </View>
+          </Entra>
         ) : (
-          <>
+          <Entra style={estilos.hero}>
+            <Ilustracion icono="smartphone" color={colores.primario} />
             <Text style={estilos.texto}>
               {t('dispositivo.vinculacion.explicacion')}
             </Text>
             <Text style={estilos.texto}>
               {t('dispositivo.vinculacion.privacidad')}
             </Text>
-          </>
+          </Entra>
         )}
       </ScrollView>
       {!consultando && !sinConsulta && !dispositivo && (
@@ -191,7 +202,7 @@ export default function DispositivoPantalla() {
 }
 
 const estilos = StyleSheet.create({
-  raiz: { flex: 1, backgroundColor: colores.fondo },
+  raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   encabezado: {
     minHeight: 56,
     flexDirection: 'row',
@@ -221,7 +232,9 @@ const estilos = StyleSheet.create({
     borderWidth: 1,
     borderColor: colores.borde,
     backgroundColor: colores.superficie,
+    ...sombraTarjeta,
   },
+  hero: { gap: espacio(4) },
   dato: { gap: 2 },
   etiqueta: { ...tipografia.etiqueta, color: colores.textoSecundario },
   valor: { ...tipografia.cuerpo, color: colores.texto },

@@ -27,6 +27,8 @@ import { Aviso } from '@/componentes/Mensajes';
 import { useSesion } from '@/contexto/sesion';
 import { formatearHora, t } from '@/i18n';
 import { ejecutarLiveness, ErrorLiveness } from '@/identidad/liveness';
+import { Entra, Esqueleto } from '@/componentes/Animado';
+import { Ilustracion } from '@/componentes/Ilustracion';
 import { colores, espacio, radio, tipografia } from '@/tema/tokens';
 
 type Paso = 1 | 2 | 3;
@@ -252,7 +254,9 @@ export default function IdentidadPantalla() {
       >
         {falla && <Aviso tono="peligro">{falla.texto}</Aviso>}
         {consultando ? (
-          <Text style={estilos.texto}>{t('comun.estados.cargando')}</Text>
+          <View accessibilityLabel={t('comun.estados.cargando')}>
+            <Esqueleto alto={140} redondeo={radio.l} />
+          </View>
         ) : sinConsulta ? (
           <Boton
             variante="secundario"
@@ -262,7 +266,8 @@ export default function IdentidadPantalla() {
             alPresionar={reintentar}
           />
         ) : verificada ? (
-          <>
+          <Entra style={estilos.hero}>
+            <Ilustracion icono="verified_user" color={colores.exito} />
             <Aviso tono="exito">{t('identidad.verificacion.verificada')}</Aviso>
             {estado?.verificadoEn && (
               <Text style={estilos.texto}>
@@ -272,7 +277,7 @@ export default function IdentidadPantalla() {
                 )}
               </Text>
             )}
-          </>
+          </Entra>
         ) : bloqueada ? (
           <Aviso tono="peligro">
             {t('identidad.verificacion.bloqueada').replace(
@@ -290,6 +295,18 @@ export default function IdentidadPantalla() {
             <Text style={estilos.texto}>
               {t('identidad.verificacion.explicacion')}
             </Text>
+            <View
+              style={estilos.progreso}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            >
+              {[1, 2, 3].map((n) => (
+                <View
+                  key={n}
+                  style={[estilos.segmento, n <= paso && estilos.segmentoHecho]}
+                />
+              ))}
+            </View>
             <Text style={estilos.paso} accessibilityRole="header">
               {t('identidad.verificacion.paso').replace(
                 '{actual}',
@@ -414,7 +431,7 @@ export default function IdentidadPantalla() {
 }
 
 const estilos = StyleSheet.create({
-  raiz: { flex: 1, backgroundColor: colores.fondo },
+  raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   encabezado: {
     minHeight: 56,
     flexDirection: 'row',
@@ -437,6 +454,15 @@ const estilos = StyleSheet.create({
     paddingVertical: espacio(4),
   },
   texto: { ...tipografia.cuerpo, color: colores.textoSecundario },
+  hero: { gap: espacio(4) },
+  progreso: { flexDirection: 'row', gap: espacio(2) },
+  segmento: {
+    flex: 1,
+    height: 6,
+    borderRadius: radio.completo,
+    backgroundColor: colores.borde,
+  },
+  segmentoHecho: { backgroundColor: colores.primario },
   paso: { ...tipografia.etiqueta, color: colores.texto },
   grupo: { gap: espacio(2) },
   previa: {

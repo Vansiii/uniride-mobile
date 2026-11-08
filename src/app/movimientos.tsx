@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  Pressable,
   StyleSheet,
   Text,
   View,
@@ -19,6 +18,7 @@ import {
   PaginaMovimientos,
   TipoMovimiento,
 } from '@/api/cliente';
+import { Entra, Toque } from '@/componentes/Animado';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { FilaMovimiento } from '@/componentes/FilaMovimiento';
 import { Ilustracion } from '@/componentes/Ilustracion';
@@ -230,7 +230,7 @@ function Contenido() {
         accessibilityLabel={t('billetera.historial.filtros')}
       >
         {(Object.keys(FILTROS) as Filtro[]).map((f) => (
-          <Pressable
+          <Toque
             key={f}
             accessibilityRole="radio"
             accessibilityLabel={t(`billetera.historial.filtro.${f}`)}
@@ -247,7 +247,7 @@ function Contenido() {
             >
               {t(`billetera.historial.filtro.${f}`)}
             </Text>
-          </Pressable>
+          </Toque>
         ))}
       </View>
       {saldoSinSincronizar && (
@@ -317,11 +317,13 @@ function Contenido() {
               {item.dia}
             </Text>
           ) : (
-            <FilaMovimiento
-              movimiento={item.movimiento}
-              primero={item.primero}
-              ultimo={item.ultimo}
-            />
+            <Entra indice={0}>
+              <FilaMovimiento
+                movimiento={item.movimiento}
+                primero={item.primero}
+                ultimo={item.ultimo}
+              />
+            </Entra>
           )
         }
         ListHeaderComponent={encabezado}
@@ -387,7 +389,7 @@ function Contenido() {
 }
 
 const estilos = StyleSheet.create({
-  raiz: { flex: 1, backgroundColor: colores.fondo },
+  raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   barra: {
     minHeight: 56,
     flexDirection: 'row',
