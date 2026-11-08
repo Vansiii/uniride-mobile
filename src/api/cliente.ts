@@ -220,6 +220,7 @@ export async function cerrarSesion(): Promise<void> {
   } finally {
     tokenAcceso = null;
     dispositivoId = null;
+    viajesEncontrados.clear();
     await AlmacenSeguro.deleteItemAsync(CLAVE_REFRESCO);
   }
 }
@@ -247,6 +248,7 @@ export async function cambiarOrganizacionActiva(
     { organizacionId },
   );
   tokenAcceso = r.tokenAcceso;
+  viajesEncontrados.clear();
 }
 
 /** Lo que ve el dueño de su vehículo: nunca trae la foto ni su clave (D-20). */
@@ -356,7 +358,8 @@ export async function consultarMiDispositivo(): Promise<MiDispositivo | null> {
 
 /**
  * Petición sensible (billetera, publicar viaje, reservar, handshakes): lleva la firma del dispositivo (A-08).
- * Cada intento se firma de nuevo: el nonce es de un solo uso y la ventana es de 30 s.
+ * Una huella por petición: si solo venció la sesión, el servidor la rechaza antes de mirar la firma y gastar su
+ * nonce, así que la misma firma vale al reenviarla. Otro 401 es de la firma y va tal cual a la pantalla.
  */
 export async function solicitarFirmado<T>(
   ruta: string,
@@ -367,16 +370,25 @@ export async function solicitarFirmado<T>(
   if (!id) throw new ErrorApi(0, 'DISPOSITIVO_NO_VINCULADO');
   const url = new URL(`${BASE}${ruta}`);
   const texto = cuerpo === undefined ? '' : JSON.stringify(cuerpo);
-  const intentar = async () =>
-    enviar(
-      ruta,
-      metodo,
-      cuerpo,
-      await cabecerasFirma(id, metodo, url.pathname + url.search, texto),
-    );
-  let respuesta = await intentar();
-  if (respuesta.status === 401 && tokenAcceso && (await renovarSesion()))
-    respuesta = await intentar();
+  const firma = await cabecerasFirma(
+    id,
+    metodo,
+    url.pathname + url.search,
+    texto,
+  );
+  let respuesta = await enviar(ruta, metodo, cuerpo, firma);
+  if (
+    respuesta.status === 401 &&
+    tokenAcceso &&
+    (
+      await respuesta
+        .clone()
+        .json()
+        .catch(() => ({}))
+    ).codigo === 'NO_AUTENTICADO' &&
+    (await renovarSesion())
+  )
+    respuesta = await enviar(ruta, metodo, cuerpo, firma);
   return leer<T>(respuesta);
 }
 
@@ -430,3 +442,188 @@ export function verificarIdentidad(datos: {
   );
   return solicitar('/identidad/verificar', 'POST', formulario);
 }
+
+/** Billetera de la persona (HU-12): el saldo es texto tal cual lo envía la API; nunca se convierte a número. */
+export interface Billetera {
+  id: string;
+  direccion: string;
+  saldoUrc: string;
+  /** `null` fuera de Polygon Amoy (nodo local): no hay enlace que mostrar. */
+  exploradorUrl: string | null;
+}
+
+/** Lectura firmada: pide la huella. `null` si todavía no tiene billetera (404). */
+export async function consultarMiBilletera(): Promise<Billetera | null> {
+  try {
+    return await solicitarFirmado<Billetera>('/billetera/mia', 'GET');
+  } catch (error) {
+    if (error instanceof ErrorApi && error.codigo === 'BILLETERA_NO_ENCONTRADA')
+      return null;
+    throw error;
+  }
+}
+
+/** Reintento de la creación automática; idempotente: si ya existía devuelve la misma billetera. */
+export const crearBilletera = () =>
+  solicitarFirmado<Billetera>('/billetera', 'POST');
+
+/** Desglose de la billetera (HU-14): montos como texto de la API, nunca `Number`. Lectura con token, sin firma ni huella. */
+export interface Saldo {
+  saldoTotal: string;
+  saldoDisponible: string;
+  saldoBloqueadoEscrow: string;
+  moneda: 'URC';
+  /** `false`: el nodo no respondió y el saldo es el contable (último sincronizado). */
+  enLinea: boolean;
+}
+
+export const consultarSaldo = () => solicitar<Saldo>('/billetera/saldo', 'GET');
+
+export type TipoMovimiento =
+  'recarga' | 'bloqueo_reserva' | 'liberacion_viaje' | 'reembolso_reserva';
+
+export interface Movimiento {
+  id: string;
+  tipo: TipoMovimiento;
+  monto: string;
+  estado: 'pendiente' | 'confirmado' | 'fallido';
+  /** `null` mientras está pendiente. */
+  hashTx: string | null;
+  /** `null` si está pendiente o fuera de Polygon Amoy (nodo local): no hay enlace que mostrar. */
+  exploradorUrl: string | null;
+  creadoEn: string;
+}
+
+export interface PaginaMovimientos {
+  items: Movimiento[];
+  total: number;
+  pagina: number;
+  paginas: number;
+}
+
+/** Del más reciente al más antiguo; sin firma: refrescar o paginar nunca pide la huella. */
+export const consultarMovimientos = (
+  pagina: number,
+  tipos: TipoMovimiento[] = [],
+  limite = 20,
+) =>
+  solicitar<PaginaMovimientos>(
+    `/billetera/movimientos?pagina=${pagina}&limite=${limite}${tipos.length ? `&tipo=${tipos.join(',')}` : ''}`,
+    'GET',
+  );
+
+/** Orden de recarga (HU-13): el monto es texto de la API; `procesando` ya no vence y se acredita sola. */
+export interface OrdenRecarga {
+  ordenId: string;
+  monto: string;
+  estado: 'pendiente' | 'procesando' | 'completada' | 'expirada';
+  expiraEn: string;
+  hashTx: string | null;
+}
+
+export interface OrdenRecargaCreada extends OrdenRecarga {
+  qrTexto: string;
+  /** PNG en Base64, sin prefijo `data:`. */
+  qrImagenBase64: string;
+}
+
+export const crearRecarga = (monto: number) =>
+  solicitar<OrdenRecargaCreada>('/billetera/recargas', 'POST', { monto });
+
+/** Pide la huella (CA-4). Idempotente: repetirla responde el estado actual y nunca acuña de nuevo (CA-3). */
+export const confirmarRecarga = (id: string) =>
+  solicitarFirmado<OrdenRecarga>(`/billetera/recargas/${id}/confirmar`, 'POST');
+
+/** Sin firma: consultar el estado nunca pide la huella. */
+export const consultarRecarga = (id: string) =>
+  solicitar<OrdenRecarga>(`/billetera/recargas/${id}`, 'GET');
+
+/** Precio por asiento de la organización activa (HU-17), en URC. Solo para avisar: decide `POST /viajes`. */
+export interface LimitesViaje {
+  precioMinimo: number;
+  precioMaximo: number;
+}
+
+export const consultarLimitesViaje = () =>
+  solicitar<LimitesViaje>('/viajes/limites', 'GET');
+
+export interface DatosViaje {
+  origenNombre: string;
+  origenLat: number;
+  origenLng: number;
+  destinoNombre: string;
+  destinoLat: number;
+  destinoLng: number;
+  /** ISO 8601 con zona. */
+  fechaHoraSalida: string;
+  cuposTotales: number;
+  precioPorAsiento: number;
+}
+
+/** Vehículo y conductor públicos (RN-4 de HU-18): nombre de pila, sin documentos. */
+export interface VehiculoPublico {
+  placa: string;
+  marca: string;
+  modelo: string;
+  color: string;
+}
+
+export interface ViajeEncontrado {
+  id: string;
+  origenNombre: string;
+  distanciaKm: number;
+  destinoNombre: string;
+  fechaHoraSalida: string;
+  cuposDisponibles: number;
+  precioPorAsiento: number;
+  conductor: {
+    nombre: string;
+    verificado: boolean;
+    calificacionPromedio: number | null;
+    esNuevo: boolean;
+    miembroDesde: string;
+  };
+  vehiculo: VehiculoPublico;
+}
+
+export interface DetalleViaje {
+  id: string;
+  origen: { nombre: string; lat: number; lng: number };
+  destino: { nombre: string; lat: number; lng: number };
+  fechaHoraSalida: string;
+  conductor: { nombre: string };
+  vehiculo: VehiculoPublico;
+  cuposTotales: number;
+  cuposDisponibles: number;
+  precioPorAsiento: number;
+  estado: string;
+}
+
+/** Lo último encontrado: el detalle no trae distancia ni insignias. En memoria y no por la ruta: un enlace no puede inventar una insignia. */
+export const viajesEncontrados = new Map<string, ViajeEncontrado>();
+
+/** Con token y membresía aprobada, sin firma: buscar no pide huella (RN-6 de HU-18). */
+export async function buscarViajes(consulta: {
+  origenLat: string;
+  origenLng: string;
+  horaSalida: string;
+}): Promise<ViajeEncontrado[]> {
+  const viajes = await solicitar<ViajeEncontrado[]>(
+    `/viajes/buscar?${new URLSearchParams(consulta)}`,
+    'GET',
+  );
+  viajesEncontrados.clear();
+  viajes.forEach((v) => viajesEncontrados.set(v.id, v));
+  return viajes;
+}
+
+export const consultarViaje = (id: string) =>
+  solicitar<DetalleViaje>(`/viajes/${encodeURIComponent(id)}`, 'GET');
+
+/** Pide la huella (CA-7); se publica en la organización activa, que el cliente no envía (A-13). */
+export const publicarViaje = (datos: DatosViaje) =>
+  solicitarFirmado<{ id: string; estado: string; cuposDisponibles: number }>(
+    '/viajes',
+    'POST',
+    datos,
+  );

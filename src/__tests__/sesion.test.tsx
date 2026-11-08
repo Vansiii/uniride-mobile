@@ -7,11 +7,15 @@ import {
 import { ReactNode } from 'react';
 import * as api from '@/api/cliente';
 import EstadoMembresia from '@/app/estado-membresia';
-import Inicio from '@/app/index';
+import Inicio from '@/app/(pestanas)/index';
 import IniciarSesion from '@/app/iniciar-sesion';
 import { ProveedorSesion } from '@/contexto/sesion';
 import { t } from '@/i18n';
 
+// Inicio monta el formulario de búsqueda, que tiene sus propias pruebas.
+jest.mock('@/componentes/FormularioBusqueda', () => ({
+  FormularioBusqueda: () => null,
+}));
 jest.mock('expo-router', () => {
   const { Text: Texto } = jest.requireActual('react-native');
   return {
@@ -178,7 +182,8 @@ describe('Inicio según la sesión y la membresía', () => {
       ]),
     );
     await conSesion(<Inicio />);
-    expect(await screen.findByText('Hola, Ana Pérez.')).toBeTruthy();
+    // Nombre de pila, como lo ven los demás (RN-4 de HU-18).
+    expect(await screen.findByText('Hola, Ana.')).toBeTruthy();
   });
 
   it('cerrar sesión devuelve a iniciar sesión', async () => {
