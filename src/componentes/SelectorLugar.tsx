@@ -11,7 +11,13 @@ import { Boton } from '@/componentes/Boton';
 import { Campo } from '@/componentes/Campo';
 import { Icono } from '@/componentes/Icono';
 import { t } from '@/i18n';
-import { buscarLugares, Lugar } from '@/servicios/geocoding';
+import { SelectorMapa } from '@/componentes/SelectorMapa';
+import {
+  buscarLugares,
+  CENTRO_POR_OMISION,
+  Lugar,
+  nombreDePunto,
+} from '@/servicios/geocoding';
 import { colores, espacio, radio, tipografia } from '@/tema/tokens';
 
 const MINIMO_BUSQUEDA = 3;
@@ -22,6 +28,8 @@ interface Props {
   alElegir: (lugar: Lugar | null) => void;
   error?: string;
   refEntrada?: Ref<TextInputInstance>;
+  /** Ofrece marcar el punto en el mapa interactivo, con pin fijo y dirección en vivo. */
+  conMapa?: boolean;
 }
 
 /** Busca al pedirlo la persona (política de Nominatim) y solo vale un lugar elegido de la lista: trae sus coordenadas (RN-4). */
@@ -31,7 +39,9 @@ export function SelectorLugar({
   alElegir,
   error,
   refEntrada,
+  conMapa = false,
 }: Props) {
+  const [enMapa, setEnMapa] = useState(false);
   const [texto, setTexto] = useState('');
   const [resultados, setResultados] = useState<Lugar[] | null>(null);
   const [buscando, setBuscando] = useState(false);
@@ -100,6 +110,29 @@ export function SelectorLugar({
               : 'viajes.publicar.buscar_lugar',
           )}
           alPresionar={() => void buscar()}
+        />
+      )}
+      {!lugar && conMapa && (
+        <Boton
+          variante="suave"
+          icono="map"
+          etiqueta={t('viajes.buscar.elegir_mapa')}
+          alPresionar={() => setEnMapa(true)}
+        />
+      )}
+      {enMapa && (
+        <SelectorMapa
+          inicial={CENTRO_POR_OMISION}
+          alCancelar={() => setEnMapa(false)}
+          alElegir={({ lat, lng }) => {
+            setEnMapa(false);
+            const respaldo = t('viajes.buscar.punto_mapa');
+            alElegir({ nombre: respaldo, detalle: respaldo, lat, lng });
+            // El nombre llega después: si falla queda «Punto en el mapa» y el viaje sigue valiendo.
+            void nombreDePunto(lat, lng).then((n) => {
+              if (n) alElegir({ nombre: n, detalle: n, lat, lng });
+            });
+          }}
         />
       )}
       {!lugar &&

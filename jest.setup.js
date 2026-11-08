@@ -29,7 +29,7 @@ jest.mock('react-native-reanimated', () => {
     withRepeat: animacion,
     withSequence: (...pasos) => pasos[pasos.length - 1],
     interpolateColor: (_v, _e, salidas) => salidas[0],
-    Easing: { inOut: facil, quad: facil, sin: facil },
+    Easing: { inOut: facil, out: facil, quad: facil, sin: facil },
     FadeInDown: cadena(),
     ReduceMotion: { System: 'system' },
   };

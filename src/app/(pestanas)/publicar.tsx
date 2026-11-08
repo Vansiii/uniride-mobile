@@ -25,6 +25,7 @@ import {
   publicarViaje,
   Vehiculo,
 } from '@/api/cliente';
+import { Entra } from '@/componentes/Animado';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { Campo } from '@/componentes/Campo';
 import { BandaMarca, ZonaAccion } from '@/componentes/Estructura';
@@ -613,12 +614,13 @@ function Contenido() {
         )}
 
         {origen && destino && <MapaRuta origen={origen} destino={destino} />}
-        <View style={estilos.seccion}>
+        <Entra indice={0} style={estilos.seccion}>
           <Text style={estilos.tituloSeccion} accessibilityRole="header">
             {t('viajes.publicar.seccion_ruta')}
           </Text>
           <View onLayout={(e) => ubicar('origen', e)}>
             <SelectorLugar
+              conMapa
               refEntrada={entradaOrigen}
               etiqueta={t('viajes.publicar.origen')}
               lugar={origen}
@@ -646,6 +648,7 @@ function Contenido() {
           </View>
           <View onLayout={(e) => ubicar('destino', e)}>
             <SelectorLugar
+              conMapa
               refEntrada={entradaDestino}
               etiqueta={t('viajes.publicar.destino')}
               lugar={destino}
@@ -656,9 +659,9 @@ function Contenido() {
               }}
             />
           </View>
-        </View>
+        </Entra>
 
-        <View style={estilos.seccion}>
+        <Entra indice={1} style={estilos.seccion}>
           <Text style={estilos.tituloSeccion} accessibilityRole="header">
             {t('viajes.publicar.seccion_cuando')}
           </Text>
@@ -684,9 +687,9 @@ function Contenido() {
               error={errores.hora}
             />
           </View>
-        </View>
+        </Entra>
 
-        <View style={estilos.seccion}>
+        <Entra indice={2} style={estilos.seccion}>
           <Text style={estilos.tituloSeccion} accessibilityRole="header">
             {t('viajes.publicar.seccion_precio')}
           </Text>
@@ -764,7 +767,7 @@ function Contenido() {
               error={errores.precio}
             />
           </View>
-        </View>
+        </Entra>
       </ScrollView>
       <ZonaAccion enPestanas>
         <Boton

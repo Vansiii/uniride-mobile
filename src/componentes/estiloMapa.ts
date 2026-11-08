@@ -3,11 +3,18 @@ import { colores } from '@/tema/tokens';
 
 export type TipoMapa = 'calles' | 'relieve';
 
-const AGUA = '#BCCBF5';
-const VERDE = '#DCEBDD';
-const EDIFICIO = '#E9EBF0';
+// Paleta del mapa: tierra casi blanca con un velo índigo, parques y agua suaves, vías principales cálidas
+// (como Google o Apple Maps) para que el trayecto de la marca sea lo que más resalta.
+const TIERRA = '#F4F5FB';
+const AGUA = '#BFD4F8';
+const VERDE = '#D6EBD9';
+const EDIFICIO = '#E7E9F2';
+const EDIFICIO_BORDE = '#D9DCEA';
 const CALLE = '#FFFFFF';
-const VIA_PRINCIPAL = '#C9D1FF';
+const CALLE_BORDE = '#DCDFEC';
+const VIA_PRINCIPAL = '#FFE3A6';
+const VIA_PRINCIPAL_BORDE = '#F0C46A';
+const CAMPUS = '#E4E8FF';
 const LETRA = ['Noto Sans Regular'];
 const LETRA_FUERTE = ['Noto Sans Bold'];
 const NOMBRE = ['coalesce', ['get', 'name:es'], ['get', 'name']];
@@ -51,7 +58,21 @@ const CAPAS = [
   {
     id: 'fondo',
     type: 'background',
-    paint: { 'background-color': colores.fondoSutil },
+    paint: { 'background-color': TIERRA },
+  },
+  {
+    id: 'campus',
+    type: 'fill',
+    source: 'calles',
+    'source-layer': 'landuse',
+    filter: [
+      'match',
+      ['get', 'class'],
+      ['school', 'university', 'college', 'hospital'],
+      true,
+      false,
+    ],
+    paint: { 'fill-color': CAMPUS },
   },
   {
     id: 'verde',
@@ -88,7 +109,11 @@ const CAPAS = [
     source: 'calles',
     'source-layer': 'building',
     minzoom: 14,
-    paint: { 'fill-color': EDIFICIO, 'fill-outline-color': colores.borde },
+    paint: {
+      'fill-color': EDIFICIO,
+      'fill-outline-color': EDIFICIO_BORDE,
+      'fill-opacity': ['interpolate', ['linear'], ['zoom'], 14, 0, 15.5, 1],
+    },
   },
   {
     id: 'vias-borde',
@@ -96,7 +121,10 @@ const CAPAS = [
     source: 'calles',
     'source-layer': 'transportation',
     layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': colores.borde, 'line-width': anchoVia(1.5) },
+    paint: {
+      'line-color': ['case', ES_PRINCIPAL, VIA_PRINCIPAL_BORDE, CALLE_BORDE],
+      'line-width': anchoVia(1.5),
+    },
   },
   {
     id: 'vias',
@@ -108,6 +136,19 @@ const CAPAS = [
       'line-color': ['case', ES_PRINCIPAL, VIA_PRINCIPAL, CALLE],
       'line-width': anchoVia(0),
     },
+  },
+  {
+    id: 'nombres-agua',
+    type: 'symbol',
+    source: 'calles',
+    'source-layer': 'water_name',
+    layout: {
+      'text-field': NOMBRE,
+      'text-font': LETRA,
+      'text-size': 12,
+      'text-letter-spacing': 0.1,
+    },
+    paint: { 'text-color': '#5B7FC7', ...HALO },
   },
   {
     id: 'nombres-vias',
@@ -129,15 +170,44 @@ const CAPAS = [
     source: 'calles',
     'source-layer': 'poi',
     minzoom: 15,
-    filter: ['<=', ['get', 'rank'], 15],
+    filter: ['<=', ['get', 'rank'], 20],
     layout: { 'text-field': NOMBRE, 'text-font': LETRA, 'text-size': 11 },
     paint: { 'text-color': colores.primarioTexto, ...HALO },
+  },
+  {
+    id: 'barrios',
+    type: 'symbol',
+    source: 'calles',
+    'source-layer': 'place',
+    minzoom: 12.5,
+    filter: [
+      'match',
+      ['get', 'class'],
+      ['suburb', 'neighbourhood', 'quarter'],
+      true,
+      false,
+    ],
+    layout: {
+      'text-field': NOMBRE,
+      'text-font': LETRA,
+      'text-size': 12,
+      'text-transform': 'uppercase',
+      'text-letter-spacing': 0.12,
+    },
+    paint: { 'text-color': colores.textoPlaceholder, ...HALO },
   },
   {
     id: 'ciudades',
     type: 'symbol',
     source: 'calles',
     'source-layer': 'place',
+    filter: [
+      'match',
+      ['get', 'class'],
+      ['suburb', 'neighbourhood', 'quarter'],
+      false,
+      true,
+    ],
     layout: {
       'text-field': NOMBRE,
       'text-font': LETRA_FUERTE,

@@ -432,6 +432,11 @@
       "creditos": "Ver los créditos del mapa",
       "ver_relieve": "Ver el relieve",
       "ver_calles": "Ver las calles",
+      "buscar_lugar": "Buscar un lugar",
+      "buscar_en_mapa": "Buscar en el mapa",
+      "sin_resultados": "No encontramos ese lugar",
+      "mueve_mapa": "Mueve el mapa para ajustar el punto",
+      "ubicando": "Buscando la dirección…",
       "atribucion": "OpenFreeMap © OpenMapTiles © OpenStreetMap",
       "atribucion_relieve": "© OpenStreetMap · Relieve: Mapzen, USGS, NOAA y otros"
     },

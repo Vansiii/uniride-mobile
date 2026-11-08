@@ -42,3 +42,49 @@ export async function buscarLugares(texto: string): Promise<Lugar[]> {
     lng: Number(f.lon),
   }));
 }
+
+/** Donde abre el mapa si todavía no se sabe dónde está la persona (Santa Cruz de la Sierra). */
+export const CENTRO_POR_OMISION = { lat: -17.783327, lng: -63.182129 };
+
+/**
+ * El nombre del lugar donde quedó el pin (Nominatim «reverse»): calle o sitio más cercano. Solo salen las coordenadas.
+ * Devuelve `null` si no hay nombre o falla la red: el mapa sigue sirviendo y se muestra «Punto en el mapa».
+ */
+export async function nombreDePunto(
+  lat: number,
+  lng: number,
+): Promise<string | null> {
+  try {
+    const parametros = new URLSearchParams({
+      lat: String(lat),
+      lon: String(lng),
+      format: 'jsonv2',
+      zoom: '18',
+      'accept-language': 'es',
+    });
+    const respuesta = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?${parametros}`,
+      { headers: { 'User-Agent': 'UniRide/0.1 (app movil)' } },
+    );
+    if (!respuesta.ok) return null;
+    const fila: {
+      name?: string;
+      address?: Record<string, string>;
+      display_name?: string;
+    } = await respuesta.json();
+    const a = fila.address ?? {};
+    const calle = a.road ?? a.pedestrian ?? a.footway;
+    const zona = a.neighbourhood ?? a.suburb ?? a.city_district;
+    const partes = [fila.name || calle, zona].filter(Boolean);
+    const texto = (
+      partes.length
+        ? partes.join(', ')
+        : (fila.display_name?.split(',').slice(0, 2).join(',') ?? '')
+    )
+      .trim()
+      .slice(0, MAXIMO_NOMBRE);
+    return texto || null;
+  } catch {
+    return null;
+  }
+}

@@ -3,7 +3,6 @@ import { Redirect, router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ComponentProps } from 'react';
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -21,7 +20,7 @@ import {
   Movimiento,
   Saldo,
 } from '@/api/cliente';
-import { Toque } from '@/componentes/Animado';
+import { Esqueleto, Toque } from '@/componentes/Animado';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { BandaMarca } from '@/componentes/Estructura';
 import { Icono } from '@/componentes/Icono';
@@ -272,15 +271,15 @@ function Contenido() {
         </BandaMarca>
 
         {vista.tipo === 'cargando' && (
-          <View style={estilos.centro}>
-            <ActivityIndicator
-              color={colores.primario}
-              size="large"
-              accessibilityLabel={t('comun.estados.cargando')}
-            />
-            <Text style={estilos.secundario}>
-              {t('comun.estados.cargando')}
-            </Text>
+          <View
+            style={estilos.esqueletos}
+            accessibilityLabel={t('comun.estados.cargando')}
+          >
+            <View style={estilos.acciones}>
+              <Esqueleto alto={96} redondeo={radio.l} style={estilos.mitad} />
+              <Esqueleto alto={96} redondeo={radio.l} style={estilos.mitad} />
+            </View>
+            <Esqueleto alto={120} redondeo={radio.l} />
           </View>
         )}
 
@@ -506,6 +505,8 @@ const estilos = StyleSheet.create({
     justifyContent: 'space-between',
   },
   titulo: { ...tipografia.pantalla, color: colores.sobreMarca },
+  esqueletos: { gap: espacio(3), padding: espacio(4) },
+  mitad: { flex: 1 },
   centro: {
     alignItems: 'center',
     gap: espacio(3),

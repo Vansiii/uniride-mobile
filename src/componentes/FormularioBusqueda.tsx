@@ -12,7 +12,11 @@ import { SelectorLugar } from '@/componentes/SelectorLugar';
 import { SelectorMapa } from '@/componentes/SelectorMapa';
 import { formatearMonto } from '@/formato';
 import { con, t } from '@/i18n';
-import { Lugar } from '@/servicios/geocoding';
+import {
+  CENTRO_POR_OMISION,
+  Lugar,
+  nombreDePunto,
+} from '@/servicios/geocoding';
 import { obtenerUbicacion } from '@/servicios/ubicacion';
 import {
   colores,
@@ -30,8 +34,6 @@ import {
   ventanaDe,
   ventanaPasada,
 } from '@/viajes/salida';
-// Donde abre el mapa si todavía no se sabe dónde está la persona.
-const CENTRO_POR_OMISION = { lat: -17.783327, lng: -63.182129 };
 
 type AvisoUbicacion = 'sin_permiso' | 'ir_a_ajustes' | 'fallo';
 
@@ -246,6 +248,10 @@ export function FormularioBusqueda() {
             setEnMapa(false);
             setErrorOrigen(undefined);
             setOrigen(lugarDe(t('viajes.buscar.punto_mapa'), lat, lng));
+            // El nombre de la calle llega después; si falla queda «Punto en el mapa».
+            void nombreDePunto(lat, lng).then((n) => {
+              if (n) setOrigen(lugarDe(n, lat, lng));
+            });
           }}
         />
       )}
