@@ -1,4 +1,4 @@
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, useFocusEffect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -160,10 +160,13 @@ function Contenido() {
   );
 
   const personaId = usuario?.id;
-  useEffect(() => {
-    if (cargando || !personaId) return;
-    cargar(filtro, 1);
-  }, [cargando, personaId, filtro, cargar]);
+  // También al volver de otra pantalla: quien recargó ve su movimiento y no otra invitación a recargar.
+  useFocusEffect(
+    useCallback(() => {
+      if (cargando || !personaId) return;
+      cargar(filtro, 1);
+    }, [cargando, personaId, filtro, cargar]),
+  );
 
   // Saldo solo para avisar si la red de prueba no responde; sin firma, así que no pide huella.
   const leerSaldo = useCallback(() => {
@@ -276,9 +279,16 @@ function Contenido() {
           : t('billetera.historial.vacio_filtro')}
       </Text>
       {filtro === 'todos' && (
-        <Text style={estilos.textoVacio}>
-          {t('billetera.historial.vacio_detalle')}
-        </Text>
+        <>
+          <Text style={estilos.textoVacio}>
+            {t('billetera.historial.vacio_detalle')}
+          </Text>
+          <Boton
+            icono="add"
+            etiqueta={t('billetera.recarga.boton')}
+            alPresionar={() => router.push('/recargar')}
+          />
+        </>
       )}
     </View>
   );

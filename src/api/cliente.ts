@@ -499,3 +499,29 @@ export const consultarMovimientos = (
     `/billetera/movimientos?pagina=${pagina}&limite=${limite}${tipos.length ? `&tipo=${tipos.join(',')}` : ''}`,
     'GET',
   );
+
+/** Orden de recarga (HU-13): el monto es texto de la API; `procesando` ya no vence y se acredita sola. */
+export interface OrdenRecarga {
+  ordenId: string;
+  monto: string;
+  estado: 'pendiente' | 'procesando' | 'completada' | 'expirada';
+  expiraEn: string;
+  hashTx: string | null;
+}
+
+export interface OrdenRecargaCreada extends OrdenRecarga {
+  qrTexto: string;
+  /** PNG en Base64, sin prefijo `data:`. */
+  qrImagenBase64: string;
+}
+
+export const crearRecarga = (monto: number) =>
+  solicitar<OrdenRecargaCreada>('/billetera/recargas', 'POST', { monto });
+
+/** Pide la huella (CA-4). Idempotente: repetirla responde el estado actual y nunca acuña de nuevo (CA-3). */
+export const confirmarRecarga = (id: string) =>
+  solicitarFirmado<OrdenRecarga>(`/billetera/recargas/${id}/confirmar`, 'POST');
+
+/** Sin firma: consultar el estado nunca pide la huella. */
+export const consultarRecarga = (id: string) =>
+  solicitar<OrdenRecarga>(`/billetera/recargas/${id}`, 'GET');
