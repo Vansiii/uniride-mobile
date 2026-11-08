@@ -4,7 +4,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
+  type TextInputInstance,
   View,
 } from 'react-native';
 import { Boton } from '@/componentes/Boton';
@@ -21,7 +21,7 @@ interface Props {
   lugar: Lugar | null;
   alElegir: (lugar: Lugar | null) => void;
   error?: string;
-  refEntrada?: Ref<TextInput>;
+  refEntrada?: Ref<TextInputInstance>;
 }
 
 /** Busca al pedirlo la persona (política de Nominatim) y solo vale un lugar elegido de la lista: trae sus coordenadas (RN-4). */

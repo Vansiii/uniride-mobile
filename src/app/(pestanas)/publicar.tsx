@@ -8,9 +8,10 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  type ScrollViewInstance,
   StyleSheet,
   Text,
-  TextInput,
+  type TextInputInstance,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -153,12 +154,12 @@ function Contenido() {
   const [falla, setFalla] = useState<Falla | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [publicado, setPublicado] = useState<Publicado | null>(null);
-  const desplazable = useRef<ScrollView>(null);
+  const desplazable = useRef<ScrollViewInstance>(null);
   const posiciones = useRef<Partial<Record<CampoFormulario, number>>>({});
-  const entradaOrigen = useRef<TextInput>(null);
-  const entradaDestino = useRef<TextInput>(null);
-  const entradaHora = useRef<TextInput>(null);
-  const entradaPrecio = useRef<TextInput>(null);
+  const entradaOrigen = useRef<TextInputInstance>(null);
+  const entradaDestino = useRef<TextInputInstance>(null);
+  const entradaHora = useRef<TextInputInstance>(null);
+  const entradaPrecio = useRef<TextInputInstance>(null);
   // Dos toques seguidos no piden dos huellas.
   const ocupado = useRef(false);
 

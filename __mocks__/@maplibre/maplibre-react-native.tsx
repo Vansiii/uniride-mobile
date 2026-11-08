@@ -20,7 +20,7 @@ export function Map({
   onPress?: unknown;
   children?: ReactNode;
 }) {
-  mapaSimulado.estilo = mapStyle;
+  Object.assign(mapaSimulado, { estilo: mapStyle }); // la regla react-hooks/immutability de SDK 58 rechaza la asignación directa
   useImperativeHandle(ref, () => ({
     getCenter: async () => mapaSimulado.centro,
     getZoom: async () => mapaSimulado.zoom,

@@ -325,7 +325,7 @@ function Contenido() {
           )
         }
         ListHeaderComponent={encabezado}
-        ListEmptyComponent={vacio}
+        ListEmptyComponent={vacio ?? undefined}
         ListFooterComponent={
           <View style={estilos.pie}>
             {fase === 'mas' && (
