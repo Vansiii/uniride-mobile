@@ -31,20 +31,26 @@ import { Icono } from '@/componentes/Icono';
 import { Ilustracion } from '@/componentes/Ilustracion';
 import { MapaRuta } from '@/componentes/MapaRuta';
 import { Aviso, EtiquetaEstado } from '@/componentes/Mensajes';
+import { SelectorFecha } from '@/componentes/SelectorFecha';
 import { SelectorLugar } from '@/componentes/SelectorLugar';
 import { useSesion } from '@/contexto/sesion';
 import { ErrorKeystore } from '@/dispositivo/keystore';
 import { formatearDia, formatearHoraLocal, formatearMonto } from '@/formato';
-import { t } from '@/i18n';
+import { con, t } from '@/i18n';
 import { Lugar } from '@/servicios/geocoding';
 import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import {
+  ANTICIPACION_MAXIMA_DIAS,
+  escribirHora,
+  leerSalida,
+  medianoche,
+  salidaPorOmision,
+} from '@/viajes/salida';
 
 const MINUTO_MS = 60_000;
 const DIA_MS = 24 * 60 * MINUTO_MS;
 // RN-5: se valida aquí para no gastar una huella en algo que el servidor va a rechazar; decide el servidor.
 const ANTICIPACION_MINIMA_MS = 15 * MINUTO_MS;
-const ANTICIPACION_MAXIMA_DIAS = 7;
-const MEDIA_HORA_MS = 30 * MINUTO_MS;
 const CAPACIDAD_MAXIMA = 6;
 
 interface Requisitos {
@@ -82,67 +88,13 @@ interface Publicado {
   organizacion: string;
 }
 
-const con = (clave: string, valores: Record<string, string | number>) =>
-  Object.entries(valores).reduce(
-    (texto, [nombre, valor]) => texto.replaceAll(`{${nombre}}`, String(valor)),
-    t(clave),
-  );
-
 /** "15" o "12,50": como en el prototipo, sin decimales si no los tiene. */
 const urc = (monto: number) =>
   Number.isInteger(monto) ? String(monto) : formatearMonto(monto.toFixed(2));
 
-const medianoche = (fecha: Date) =>
-  new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
-
-/** Por omisión, la primera media hora que cumple la anticipación mínima (DESIGN_SYSTEM §9.2). */
-function salidaPorOmision(ahora: number) {
-  const salida = new Date(
-    Math.ceil((ahora + ANTICIPACION_MINIMA_MS) / MEDIA_HORA_MS) * MEDIA_HORA_MS,
-  );
-  return {
-    fecha: medianoche(salida),
-    hora: formatearHoraLocal(salida.toISOString()),
-  };
-}
-
-/** Las únicas fechas posibles: hoy y los 7 días siguientes (RN-5). */
-const fechasPosibles = (ahora: Date) =>
-  Array.from(
-    { length: ANTICIPACION_MAXIMA_DIAS + 1 },
-    (_, dias) =>
-      new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + dias),
-  );
-
-const etiquetaFecha = (fecha: Date, indice: number) =>
-  indice === 0
-    ? t('viajes.publicar.hoy')
-    : indice === 1
-      ? t('viajes.publicar.manana')
-      : formatearDia(fecha.toISOString());
-
-/** "0730" o "730" → "07:30": el teclado numérico no trae los dos puntos. */
-function escribirHora(texto: string) {
-  const escrito = texto.replace(/\D/g, '').slice(0, 4);
-  // Ninguna hora empieza por 3-9: "730" no es "73:0".
-  const digitos = /^[3-9]\d\d$/.test(escrito) ? `0${escrito}` : escrito;
-  return digitos.length > 2
-    ? `${digitos.slice(0, 2)}:${digitos.slice(2)}`
-    : digitos;
-}
-
-/** La salida en la hora local, o `null` si la hora está mal escrita. */
-function leerSalida(fecha: Date, hora: string): Date | null {
-  const partes = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(hora);
-  if (!partes) return null;
-  return new Date(
-    fecha.getFullYear(),
-    fecha.getMonth(),
-    fecha.getDate(),
-    Number(partes[1]),
-    Number(partes[2]),
-  );
-}
+/** Por omisión, la primera media hora que cumple la anticipación mínima. */
+const salidaPublicable = () =>
+  salidaPorOmision(Date.now() + ANTICIPACION_MINIMA_MS);
 
 function horarioPermitido(salida: Date) {
   const faltaMs = salida.getTime() - Date.now();
@@ -194,9 +146,7 @@ function Contenido() {
   const [sinMembresia, setSinMembresia] = useState(false);
   const [origen, setOrigen] = useState<Lugar | null>(null);
   const [destino, setDestino] = useState<Lugar | null>(null);
-  const [{ fecha, hora }, setSalida] = useState(() =>
-    salidaPorOmision(Date.now()),
-  );
+  const [{ fecha, hora }, setSalida] = useState(salidaPublicable);
   const [cupos, setCupos] = useState(1);
   const [precio, setPrecio] = useState('');
   const [errores, setErrores] = useState<Errores>({});
@@ -255,7 +205,7 @@ function Contenido() {
       setFalla(null);
       // La pestaña sigue montada de un día para otro: una fecha que ya pasó no está entre las opciones.
       setSalida((s) =>
-        s.fecha < medianoche(new Date()) ? salidaPorOmision(Date.now()) : s,
+        s.fecha < medianoche(new Date()) ? salidaPublicable() : s,
       );
       if (!cargando && aprobada) void leer();
     }, [cargando, aprobada, leer]),
@@ -320,7 +270,7 @@ function Contenido() {
               setDestino(null);
               setPrecio('');
               setCupos(1);
-              setSalida(salidaPorOmision(Date.now()));
+              setSalida(salidaPublicable());
             }}
           />
         </ZonaAccion>
@@ -456,7 +406,6 @@ function Contenido() {
     );
   }
 
-  const fechas = fechasPosibles(new Date());
   const capacidad = vehiculo.capacidad;
   // Si cambió de vehículo, lo elegido nunca pasa de lo que cabe: no se gasta una huella en un rechazo seguro.
   const asientos = Math.min(cupos, capacidad);
@@ -696,37 +645,13 @@ function Contenido() {
           />
         </View>
 
-        <View style={estilos.grupo}>
-          <Text style={estilos.etiqueta}>{t('viajes.publicar.fecha')}</Text>
-          <View style={estilos.chips} accessibilityRole="radiogroup">
-            {fechas.map((f, i) => {
-              const elegida = f.getTime() === fecha.getTime();
-              const etiqueta = etiquetaFecha(f, i);
-              return (
-                <Pressable
-                  key={f.getTime()}
-                  accessibilityRole="radio"
-                  accessibilityLabel={etiqueta}
-                  accessibilityState={{ selected: elegida }}
-                  onPress={() => {
-                    setSalida((s) => ({ ...s, fecha: f }));
-                    setErrores((e) => ({ ...e, hora: undefined }));
-                  }}
-                  style={[estilos.chip, elegida && estilos.chipElegido]}
-                >
-                  <Text
-                    style={[
-                      estilos.textoChip,
-                      elegida && estilos.textoChipElegido,
-                    ]}
-                  >
-                    {etiqueta}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
+        <SelectorFecha
+          fecha={fecha}
+          alElegir={(f) => {
+            setSalida((s) => ({ ...s, fecha: f }));
+            setErrores((e) => ({ ...e, hora: undefined }));
+          }}
+        />
         <View onLayout={(e) => ubicar('hora', e)}>
           <Campo
             refEntrada={entradaHora}
@@ -858,16 +783,6 @@ const estilos = StyleSheet.create({
   intercambiar: { alignItems: 'flex-end', marginVertical: -espacio(3) },
   grupo: { gap: espacio(2) },
   etiqueta: { ...tipografia.etiqueta, color: colores.texto },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: espacio(2) },
-  chip: {
-    minHeight: 40,
-    justifyContent: 'center',
-    paddingHorizontal: espacio(3),
-    borderRadius: radio.s,
-    borderWidth: 1,
-    borderColor: colores.bordeCampo,
-    backgroundColor: colores.superficie,
-  },
   chipElegido: {
     backgroundColor: colores.primarioSuave,
     borderColor: colores.primario,

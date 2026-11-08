@@ -17,6 +17,10 @@ import {
 const mockRouter = { push: jest.fn(), back: jest.fn() };
 let mockRefresco: string | null = 'refresco-de-prueba';
 
+// Inicio monta el formulario de búsqueda, que tiene sus propias pruebas.
+jest.mock('@/componentes/FormularioBusqueda', () => ({
+  FormularioBusqueda: () => null,
+}));
 jest.mock('expo-router', () => {
   const { Text: Texto } = jest.requireActual('react-native');
   return {

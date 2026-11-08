@@ -14,7 +14,8 @@
     },
     "errores": {
       "sin_conexion": "No hay conexión. Revisa tu internet e inténtalo de nuevo.",
-      "desconocido": "Algo salió mal. Inténtalo de nuevo en unos minutos."
+      "desconocido": "Algo salió mal. Inténtalo de nuevo en unos minutos.",
+      "coordenadas_invalidas": "No pudimos leer ese punto de salida. Elige otro lugar."
     }
   },
   "autenticacion": {
@@ -93,11 +94,12 @@
     }
   },
   "inicio": {
+    "voz_pronto": "Hablar con UniRide, disponible pronto",
     "cuenta": "Tu cuenta",
     "nombre": "Nombre",
     "correo": "Correo",
     "organizacion": "Organización activa",
-    "pestana": "Inicio"
+    "pestana": "Buscar"
   },
   "membresias": {
     "lista": {
@@ -411,6 +413,52 @@
       "resultado_texto": "Los miembros de {organizacion} ya pueden verlo.",
       "resultado_resumen": "{asientos} · {precio} URC c/u",
       "listo": "Listo"
+    },
+    "mapa": {
+      "ver_trayecto": "Ver el trayecto en el mapa",
+      "creditos": "Ver los créditos del mapa",
+      "ver_relieve": "Ver el relieve",
+      "ver_calles": "Ver las calles",
+      "atribucion": "OpenFreeMap © OpenMapTiles © OpenStreetMap",
+      "atribucion_relieve": "© OpenStreetMap · Relieve: Mapzen, USGS, NOAA y otros"
+    },
+    "buscar": {
+      "desde": "Desde",
+      "buscar": "Buscar viajes",
+      "mi_ubicacion": "Tu ubicación",
+      "punto_mapa": "Punto en el mapa",
+      "usar_ubicacion": "Mi ubicación",
+      "elegir_mapa": "En el mapa",
+      "usar_punto": "Usar este punto",
+      "hora_pasada": "Esa hora ya pasó. Elige una más tarde.",
+      "acercar": "Acercar el mapa",
+      "alejar": "Alejar el mapa",
+      "sin_permiso": "UniRide usa tu ubicación solo para buscar viajes que salgan cerca de ti. También puedes elegir el lugar.",
+      "ir_a_ajustes": "El permiso de ubicación está desactivado. Actívalo en los ajustes o elige el lugar.",
+      "abrir_ajustes": "Abrir ajustes",
+      "fallo": "No pudimos obtener tu ubicación. Revisa que el GPS esté activo o elige el lugar.",
+      "ubicacion_mapa_fallo": "No pudimos obtener tu ubicación. Elige en el mapa el punto de salida.",
+      "ventana": "Viajes entre {desde} y {hasta}, a menos de 1 km.",
+      "titulo_resultados": "Viajes cerca de ti",
+      "resumen": "{dia} · {desde}–{hasta} · a menos de 1 km",
+      "sin_resultados": "No hay viajes cerca a esa hora",
+      "sin_resultados_texto": "Buscamos: {ventana}. Prueba con otra hora: los viajes se publican hasta con 7 días de anticipación.",
+      "cambiar_hora": "Cambiar la hora",
+      "sin_membresia": "Para buscar viajes necesitas una membresía aprobada en tu organización activa. Elige otra o espera la aprobación.",
+      "no_encontrado": "Este viaje ya no está disponible.",
+      "asiento_libre": "1 asiento libre",
+      "asientos_libres": "{cantidad} asientos libres",
+      "origen_distancia": "{origen} · a {distancia}",
+      "verificado": "Conductor verificado",
+      "nuevo": "Nuevo",
+      "tarjeta_accesible": "Viaje a las {hora} de {origen}, a {distancia}, a {destino}, {precio}, {asientos}, conductor {conductor}, {vehiculo}, placa {placa}",
+      "titulo_detalle": "Detalle del viaje",
+      "precio_asiento": "Precio por asiento",
+      "disponibles": "Asientos libres",
+      "de_total": "{libres} de {total}",
+      "garantia": "Al reservar, el pasaje queda en garantía y solo se paga a {conductor} cuando el viaje se verifica.",
+      "reservar_pronto": "Reservar · disponible pronto",
+      "subtitulo": "¿A dónde vas hoy?"
     }
   }
 }

@@ -76,6 +76,10 @@ const estados: Record<string, [Tono | 'neutro', NombreIcono]> = {
   'movimiento.pendiente': ['neutro', 'hourglass_top'],
   'movimiento.fallido': ['peligro', 'error'],
   'viaje.publicado': ['info', 'campaign'],
+  'viaje.verificado': ['exito', 'verified'],
+  // `new_releases` se dibuja igual que `verified`: «Nuevo» parecía otra verificación.
+  'viaje.nuevo': ['info', 'auto_awesome'],
+  'viaje.distancia': ['neutro', 'directions_walk'],
 };
 
 /** Tono neutro de la tabla 4.1.2: fondo sutil, texto secundario y borde. */

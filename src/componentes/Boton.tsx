@@ -14,6 +14,8 @@ interface Props {
   /** Bloquea toques repetidos mientras se llama a la API. */
   cargando?: boolean;
   anchoCompleto?: boolean;
+  /** Acción que todavía no se puede usar. */
+  deshabilitado?: boolean;
 }
 
 const colorTexto = {
@@ -29,19 +31,24 @@ export function Boton({
   icono,
   cargando = false,
   anchoCompleto = false,
+  deshabilitado = false,
 }: Props) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={etiqueta}
-      accessibilityState={{ busy: cargando, disabled: cargando }}
-      disabled={cargando}
+      accessibilityState={{
+        busy: cargando,
+        disabled: cargando || deshabilitado,
+      }}
+      disabled={cargando || deshabilitado}
       onPress={alPresionar}
       style={({ pressed }) => [
         estilos.base,
         estilos[variante],
         pressed && estilos[`${variante}Presionado`],
         anchoCompleto && estilos.completo,
+        deshabilitado && estilos.deshabilitado,
       ]}
     >
       {cargando ? (
@@ -51,7 +58,16 @@ export function Boton({
           <Icono nombre={icono} color={colorTexto[variante]} tamano={20} />
         )
       )}
-      <Text style={[estilos.etiqueta, { color: colorTexto[variante] }]}>
+      <Text
+        style={[
+          estilos.etiqueta,
+          {
+            color: deshabilitado
+              ? colores.textoSecundario
+              : colorTexto[variante],
+          },
+        ]}
+      >
         {etiqueta}
       </Text>
     </Pressable>
@@ -64,20 +80,25 @@ export function BotonIcono({
   etiqueta,
   alPresionar,
   color = colores.textoSecundario,
+  deshabilitado = false,
 }: {
   icono: NombreIcono;
   /** Nombre accesible obligatorio. */
   etiqueta: string;
   alPresionar: () => void;
   color?: string;
+  deshabilitado?: boolean;
 }) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={etiqueta}
+      accessibilityState={{ disabled: deshabilitado }}
+      disabled={deshabilitado}
       onPress={alPresionar}
       style={({ pressed }) => [
         estilos.icono,
+        deshabilitado && { opacity: 0.5 },
         pressed && { backgroundColor: colores.fondoSutil },
       ]}
     >
@@ -99,6 +120,7 @@ const estilos = StyleSheet.create({
     gap: espacio(2),
   },
   completo: { alignSelf: 'stretch' },
+  deshabilitado: { backgroundColor: colores.fondoSutil },
   primario: { backgroundColor: colores.primario },
   primarioPresionado: { backgroundColor: colores.primarioPresionado },
   secundario: {
