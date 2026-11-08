@@ -1,4 +1,9 @@
-import { formatearMonto } from '@/formato';
+import {
+  claveDia,
+  formatearDia,
+  formatearHoraLocal,
+  formatearMonto,
+} from '@/formato';
 
 describe('formatearMonto (es-BO, sobre el texto)', () => {
   it.each([
@@ -27,5 +32,36 @@ describe('formatearMonto (es-BO, sobre el texto)', () => {
   it('un texto que no es un decimal simple se devuelve igual', () => {
     expect(formatearMonto('abc')).toBe('abc');
     expect(formatearMonto('1e21')).toBe('1e21');
+  });
+});
+
+// Las fechas se arman en la hora local del equipo de pruebas: el resultado no depende de su zona horaria.
+describe('fechas del historial', () => {
+  const iso = (a: number, m: number, d: number, h = 12, min = 0) =>
+    new Date(a, m - 1, d, h, min).toISOString();
+
+  it('el día de hoy se llama Hoy; otro día, día abreviado, número y mes', () => {
+    const ahora = new Date(2026, 10, 6, 21, 30);
+    expect(formatearDia(iso(2026, 11, 6, 0, 5), ahora)).toBe('Hoy');
+    expect(formatearDia(iso(2026, 11, 6, 23, 59), ahora)).toBe('Hoy');
+    expect(formatearDia(iso(2026, 10, 21, 7, 5), ahora)).toBe('mié 21 oct');
+    expect(formatearDia(iso(2026, 11, 5), ahora)).toBe('jue 5 nov');
+    expect(formatearDia(iso(2025, 12, 31), ahora)).toBe('mié 31 dic');
+  });
+
+  it('la hora va en 24 h con dos dígitos', () => {
+    expect(formatearHoraLocal(iso(2026, 10, 21, 7, 5))).toBe('07:05');
+    expect(formatearHoraLocal(iso(2026, 10, 21, 19, 40))).toBe('19:40');
+    expect(formatearHoraLocal(iso(2026, 10, 21, 0, 0))).toBe('00:00');
+  });
+
+  it('dos horas del mismo día local comparten clave y la medianoche separa los días', () => {
+    expect(claveDia(iso(2026, 11, 6, 0, 1))).toBe(
+      claveDia(iso(2026, 11, 6, 23, 59)),
+    );
+    expect(claveDia(iso(2026, 11, 6, 23, 59))).not.toBe(
+      claveDia(iso(2026, 11, 7, 0, 0)),
+    );
+    expect(claveDia(iso(2026, 1, 5))).toBe('2026-01-05');
   });
 });

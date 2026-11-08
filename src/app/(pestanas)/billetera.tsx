@@ -3,7 +3,6 @@ import { Redirect, router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,16 +13,20 @@ import {
   Billetera,
   consultarEstadoIdentidad,
   consultarMiBilletera,
+  consultarSaldo,
   crearBilletera,
   ErrorApi,
+  Saldo,
 } from '@/api/cliente';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { BandaMarca } from '@/componentes/Estructura';
 import { Icono } from '@/componentes/Icono';
 import { Ilustracion } from '@/componentes/Ilustracion';
 import { Aviso } from '@/componentes/Mensajes';
+import { TarjetaSaldo } from '@/componentes/TarjetaSaldo';
 import { useSesion } from '@/contexto/sesion';
 import { ErrorKeystore } from '@/dispositivo/keystore';
+import { abrirHttps } from '@/enlaces';
 import { formatearMonto } from '@/formato';
 import { t } from '@/i18n';
 import { colores, espacio, radio, tipografia } from '@/tema/tokens';
@@ -34,7 +37,8 @@ type Vista =
   | { tipo: 'sin_billetera' }
   /** Sin teléfono vinculado o firma rechazada: hay que vincular (HU-09). */
   | { tipo: 'vincular' }
-  | { tipo: 'lista'; billetera: Billetera }
+  /** `billetera` es null si /mia dio 503 (nodo caído): se ve el saldo sin la dirección. */
+  | { tipo: 'lista'; saldo: Saldo; billetera: Billetera | null }
   | {
       tipo: 'falla';
       /** Clave dentro de `billetera.pantalla` o texto común ya resuelto. */
@@ -87,7 +91,7 @@ function vistaDe(error: unknown): Vista {
 const acortar = (direccion: string) =>
   `${direccion.slice(0, 6)}…${direccion.slice(-4)}`;
 
-/** Billetera (HU-12): saldo URC, dirección pública y enlace al explorador. Lee una vez al entrar y al pulsar actualizar. */
+/** Billetera (HU-12, HU-14): saldo desglosado, dirección pública y enlace al explorador. La dirección (con huella) se lee una vez al entrar; actualizar solo relee el saldo. */
 export default function BilleteraPantalla() {
   const { usuario } = useSesion();
   // Otra persona en la misma pestaña nunca ve lo que quedó en memoria de la anterior: se monta de cero.
@@ -98,6 +102,8 @@ function Contenido() {
   const { cargando, usuario } = useSesion();
   const [vista, setVista] = useState<Vista>({ tipo: 'cargando' });
   const [copia, setCopia] = useState<'ok' | 'fallo' | null>(null);
+  // Falla al actualizar el saldo: se avisa sin perder lo que ya se ve ni gastar otra huella.
+  const [errorRefresco, setErrorRefresco] = useState<string | null>(null);
   // Cada lectura firmada pide la huella: nunca dos a la vez.
   const enCurso = useRef(false);
 
@@ -108,10 +114,27 @@ function Contenido() {
       // Sin identidad verificada el servidor responde 403 sin importar la firma: no se gasta una huella para saberlo.
       if ((await consultarEstadoIdentidad()).estado !== 'verificada')
         return { tipo: 'sin_billetera' };
-      // Billetera que aún no existe (la creación automática falló): se reintenta una sola vez.
-      const billetera =
-        (await consultarMiBilletera()) ?? (await crearBilletera());
-      return { tipo: 'lista', billetera };
+      // El saldo va solo con token: no gasta huella. Billetera que aún no existe (404): se reintenta la creación una vez.
+      let billetera: Billetera | null = null;
+      let saldo: Saldo;
+      try {
+        saldo = await consultarSaldo();
+      } catch (error) {
+        if (
+          !(error instanceof ErrorApi) ||
+          error.codigo !== 'BILLETERA_NO_ENCONTRADA'
+        )
+          throw error;
+        billetera = await crearBilletera();
+        saldo = await consultarSaldo();
+      }
+      // La dirección sí pide huella, una vez al abrir. Con el nodo caído (503) el saldo se ve igual, sin dirección.
+      try {
+        billetera ??= await consultarMiBilletera();
+      } catch (error) {
+        if (!(error instanceof ErrorApi && error.estado === 503)) throw error;
+      }
+      return { tipo: 'lista', saldo, billetera };
     } catch (error) {
       return vistaDe(error);
     } finally {
@@ -142,10 +165,29 @@ function Contenido() {
     }, [leer]),
   );
 
-  const actualizar = () => {
+  // Lectura completa (la dirección pide huella): al reintentar una falla o al volver a pedir la dirección.
+  const recargar = () => {
     if (enCurso.current) return;
+    setErrorRefresco(null);
     setVista({ tipo: 'cargando' });
     void leer().then((v) => v && setVista(v));
+  };
+  // Actualizar solo relee el saldo: nunca pide huella.
+  const actualizar = async () => {
+    if (vista.tipo !== 'lista') return recargar();
+    if (enCurso.current) return;
+    enCurso.current = true;
+    setErrorRefresco(null);
+    try {
+      const saldo = await consultarSaldo();
+      setVista((v) => (v.tipo === 'lista' ? { ...v, saldo } : v));
+    } catch (error) {
+      const v = vistaDe(error);
+      if (v.tipo === 'falla') setErrorRefresco(v.texto);
+      else setVista(v);
+    } finally {
+      enCurso.current = false;
+    }
   };
   useEffect(() => {
     if (!copia) return;
@@ -164,14 +206,9 @@ function Contenido() {
       setCopia('fallo');
     }
   };
-  const abrirExplorador = (url: string) => {
-    // La URL la arma el servidor; aun así solo se abre https.
-    if (url.startsWith('https://')) Linking.openURL(url).catch(() => undefined);
-  };
 
-  const billetera = vista.tipo === 'lista' ? vista.billetera : null;
-  // Es-BO sobre el texto de la API, nunca vía Number (DESIGN_SYSTEM §13).
-  const saldo = billetera ? formatearMonto(billetera.saldoUrc) : '';
+  const lista = vista.tipo === 'lista' ? vista : null;
+  const billetera = lista?.billetera ?? null;
   return (
     <View style={estilos.raiz}>
       <ScrollView contentContainerStyle={estilos.desplazable}>
@@ -185,30 +222,11 @@ function Contenido() {
                 icono="refresh"
                 color={colores.sobreMarca}
                 etiqueta={t('billetera.pantalla.actualizar')}
-                alPresionar={actualizar}
+                alPresionar={() => void actualizar()}
               />
             )}
           </View>
-          {billetera && (
-            <View style={estilos.saldo}>
-              <Text style={estilos.etiquetaSaldo}>
-                {t('billetera.pantalla.saldo')}
-              </Text>
-              <Text
-                style={estilos.cifra}
-                accessibilityLabel={`${saldo} ${t('billetera.pantalla.unidad')}`}
-              >
-                {saldo}
-                <Text style={estilos.unidad}>
-                  {' '}
-                  {t('billetera.pantalla.unidad')}
-                </Text>
-              </Text>
-              <Text style={estilos.prueba}>
-                {t('billetera.pantalla.prueba')}
-              </Text>
-            </View>
-          )}
+          {lista && <TarjetaSaldo saldo={lista.saldo} />}
         </BandaMarca>
 
         {vista.tipo === 'cargando' && (
@@ -267,55 +285,90 @@ function Contenido() {
                 icono="refresh"
                 anchoCompleto
                 etiqueta={t('comun.acciones.reintentar')}
-                alPresionar={actualizar}
+                alPresionar={recargar}
               />
             )}
           </View>
         )}
 
-        {billetera && (
+        {lista && (
           <View style={[estilos.bloque, estilos.sobreBanda]}>
             <View style={estilos.tarjeta}>
-              <View style={estilos.fila}>
-                <View style={estilos.icono}>
-                  <Icono
-                    nombre="account_balance_wallet"
-                    color={colores.primario}
-                  />
-                </View>
-                <View style={estilos.texto}>
+              <Boton
+                variante="secundario"
+                icono="receipt_long"
+                anchoCompleto
+                etiqueta={t('billetera.pantalla.movimientos')}
+                alPresionar={() => router.push('/movimientos')}
+              />
+            </View>
+            {(!lista.saldo.enLinea || !billetera) && (
+              <Aviso tono="aviso">
+                {t('billetera.saldo.sincronizacion_pendiente').replace(
+                  '{monto}',
+                  formatearMonto(lista.saldo.saldoDisponible),
+                )}
+              </Aviso>
+            )}
+            {errorRefresco && <Aviso tono="peligro">{errorRefresco}</Aviso>}
+            <View style={estilos.tarjeta}>
+              {!billetera && (
+                <>
                   <Text style={estilos.secundario}>
-                    {t('billetera.pantalla.direccion')}
+                    {t('billetera.pantalla.direccion_no_disponible')}
                   </Text>
-                  <Text style={estilos.direccion}>
-                    {acortar(billetera.direccion)}
-                  </Text>
-                </View>
-                <BotonIcono
-                  icono="content_copy"
-                  etiqueta={t('billetera.pantalla.copiar')}
-                  alPresionar={() => copiar(billetera.direccion)}
-                />
-              </View>
-              {billetera.exploradorUrl && (
-                <Pressable
-                  accessibilityRole="link"
-                  accessibilityLabel={t('billetera.pantalla.explorador')}
-                  onPress={() => abrirExplorador(billetera.exploradorUrl!)}
-                  style={estilos.fila}
-                >
-                  <View style={estilos.icono}>
-                    <Icono nombre="open_in_new" color={colores.primario} />
+                  <Boton
+                    variante="texto"
+                    icono="refresh"
+                    etiqueta={t('billetera.pantalla.direccion_reintentar')}
+                    alPresionar={recargar}
+                  />
+                </>
+              )}
+              {billetera && (
+                <>
+                  <View style={estilos.fila}>
+                    <View style={estilos.icono}>
+                      <Icono
+                        nombre="account_balance_wallet"
+                        color={colores.primario}
+                      />
+                    </View>
+                    <View style={estilos.texto}>
+                      <Text style={estilos.secundario}>
+                        {t('billetera.pantalla.direccion')}
+                      </Text>
+                      <Text style={estilos.direccion}>
+                        {acortar(billetera.direccion)}
+                      </Text>
+                    </View>
+                    <BotonIcono
+                      icono="content_copy"
+                      etiqueta={t('billetera.pantalla.copiar')}
+                      alPresionar={() => copiar(billetera.direccion)}
+                    />
                   </View>
-                  <View style={estilos.texto}>
-                    <Text style={estilos.enlace}>
-                      {t('billetera.pantalla.explorador')}
-                    </Text>
-                    <Text style={estilos.secundario}>
-                      {t('billetera.pantalla.explorador_detalle')}
-                    </Text>
-                  </View>
-                </Pressable>
+                  {billetera.exploradorUrl && (
+                    <Pressable
+                      accessibilityRole="link"
+                      accessibilityLabel={t('billetera.pantalla.explorador')}
+                      onPress={() => abrirHttps(billetera.exploradorUrl!)}
+                      style={estilos.fila}
+                    >
+                      <View style={estilos.icono}>
+                        <Icono nombre="open_in_new" color={colores.primario} />
+                      </View>
+                      <View style={estilos.texto}>
+                        <Text style={estilos.enlace}>
+                          {t('billetera.pantalla.explorador')}
+                        </Text>
+                        <Text style={estilos.secundario}>
+                          {t('billetera.pantalla.explorador_detalle')}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  )}
+                </>
               )}
             </View>
             {copia && (
@@ -343,20 +396,6 @@ const estilos = StyleSheet.create({
     justifyContent: 'space-between',
   },
   titulo: { ...tipografia.pantalla, color: colores.sobreMarca },
-  saldo: { gap: espacio(1) },
-  etiquetaSaldo: {
-    ...tipografia.secundario,
-    color: colores.sobreMarcaSecundario,
-  },
-  // Cifra del saldo (DESIGN_SYSTEM §4.2): 34/40, 700.
-  cifra: {
-    fontSize: 34,
-    lineHeight: 40,
-    fontWeight: '700',
-    color: colores.sobreMarca,
-  },
-  unidad: { ...tipografia.subtitulo, color: colores.sobreMarcaSecundario },
-  prueba: { ...tipografia.pequeno, color: colores.sobreMarcaSecundario },
   centro: {
     alignItems: 'center',
     gap: espacio(3),

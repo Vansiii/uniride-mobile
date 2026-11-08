@@ -15,6 +15,7 @@ import { ErrorKeystore, firmar } from '@/dispositivo/keystore';
 import {
   billeteraReal as b,
   dispositivoReal as d,
+  historialReal as h,
   identidadReal as i,
   respuestasReales as r,
   simularFetch,
@@ -65,7 +66,18 @@ const CON_SESION = {
   'GET /yo': r.yoAprobada,
   'GET /identidad/estado': i.verificada,
   'GET /dispositivos/mi-dispositivo': d.vinculado,
+  // HU-14: el saldo sale de /saldo (solo token); /mia aporta la dirección.
+  'GET /billetera/saldo': h.saldo,
 };
+const saldo = (saldoDisponible: string) => ({
+  estado: 200,
+  cuerpo: {
+    ...(h.saldo.cuerpo as object),
+    saldoDisponible,
+    saldoTotal: saldoDisponible,
+    saldoBloqueadoEscrow: '0.00',
+  },
+});
 
 const abrir = async (rutas: Parameters<typeof simularFetch>[0] = {}) => {
   const simulado = simularFetch({ ...CON_SESION, ...rutas });
@@ -78,6 +90,8 @@ const abrir = async (rutas: Parameters<typeof simularFetch>[0] = {}) => {
 };
 const lecturas = (llamadas: { ruta: string }[]) =>
   llamadas.filter((l) => l.ruta === 'GET /billetera/mia').length;
+const lecturasSaldo = (llamadas: { ruta: string }[]) =>
+  llamadas.filter((l) => l.ruta === 'GET /billetera/saldo').length;
 const reintentar = () => screen.getByRole('button', { name: 'Reintentar' });
 
 beforeEach(async () => {
@@ -92,7 +106,7 @@ describe('Billetera · CA-5: saldo, dirección y enlace', () => {
   it('muestra el saldo tal cual lo envía la API y la dirección acortada, con una sola huella', async () => {
     const { llamadas } = await abrir({ 'GET /billetera/mia': b.conSaldo });
     expect(await screen.findByText('Saldo disponible')).toBeTruthy();
-    expect(screen.getByText(/12,34/)).toBeTruthy();
+    expect(screen.getByLabelText('347,00 URC')).toBeTruthy();
     expect(screen.getByText('0x3021…6805')).toBeTruthy();
     // La dirección completa no se muestra, solo se copia.
     expect(screen.queryByText(b.direccion)).toBeNull();
@@ -102,28 +116,24 @@ describe('Billetera · CA-5: saldo, dirección y enlace', () => {
   });
 
   it('el saldo se formatea como texto, en es-BO: "12.30" no pasa a "12,3"', async () => {
-    await abrir({ 'GET /billetera/mia': b.enAmoy });
-    expect(await screen.findByText(/12,30/)).toBeTruthy();
+    await abrir({
+      'GET /billetera/mia': b.enAmoy,
+      'GET /billetera/saldo': saldo('12.30'),
+    });
+    expect(await screen.findByLabelText('12,30 URC')).toBeTruthy();
     expect(screen.queryByText(/12,3(?!0)/)).toBeNull();
   });
 
   it('saldo con separador de miles, también en el nombre accesible', async () => {
     await abrir({
-      'GET /billetera/mia': {
-        estado: 200,
-        cuerpo: {
-          id: 'd0c05fca-d161-447f-92c4-0791765882b3',
-          direccion: b.direccion,
-          saldoUrc: '1234.50',
-          exploradorUrl: null,
-        },
-      },
+      'GET /billetera/mia': b.conSaldo,
+      'GET /billetera/saldo': saldo('1234.50'),
     });
-    expect(await screen.findByText(/1\.234,50/)).toBeTruthy();
+    expect(await screen.findByLabelText('1.234,50 URC')).toBeTruthy();
     expect(screen.getByLabelText('1.234,50 URC')).toBeTruthy();
   });
 
-  it('la petición lleva la sesión y la firma del dispositivo (A-08)', async () => {
+  it('la lectura de la dirección lleva la sesión y la firma del dispositivo (A-08)', async () => {
     const { falso } = await abrir({ 'GET /billetera/mia': b.conSaldo });
     await screen.findByText('Saldo disponible');
     const llamada = falso.mock.calls.find(([url]) =>
@@ -199,16 +209,19 @@ describe('Billetera · CA-5: saldo, dirección y enlace', () => {
 describe('Billetera · creación y lectura firmada', () => {
   it('sin billetera (404) la crea una sola vez con POST y la muestra', async () => {
     const { llamadas } = await abrir({
-      'GET /billetera/mia': b.noEncontrada,
+      // HU-14 CA-6: verificada sin billetera, /saldo da 404 y la creación es el reintento de HU-12.
+      'GET /billetera/saldo': [h.noEncontrada, saldo('0.00')],
       'POST /billetera': b.creada,
     });
     expect(await screen.findByText('Saldo disponible')).toBeTruthy();
-    expect(screen.getByText(/0,00/)).toBeTruthy();
+    expect(screen.getByLabelText('0,00 URC')).toBeTruthy();
+    expect(screen.getByText('0x3021…6805')).toBeTruthy();
     expect(llamadas.filter((l) => l.ruta === 'POST /billetera')).toHaveLength(
       1,
     );
-    // Dos huellas: la lectura y la creación; aceptable una sola vez.
-    expect(firma).toHaveBeenCalledTimes(2);
+    // La creación ya trae la dirección: no se pide /mia. Una sola huella.
+    expect(lecturas(llamadas)).toBe(0);
+    expect(firma).toHaveBeenCalledTimes(1);
   });
 
   it('carga al entrar y no vuelve a leer por cambios de foco o de pantalla', async () => {
@@ -228,15 +241,35 @@ describe('Billetera · creación y lectura firmada', () => {
     expect(firma).toHaveBeenCalledTimes(1);
   });
 
-  it('actualizar vuelve a leer y consulta la billetera otra vez', async () => {
-    const { llamadas } = await abrir({ 'GET /billetera/mia': b.conSaldo });
-    await screen.findByText('Saldo disponible');
+  it('actualizar relee solo el saldo y nunca pide otra huella', async () => {
+    const { llamadas } = await abrir({
+      'GET /billetera/mia': b.conSaldo,
+      'GET /billetera/saldo': [h.saldo, saldo('400.00')],
+    });
+    await screen.findByLabelText('347,00 URC');
     await fireEvent.press(
       screen.getByRole('button', { name: 'Actualizar saldo' }),
     );
-    await waitFor(() => expect(lecturas(llamadas)).toBe(2));
-    expect(await screen.findByText('Saldo disponible')).toBeTruthy();
-    expect(firma).toHaveBeenCalledTimes(2);
+    expect(await screen.findByLabelText('400,00 URC')).toBeTruthy();
+    expect(lecturasSaldo(llamadas)).toBe(2);
+    expect(lecturas(llamadas)).toBe(1);
+    expect(firma).toHaveBeenCalledTimes(1);
+    // La dirección sigue a la vista.
+    expect(screen.getByText('0x3021…6805')).toBeTruthy();
+  });
+
+  it('si actualizar falla avisa, conserva lo que se ve y no gasta huella', async () => {
+    await abrir({ 'GET /billetera/mia': b.conSaldo });
+    await screen.findByLabelText('347,00 URC');
+    // Se cae la red: ninguna ruta responde.
+    simularFetch({});
+    await fireEvent.press(
+      screen.getByRole('button', { name: 'Actualizar saldo' }),
+    );
+    expect(await screen.findByText(/No hay conexión/)).toBeTruthy();
+    expect(screen.getByLabelText('347,00 URC')).toBeTruthy();
+    expect(screen.getByText('0x3021…6805')).toBeTruthy();
+    expect(firma).toHaveBeenCalledTimes(1);
   });
 
   it('un toque en actualizar mientras la huella está en curso no abre una segunda lectura', async () => {
@@ -283,7 +316,7 @@ describe('Billetera · estados', () => {
       mockFoco.alEnfocar?.();
     });
     expect(await screen.findByText('Saldo disponible')).toBeTruthy();
-    expect(screen.getByText(/12,34/)).toBeTruthy();
+    expect(screen.getByLabelText('347,00 URC')).toBeTruthy();
     expect(
       screen.queryByText('Tu billetera se crea al verificar tu identidad'),
     ).toBeNull();
@@ -330,7 +363,7 @@ describe('Billetera · estados', () => {
   });
 
   it('403 IDENTIDAD_NO_VERIFICADA del servidor: la misma vista sin billetera', async () => {
-    await abrir({ 'GET /billetera/mia': b.identidadNoVerificada });
+    await abrir({ 'GET /billetera/saldo': h.identidadNoVerificada });
     expect(
       await screen.findByText('Tu billetera se crea al verificar tu identidad'),
     ).toBeTruthy();
@@ -362,9 +395,47 @@ describe('Billetera · estados', () => {
     expect(screen.queryByText('Saldo disponible')).toBeNull();
   });
 
-  it('503: avisa y al reintentar vuelve a leer', async () => {
+  it('503 de /mia con el nodo caído: se ve el saldo con el aviso, sin dirección ni bloqueo', async () => {
     const { llamadas } = await abrir({
-      'GET /billetera/mia': [b.cadenaCaida, b.conSaldo],
+      'GET /billetera/mia': b.cadenaCaida,
+      'GET /billetera/saldo': h.saldoSinNodo,
+    });
+    expect(await screen.findByLabelText('347,00 URC')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Mostramos el último saldo sincronizado (347,00 URC). Lo actualizaremos al reconectar.',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText('0x3021…6805')).toBeNull();
+    expect(screen.queryByText(/No pudimos consultar tu saldo/)).toBeNull();
+    expect(lecturas(llamadas)).toBe(1);
+    // Volver a pedir la dirección es una lectura completa, a pedido de la persona.
+    simularFetch({
+      ...CON_SESION,
+      'GET /billetera/mia': b.conSaldo,
+      'GET /billetera/saldo': h.saldo,
+    });
+    await fireEvent.press(
+      screen.getByRole('button', { name: /Cargar la dirección/ }),
+    );
+    expect(await screen.findByText('0x3021…6805')).toBeTruthy();
+    expect(screen.queryByText(/Mostramos el último saldo/)).toBeNull();
+  });
+
+  it('enLinea false con la dirección cargada: el aviso de sincronización sin ocultar nada', async () => {
+    await abrir({
+      'GET /billetera/mia': b.conSaldo,
+      'GET /billetera/saldo': h.saldoSinNodo,
+    });
+    expect(await screen.findByText(/último saldo sincronizado/)).toBeTruthy();
+    expect(screen.getByText('0x3021…6805')).toBeTruthy();
+    expect(screen.getByText('Saldo disponible')).toBeTruthy();
+  });
+
+  it('503 al leer el saldo: avisa y al reintentar vuelve a leer', async () => {
+    const { llamadas } = await abrir({
+      'GET /billetera/mia': b.conSaldo,
+      'GET /billetera/saldo': [b.cadenaCaida, h.saldo],
     });
     expect(
       await screen.findByText(/No pudimos consultar tu saldo/),
@@ -372,12 +443,13 @@ describe('Billetera · estados', () => {
     expect(screen.queryByText('Saldo disponible')).toBeNull();
     await fireEvent.press(reintentar());
     expect(await screen.findByText('Saldo disponible')).toBeTruthy();
-    expect(screen.getByText(/12,34/)).toBeTruthy();
-    expect(lecturas(llamadas)).toBe(2);
+    expect(screen.getByLabelText('347,00 URC')).toBeTruthy();
+    expect(lecturasSaldo(llamadas)).toBe(2);
   });
 
   it('PETICION_EXPIRADA: mensaje y, al reintentar, la lectura se firma de nuevo', async () => {
     const { llamadas } = await abrir({
+      'GET /billetera/saldo': h.saldo,
       // El cliente reintenta una vez ante un 401 (renueva la sesión y firma otra vez): las dos primeras fallan.
       'GET /billetera/mia': [
         b.peticionExpirada,
@@ -430,5 +502,44 @@ describe('Billetera · estados', () => {
       0,
     );
     expect(firma).not.toHaveBeenCalled();
+  });
+});
+
+describe('Billetera · HU-14: saldo desglosado y movimientos', () => {
+  it('CA-1: muestra disponible, en garantía y total, tal cual los envía la API', async () => {
+    await abrir({ 'GET /billetera/mia': b.conSaldo });
+    expect(await screen.findByText('Saldo disponible')).toBeTruthy();
+    expect(screen.getByLabelText('347,00 URC')).toBeTruthy();
+    expect(screen.getByText('En garantía: 15,00 URC')).toBeTruthy();
+    expect(screen.getByText('Total: 362,00 URC')).toBeTruthy();
+  });
+
+  it('el saldo se pide con token y sin firma ni huella (solo la dirección firma)', async () => {
+    const { falso } = await abrir({ 'GET /billetera/mia': b.conSaldo });
+    await screen.findByText('Saldo disponible');
+    const llamada = falso.mock.calls.find(([url]) =>
+      String(url).endsWith('/billetera/saldo'),
+    );
+    const cabeceras = llamada?.[1]?.headers as Record<string, string>;
+    expect(cabeceras.Authorization).toBe('Bearer acceso-de-prueba');
+    expect(Object.keys(cabeceras).filter((k) => k.startsWith('X-'))).toEqual(
+      [],
+    );
+    // Una sola huella: la de /mia.
+    expect(firma).toHaveBeenCalledTimes(1);
+  });
+
+  it('el botón Movimientos abre el historial', async () => {
+    await abrir({ 'GET /billetera/mia': b.conSaldo });
+    await fireEvent.press(
+      await screen.findByRole('button', { name: 'Movimientos' }),
+    );
+    expect(router.push).toHaveBeenCalledWith('/movimientos');
+  });
+
+  it('no hay botón Recargar: es de HU-13', async () => {
+    await abrir({ 'GET /billetera/mia': b.conSaldo });
+    await screen.findByText('Saldo disponible');
+    expect(screen.queryByRole('button', { name: 'Recargar' })).toBeNull();
   });
 });
