@@ -1,8 +1,39 @@
+import { Platform } from 'react-native';
 import * as AlmacenSeguro from 'expo-secure-store';
 import { cabecerasFirma } from '@/dispositivo/firma';
 
 const BASE = process.env.EXPO_PUBLIC_API_URL ?? 'http://10.0.2.2:3000/api/v1';
 const CLAVE_REFRESCO = 'uniride.refresco';
+
+async function guardarRefresco(valor: string): Promise<void> {
+  if (Platform.OS === 'web') {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(CLAVE_REFRESCO, valor);
+    }
+    return;
+  }
+  await AlmacenSeguro.setItemAsync(CLAVE_REFRESCO, valor);
+}
+
+async function obtenerRefresco(): Promise<string | null> {
+  if (Platform.OS === 'web') {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return window.localStorage.getItem(CLAVE_REFRESCO);
+    }
+    return null;
+  }
+  return await AlmacenSeguro.getItemAsync(CLAVE_REFRESCO);
+}
+
+async function borrarRefresco(): Promise<void> {
+  if (Platform.OS === 'web') {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.removeItem(CLAVE_REFRESCO);
+    }
+    return;
+  }
+  await AlmacenSeguro.deleteItemAsync(CLAVE_REFRESCO);
+}
 
 /** Error de la API con el `codigo` estable que el cliente traduce con su es-BO. */
 export class ErrorApi extends Error {
@@ -90,20 +121,20 @@ async function guardarSesion(r: {
   tokenRefresco: string;
 }): Promise<void> {
   tokenAcceso = r.tokenAcceso;
-  await AlmacenSeguro.setItemAsync(CLAVE_REFRESCO, r.tokenRefresco);
+  await guardarRefresco(r.tokenRefresco);
 }
 
 /** Pide un token de acceso nuevo con el refresco guardado; llamadas simultáneas comparten una sola petición. */
 export function renovarSesion(): Promise<boolean> {
   renovando ??= (async () => {
-    const tokenRefresco = await AlmacenSeguro.getItemAsync(CLAVE_REFRESCO);
+    const tokenRefresco = await obtenerRefresco();
     if (!tokenRefresco) return false;
     const r = await enviar('/autenticacion/refrescar', 'POST', {
       tokenRefresco,
     });
     if (!r.ok) {
       // Refresco rechazado (vencido, revocado o reusado): la sesión local ya no sirve.
-      await AlmacenSeguro.deleteItemAsync(CLAVE_REFRESCO);
+      await borrarRefresco();
       return false;
     }
     await guardarSesion(await r.json());
@@ -213,7 +244,7 @@ export async function restablecerContrasena(
 
 export async function cerrarSesion(): Promise<void> {
   try {
-    const tokenRefresco = await AlmacenSeguro.getItemAsync(CLAVE_REFRESCO);
+    const tokenRefresco = await obtenerRefresco();
     await solicitar<void>('/autenticacion/cerrar-sesion', 'POST', {
       tokenRefresco: tokenRefresco ?? undefined,
     });
@@ -221,7 +252,7 @@ export async function cerrarSesion(): Promise<void> {
     tokenAcceso = null;
     dispositivoId = null;
     viajesEncontrados.clear();
-    await AlmacenSeguro.deleteItemAsync(CLAVE_REFRESCO);
+    await borrarRefresco();
   }
 }
 
@@ -325,6 +356,15 @@ export const pedirDesafioAtestacion = () =>
     'POST',
   );
 
+/** Desafío para revincular o cambiar de teléfono (HU-10). */
+export const pedirDesafioRevinculacion = () =>
+  solicitar<{
+    desafio: string;
+    expiraEn: string;
+    requiereIdentidad: boolean;
+    sesionLivenessId?: string;
+  }>('/dispositivos/revinculacion', 'POST');
+
 /** El servidor valida la atestación y guarda solo la llave PÚBLICA; la privada nunca sale del Keystore. */
 export async function vincularDispositivo(datos: {
   desafio: string;
@@ -334,6 +374,23 @@ export async function vincularDispositivo(datos: {
 }): Promise<{ id: string; estado: 'vinculado' }> {
   const r = await solicitar<{ id: string; estado: 'vinculado' }>(
     '/dispositivos/vincular',
+    'POST',
+    datos,
+  );
+  dispositivoId = r.id;
+  return r;
+}
+
+/** Revincula el teléfono o pasa la cuenta a un nuevo teléfono (HU-10). */
+export async function revincularDispositivo(datos: {
+  desafio: string;
+  tokenIntegridad: string;
+  llavePublicaPem: string;
+  modelo: string;
+  sesionLivenessId?: string;
+}): Promise<{ id: string; estado: 'vinculado' }> {
+  const r = await solicitar<{ id: string; estado: 'vinculado' }>(
+    '/dispositivos/revincular',
     'POST',
     datos,
   );

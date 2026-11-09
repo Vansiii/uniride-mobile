@@ -72,12 +72,27 @@ describe('Keystore con módulo nativo', () => {
     );
   });
 
+  it.each([
+    ['LLAVE_ANULADA'],
+    ['SIN_LLAVE'],
+    ['SIN_BIOMETRIA'],
+    ['BIOMETRIA_BLOQUEADA'],
+  ] as const)(
+    'preserva el codigo especifico %s de la falla nativa (HU-10)',
+    async (codigo) => {
+      nativo.firmar.mockRejectedValue(
+        Object.assign(new Error('falla'), { code: codigo }),
+      );
+      expect(await codigoDe(cargar(nativo).firmar('m', 'n'))).toBe(codigo);
+    },
+  );
+
   it.each(['crearLlave', 'firmar'] as const)(
     'cualquier otra falla de %s es KEYSTORE_NO_DISPONIBLE y no filtra el detalle nativo',
     async (funcion) => {
       nativo[funcion].mockRejectedValue(
         Object.assign(new Error('detalle interno'), {
-          code: 'KEYSTORE_NO_DISPONIBLE',
+          code: 'OTRO_ERROR_INTERNO',
         }),
       );
       const falla = await cargar(nativo)

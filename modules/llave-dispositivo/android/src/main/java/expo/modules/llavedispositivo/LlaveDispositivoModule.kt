@@ -3,6 +3,7 @@ package expo.modules.llavedispositivo
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyInfo
+import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.KeyProperties
 import android.security.keystore.StrongBoxUnavailableException
 import android.util.Base64
@@ -69,7 +70,11 @@ class LlaveDispositivoModule : Module() {
 
   private fun crearLlave(): String {
     val contexto = appContext.reactContext ?: throw noDisponible("Sin contexto de la app")
-    if (BiometricManager.from(contexto).canAuthenticate(BIOMETRIC_STRONG) != BiometricManager.BIOMETRIC_SUCCESS) {
+    val puede = BiometricManager.from(contexto).canAuthenticate(BIOMETRIC_STRONG)
+    if (puede != BiometricManager.BIOMETRIC_SUCCESS) {
+      if (puede == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED || puede == BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE) {
+        throw CodedException("SIN_BIOMETRIA", "El teléfono no tiene biometría fuerte configurada")
+      }
       throw noDisponible("El teléfono no tiene biometría fuerte lista")
     }
     val par = try {
@@ -116,10 +121,14 @@ class LlaveDispositivoModule : Module() {
       ?: return promesa.reject(noDisponible("La app no está en primer plano"))
     val firma = try {
       val llave = KeyStore.getInstance(PROVEEDOR).apply { load(null) }.getKey(ALIAS, null) as? PrivateKey
-        ?: return promesa.reject(noDisponible("Este teléfono no tiene llave"))
+        ?: return promesa.reject(CodedException("SIN_LLAVE", "Este teléfono no tiene llave"))
       Signature.getInstance("SHA256withECDSA").apply { initSign(llave) }
+    } catch (error: KeyPermanentlyInvalidatedException) {
+      return promesa.reject(CodedException("LLAVE_ANULADA", "Se registró una huella nueva", error))
     } catch (error: Exception) {
-      // Incluye KeyPermanentlyInvalidatedException: se registró otra huella y la llave ya no vale (A-04).
+      if (error.cause is KeyPermanentlyInvalidatedException) {
+        return promesa.reject(CodedException("LLAVE_ANULADA", "Se registró una huella nueva", error))
+      }
       return promesa.reject(noDisponible("La llave no se puede usar", error))
     }
 
@@ -154,15 +163,22 @@ class LlaveDispositivoModule : Module() {
             codigo == BiometricPrompt.ERROR_USER_CANCELED ||
             codigo == BiometricPrompt.ERROR_CANCELED ||
             codigo == BiometricPrompt.ERROR_TIMEOUT
-          promesa.reject(
-            if (cancelada) {
-              CodedException("BIOMETRIA_CANCELADA", texto.toString(), null)
-            } else {
-              noDisponible(texto.toString())
-            }
-          )
+          val bloqueada = codigo == BiometricPrompt.ERROR_LOCKOUT ||
+            codigo == BiometricPrompt.ERROR_LOCKOUT_PERMANENT
+          val sinBiometria = codigo == BiometricPrompt.ERROR_NO_BIOMETRICS ||
+            codigo == BiometricPrompt.ERROR_HW_NOT_PRESENT ||
+            codigo == BiometricPrompt.ERROR_HW_UNAVAILABLE
+
+          val excepcion = when {
+            cancelada -> CodedException("BIOMETRIA_CANCELADA", texto.toString(), null)
+            bloqueada -> CodedException("BIOMETRIA_BLOQUEADA", texto.toString(), null)
+            sinBiometria -> CodedException("SIN_BIOMETRIA", texto.toString(), null)
+            else -> noDisponible(texto.toString())
+          }
+          promesa.reject(excepcion)
         }
       }
     ).authenticate(aviso, BiometricPrompt.CryptoObject(firma))
   }
 }
+

@@ -24,7 +24,13 @@ interface Sesion {
   cerrar: () => Promise<void>;
 }
 
-const Contexto = createContext<Sesion | null>(null);
+const CLAVE_GLOBAL = '__UNIRIDE_SESION_CONTEXT__';
+const Contexto =
+  ((globalThis as unknown as Record<string, unknown>)[
+    CLAVE_GLOBAL
+  ] as ReturnType<typeof createContext<Sesion | null>>) ??
+  createContext<Sesion | null>(null);
+(globalThis as unknown as Record<string, unknown>)[CLAVE_GLOBAL] = Contexto;
 
 export function ProveedorSesion({ children }: { children: ReactNode }) {
   const [cargando, setCargando] = useState(true);
@@ -73,7 +79,7 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
   };
 
   return (
-    <Contexto
+    <Contexto.Provider
       value={{
         cargando,
         usuario,
@@ -85,7 +91,7 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
       }}
     >
       {children}
-    </Contexto>
+    </Contexto.Provider>
   );
 }
 

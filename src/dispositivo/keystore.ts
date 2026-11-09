@@ -1,11 +1,18 @@
 import { requireOptionalNativeModule } from 'expo';
+import { Platform } from 'react-native';
 import { t } from '@/i18n';
 
-/** Falla local del teléfono (no de la API): sin módulo nativo, sin biometría o cancelada por la persona. */
+export type CodigoErrorKeystore =
+  | 'KEYSTORE_NO_DISPONIBLE'
+  | 'BIOMETRIA_CANCELADA'
+  | 'LLAVE_ANULADA'
+  | 'SIN_LLAVE'
+  | 'SIN_BIOMETRIA'
+  | 'BIOMETRIA_BLOQUEADA';
+
+/** Falla local del teléfono (no de la API): sin módulo nativo, sin biometría, anulada o cancelada por la persona. */
 export class ErrorKeystore extends Error {
-  constructor(
-    readonly codigo: 'KEYSTORE_NO_DISPONIBLE' | 'BIOMETRIA_CANCELADA',
-  ) {
+  constructor(readonly codigo: CodigoErrorKeystore) {
     super(codigo);
   }
 }
@@ -39,16 +46,33 @@ function modulo(): ModuloLlave {
   return nativo;
 }
 
-/** Cualquier falla del Keystore se reduce a dos casos: la persona canceló o la llave no se pudo usar. */
-const traducirFalla = (error: unknown) =>
-  new ErrorKeystore(
-    (error as { code?: string }).code === 'BIOMETRIA_CANCELADA'
-      ? 'BIOMETRIA_CANCELADA'
-      : 'KEYSTORE_NO_DISPONIBLE',
-  );
+/** Traduce la falla del modulo nativo preservando codigos explicitos de seguridad (HU-10). */
+const codigosValidos: Set<string> = new Set<CodigoErrorKeystore>([
+  'KEYSTORE_NO_DISPONIBLE',
+  'BIOMETRIA_CANCELADA',
+  'LLAVE_ANULADA',
+  'SIN_LLAVE',
+  'SIN_BIOMETRIA',
+  'BIOMETRIA_BLOQUEADA',
+]);
+
+const traducirFalla = (error: unknown) => {
+  const code = (error as { code?: string }).code;
+  if (code && codigosValidos.has(code)) {
+    return new ErrorKeystore(code as CodigoErrorKeystore);
+  }
+  return new ErrorKeystore('KEYSTORE_NO_DISPONIBLE');
+};
 
 /** Genera el par en el Keystore y devuelve la llave PÚBLICA en PEM (SPKI). */
 export async function crearLlave(): Promise<string> {
+  if (
+    (__DEV__ || Platform.OS === 'web') &&
+    process.env.EXPO_PUBLIC_MODO_SIMULADO === 'true' &&
+    !nativo
+  ) {
+    return '-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEqVwIfwjrugxJ579FsE9CPQn0kKmp\nX2PMrD9TnZobjcaQzMPkGgJGUSmRdKmrPnpNqLsWR/vwK94XG82/uuSm8g==\n-----END PUBLIC KEY-----\n';
+  }
   try {
     return await modulo().crearLlave();
   } catch (error) {
@@ -61,6 +85,16 @@ export async function firmar(
   antes: string,
   despues: string,
 ): Promise<FirmaConMarca> {
+  if (
+    (__DEV__ || Platform.OS === 'web') &&
+    process.env.EXPO_PUBLIC_MODO_SIMULADO === 'true' &&
+    !nativo
+  ) {
+    return {
+      firma: 'MEQCID6v+4Y8G5xZ5z5z5z5z5z5z5z5z5z5z5z5z5z5z5z5zAkA+7w+4Y8G5xZ5z5z5z5z5z5z5z5z5z5z5z5z5z5z5z5z==',
+      marca: Date.now().toString(),
+    };
+  }
   try {
     return await modulo().firmar(antes, despues, {
       titulo: t('dispositivo.autenticacion.titulo'),
@@ -74,6 +108,15 @@ export async function firmar(
 
 /** 16 bytes aleatorios del sistema en hexadecimal (el servidor pide de 16 a 128 caracteres). */
 export function nonceAleatorio(): string {
+  if (
+    (__DEV__ || Platform.OS === 'web') &&
+    process.env.EXPO_PUBLIC_MODO_SIMULADO === 'true' &&
+    !nativo
+  ) {
+    return Array.from({ length: 32 }, () =>
+      Math.floor(Math.random() * 16).toString(16),
+    ).join('');
+  }
   return modulo().nonceAleatorio();
 }
 
@@ -84,7 +127,10 @@ export function nonceAleatorio(): string {
  * sin token real no se puede vincular, y eso es lo correcto (la app no decide).
  */
 export async function pedirTokenIntegridad(_desafio: string): Promise<string> {
-  if (__DEV__ && process.env.EXPO_PUBLIC_MODO_SIMULADO === 'true')
+  if (
+    (__DEV__ || Platform.OS === 'web') &&
+    process.env.EXPO_PUBLIC_MODO_SIMULADO === 'true'
+  )
     return 'simulado:integro';
   throw new ErrorKeystore('KEYSTORE_NO_DISPONIBLE');
 }

@@ -16,6 +16,9 @@
       "sin_conexion": "No hay conexión. Revisa tu internet e inténtalo de nuevo.",
       "desconocido": "Algo salió mal. Inténtalo de nuevo en unos minutos.",
       "coordenadas_invalidas": "No pudimos leer ese punto de salida. Elige otro lugar."
+    },
+    "biometria": {
+      "sin_registrar": "Tu teléfono no tiene ninguna huella o rostro registrado. Agrega uno en los ajustes de tu teléfono."
     }
   },
   "autenticacion": {
@@ -219,7 +222,23 @@
       "desafio_invalido": "La comprobación venció. Inténtalo de nuevo.",
       "llave_invalida": "No pudimos registrar la llave de seguridad de tu teléfono.",
       "servicio_no_disponible": "No pudimos comprobar tu teléfono por un problema del servicio. No se guardó nada; inténtalo más tarde.",
-      "keystore_no_disponible": "Esta versión de la app todavía no puede vincular el teléfono. Actualiza la app e inténtalo de nuevo."
+      "keystore_no_disponible": "Esta versión de la app todavía no puede vincular el teléfono. Inténtalo de nuevo."
+    },
+    "llave_anulada": {
+      "titulo": "Huella nueva detectada",
+      "explicacion": "Registraste una huella nueva. Por seguridad, confirma tu identidad para volver a activar este teléfono.",
+      "confirmar": "Confirmar mi identidad"
+    },
+    "revincular": {
+      "titulo": "Volver a vincular teléfono",
+      "boton": "Pasar mi cuenta a este teléfono",
+      "boton_reactivar": "Volver a activar este teléfono",
+      "telefono_nuevo": "Tu cuenta está vinculada a otro teléfono. Para usar este, confirma tu identidad.",
+      "revinculando": "Revinculando…",
+      "exito": "Tu cuenta quedó vinculada a este teléfono.",
+      "rostro_no_coincide": "Tu rostro no coincide con el de tu carnet verificado. No pudimos vincular este teléfono.",
+      "liveness_fallida": "La prueba de vida no fue satisfactoria. Inténtalo con buena luz y sin moverte.",
+      "intentos_agotados": "Demasiados intentos fallidos. Por seguridad, tu cuenta no puede cambiar de teléfono durante 24 horas."
     },
     "autenticacion": {
       "titulo": "Confirma que eres tú",

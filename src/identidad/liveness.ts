@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 /** Falla de la prueba de vida en el teléfono (no de la API). */
 export class ErrorLiveness extends Error {
   constructor() {
@@ -13,6 +15,10 @@ export class ErrorLiveness extends Error {
  * sin módulo nativo la verificación no se puede completar, y eso es lo correcto (la app no decide).
  */
 export async function ejecutarLiveness(_sesionId: string): Promise<void> {
-  if (__DEV__ && process.env.EXPO_PUBLIC_MODO_SIMULADO === 'true') return;
+  if (
+    (__DEV__ || Platform.OS === 'web') &&
+    process.env.EXPO_PUBLIC_MODO_SIMULADO === 'true'
+  )
+    return;
   throw new ErrorLiveness();
 }

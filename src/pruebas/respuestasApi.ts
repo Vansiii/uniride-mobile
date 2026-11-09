@@ -392,6 +392,25 @@ export const dispositivoReal = {
     codigo: 'DISPOSITIVO_YA_VINCULADO',
     mensaje: 'Ya tienes un dispositivo vinculado.',
   }),
+  desafioRevinculacion: ok(201, {
+    desafio: 'ZGVzYWZpby1yZXZpbmN1bGFjaW9u',
+    expiraEn: '2026-11-08T15:05:00.000Z',
+    requiereIdentidad: true,
+    sesionLivenessId: 'liveness-ses-123',
+  }),
+  desafioRevinculacionSinIdentidad: ok(201, {
+    desafio: 'ZGVzYWZpby1yZXZpbmN1bGFjaW9u',
+    expiraEn: '2026-11-08T15:05:00.000Z',
+    requiereIdentidad: false,
+  }),
+  revinculadoOk: ok(201, {
+    id: '0b6f1d3a-7c2e-4a55-9d21-5f8e3b9c4a10',
+    estado: 'vinculado',
+  }),
+  rostroNoCoincide: ok(422, {
+    codigo: 'ROSTRO_NO_COINCIDE',
+    mensaje: 'Tu rostro no coincide con la foto del carnet verificado.',
+  }),
 };
 
 // HU-08: formas según el contrato del backend (DTOs de `identidad`); el motor facial real no se probó.

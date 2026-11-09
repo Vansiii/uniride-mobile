@@ -9,6 +9,8 @@ import {
   ErrorApi,
   MiDispositivo,
   pedirDesafioAtestacion,
+  pedirDesafioRevinculacion,
+  revincularDispositivo,
   vincularDispositivo,
 } from '@/api/cliente';
 import { Entra, Esqueleto } from '@/componentes/Animado';
@@ -22,6 +24,7 @@ import {
   ErrorKeystore,
   pedirTokenIntegridad,
 } from '@/dispositivo/keystore';
+import { ejecutarLiveness, ErrorLiveness } from '@/identidad/liveness';
 import { t } from '@/i18n';
 import {
   colores,
@@ -33,12 +36,20 @@ import {
 
 /** Traduce el `codigo` de la API; nunca muestra códigos técnicos (DESIGN_SYSTEM §13.4). */
 function textoDe(error: unknown): string {
-  if (error instanceof ErrorKeystore)
-    return t(
-      error.codigo === 'BIOMETRIA_CANCELADA'
-        ? 'dispositivo.autenticacion.cancelada'
-        : 'dispositivo.vinculacion.keystore_no_disponible',
-    );
+  if (error instanceof ErrorLiveness)
+    return t('dispositivo.revincular.liveness_fallida');
+  if (error instanceof ErrorKeystore) {
+    switch (error.codigo) {
+      case 'BIOMETRIA_CANCELADA':
+        return t('dispositivo.autenticacion.cancelada');
+      case 'SIN_BIOMETRIA':
+        return t('comun.biometria.sin_registrar');
+      case 'LLAVE_ANULADA':
+        return t('dispositivo.llave_anulada.explicacion');
+      default:
+        return t('dispositivo.vinculacion.keystore_no_disponible');
+    }
+  }
   if (!(error instanceof ErrorApi)) return t('comun.errores.desconocido');
   switch (error.codigo) {
     case 'DISPOSITIVO_NO_INTEGRO':
@@ -49,6 +60,14 @@ function textoDe(error: unknown): string {
       return t('dispositivo.vinculacion.desafio_invalido');
     case 'LLAVE_INVALIDA':
       return t('dispositivo.vinculacion.llave_invalida');
+    case 'ROSTRO_NO_COINCIDE':
+      return t('dispositivo.revincular.rostro_no_coincide');
+    case 'LIVENESS_FALLIDA':
+      return t('dispositivo.revincular.liveness_fallida');
+    case 'IDENTIDAD_BLOQUEADA':
+    case 'IDENTIDAD_BLOQUEADA_TEMPORAL':
+    case 'INTENTOS_AGOTADOS':
+      return t('dispositivo.revincular.intentos_agotados');
     case 'SERVICIO_NO_DISPONIBLE':
       return t('dispositivo.vinculacion.servicio_no_disponible');
     case 'SIN_CONEXION':
@@ -69,6 +88,7 @@ export default function DispositivoPantalla() {
   const [falla, setFalla] = useState<string | null>(null);
   const [vinculando, setVinculando] = useState(false);
   const [recienVinculado, setRecienVinculado] = useState(false);
+  const [revinculando, setRevinculando] = useState(false);
 
   useEffect(() => {
     if (cargando || !usuario) return;
@@ -126,6 +146,33 @@ export default function DispositivoPantalla() {
     }
   };
 
+  const revincular = async () => {
+    setFalla(null);
+    setRevinculando(true);
+    try {
+      const { desafio, requiereIdentidad, sesionLivenessId } =
+        await pedirDesafioRevinculacion();
+      if (requiereIdentidad && sesionLivenessId) {
+        await ejecutarLiveness(sesionLivenessId);
+      }
+      const llavePublicaPem = await crearLlave();
+      const tokenIntegridad = await pedirTokenIntegridad(desafio);
+      await revincularDispositivo({
+        desafio,
+        tokenIntegridad,
+        llavePublicaPem,
+        modelo: Dispositivo.modelName ?? 'Android',
+        sesionLivenessId: requiereIdentidad ? sesionLivenessId : undefined,
+      });
+      setDispositivo(await consultarMiDispositivo());
+      setRecienVinculado(true);
+    } catch (error) {
+      setFalla(textoDe(error));
+    } finally {
+      setRevinculando(false);
+    }
+  };
+
   return (
     <View style={estilos.raiz}>
       <StatusBar style="dark" />
@@ -172,6 +219,17 @@ export default function DispositivoPantalla() {
                 {new Date(dispositivo.vinculadoEn).toLocaleDateString('es-BO')}
               </Text>
             </View>
+            <Boton
+              variante="secundario"
+              cargando={revinculando}
+              anchoCompleto
+              etiqueta={t(
+                revinculando
+                  ? 'dispositivo.revincular.revinculando'
+                  : 'dispositivo.revincular.boton',
+              )}
+              alPresionar={revincular}
+            />
           </Entra>
         ) : (
           <Entra style={estilos.hero}>
