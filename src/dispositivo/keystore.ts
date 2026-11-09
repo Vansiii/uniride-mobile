@@ -91,7 +91,8 @@ export async function firmar(
     !nativo
   ) {
     return {
-      firma: 'MEQCID6v+4Y8G5xZ5z5z5z5z5z5z5z5z5z5z5z5z5z5z5z5zAkA+7w+4Y8G5xZ5z5z5z5z5z5z5z5z5z5z5z5z5z5z5z5z==',
+      firma:
+        'MEQCID6v+4Y8G5xZ5z5z5z5z5z5z5z5z5z5z5z5z5z5z5z5zAkA+7w+4Y8G5xZ5z5z5z5z5z5z5z5z5z5z5z5z5z5z5z5z==',
       marca: Date.now().toString(),
     };
   }
