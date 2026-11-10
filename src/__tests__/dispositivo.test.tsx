@@ -305,6 +305,25 @@ describe('Vinculación de dispositivo', () => {
       expect(confirmar).not.toHaveBeenCalled();
     });
 
+    it('tras vincular, un rechazo al revincular no deja el aviso de éxito anterior', async () => {
+      await abrir({
+        'POST /dispositivos/desafio-atestacion': d.desafio,
+        'POST /dispositivos/vincular': d.vinculadoOk,
+        'GET /dispositivos/mi-dispositivo': [d.sinDispositivo, d.vinculado],
+        'POST /dispositivos/revinculacion': d.desafioRevinculacion,
+        'POST /dispositivos/revincular': d.rostroNoCoincide,
+      });
+      await vincular();
+      await screen.findByText('Tu teléfono quedó vinculado.');
+      fireEvent.press(
+        screen.getByRole('button', { name: 'Pasar mi cuenta a este teléfono' }),
+      );
+      expect(
+        await screen.findByText(/Tu rostro no coincide con el de tu carnet/),
+      ).toBeTruthy();
+      expect(screen.queryByText('Tu teléfono quedó vinculado.')).toBeNull();
+    });
+
     it.each([
       [
         'PRUEBA_VIDA_FALLIDA',

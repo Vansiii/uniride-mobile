@@ -159,6 +159,8 @@ export default function DispositivoPantalla() {
 
   const revincular = async () => {
     setFalla(null);
+    // El éxito de una vinculación anterior no debe quedar junto al resultado de esta.
+    setRecienVinculado(false);
     setRevinculando(true);
     try {
       const { desafio, requiereIdentidad, sesionLivenessId } =
