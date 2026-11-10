@@ -79,7 +79,7 @@ class LlaveDispositivoModule : Module() {
     val puede = BiometricManager.from(contexto).canAuthenticate(BIOMETRIC_STRONG)
     if (puede != BiometricManager.BIOMETRIC_SUCCESS) {
       if (puede == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED || puede == BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE) {
-        throw CodedException("SIN_BIOMETRIA", "El teléfono no tiene biometría fuerte configurada")
+        throw CodedException("SIN_BIOMETRIA", "El teléfono no tiene biometría fuerte configurada", null)
       }
       throw noDisponible("El teléfono no tiene biometría fuerte lista")
     }
@@ -151,7 +151,7 @@ class LlaveDispositivoModule : Module() {
       ?: return promesa.reject(noDisponible("La app no está en primer plano"))
     val firma = try {
       val llave = almacen().getKey(aliasActivo(actividad), null) as? PrivateKey
-        ?: return promesa.reject(CodedException("SIN_LLAVE", "Este teléfono no tiene llave"))
+        ?: return promesa.reject(CodedException("SIN_LLAVE", "Este teléfono no tiene llave", null))
       Signature.getInstance("SHA256withECDSA").apply { initSign(llave) }
     } catch (error: KeyPermanentlyInvalidatedException) {
       return promesa.reject(CodedException("LLAVE_ANULADA", "Se registró una huella nueva", error))
