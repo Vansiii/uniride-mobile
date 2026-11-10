@@ -358,6 +358,28 @@ describe('Vinculación de dispositivo', () => {
       },
     );
 
+    it('409 y la consulta del teléfono que quedó también falla: ofrece reintentar, no «Vincular este teléfono»', async () => {
+      await abrir({
+        'GET /dispositivos/mi-dispositivo': [
+          d.vinculado,
+          { estado: 500, cuerpo: { codigo: 'ERROR_INTERNO' } },
+        ],
+        'POST /dispositivos/revinculacion': d.desafioRevinculacion,
+        'POST /dispositivos/revincular': d.conflictoConcurrente,
+      });
+      fireEvent.press(
+        await screen.findByRole('button', {
+          name: 'Pasar mi cuenta a este teléfono',
+        }),
+      );
+      expect(
+        await screen.findByRole('button', { name: 'Reintentar' }),
+      ).toBeTruthy();
+      expect(
+        screen.queryByRole('button', { name: 'Vincular este teléfono' }),
+      ).toBeNull();
+    });
+
     it('CA-1: con la llave anulada explica la huella nueva y ofrece confirmar la identidad (nunca «Actualiza la app»)', async () => {
       parametros.mockReturnValue({ motivo: 'llave_anulada' });
       await abrir({

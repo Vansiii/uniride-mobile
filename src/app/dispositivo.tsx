@@ -127,6 +127,10 @@ export default function DispositivoPantalla() {
     setIntento((n) => n + 1);
   };
 
+  // Si la consulta también falla se ofrece reintentar, no «Vincular»: la cuenta sí tiene un teléfono activo.
+  const mostrarElQueQuedo = () =>
+    consultarMiDispositivo().then(setDispositivo, () => setSinConsulta(true));
+
   const vincular = async () => {
     setFalla(null);
     setVinculando(true);
@@ -150,7 +154,7 @@ export default function DispositivoPantalla() {
         error.codigo === 'DISPOSITIVO_YA_VINCULADO'
       )
         // Otra sesión lo vinculó antes: se muestra el que quedó.
-        setDispositivo(await consultarMiDispositivo().catch(() => null));
+        await mostrarElQueQuedo();
       setFalla(textoDe(error));
     } finally {
       setVinculando(false);
@@ -184,7 +188,7 @@ export default function DispositivoPantalla() {
     } catch (error) {
       if (error instanceof ErrorApi && error.codigo === 'CONFLICTO_CONCURRENTE')
         // Otra revinculación ganó: se muestra el teléfono que quedó.
-        setDispositivo(await consultarMiDispositivo().catch(() => null));
+        await mostrarElQueQuedo();
       setFalla(textoDe(error));
     } finally {
       setRevinculando(false);
