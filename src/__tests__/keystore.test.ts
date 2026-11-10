@@ -27,6 +27,7 @@ describe('Keystore sin módulo nativo (web y Jest)', () => {
 
   it('no crea llave ni firma: falla de forma segura', async () => {
     expect(await codigoDe(k().crearLlave())).toBe('KEYSTORE_NO_DISPONIBLE');
+    expect(await codigoDe(k().confirmarLlave())).toBe('KEYSTORE_NO_DISPONIBLE');
     expect(await codigoDe(k().firmar('m', 'n'))).toBe('KEYSTORE_NO_DISPONIBLE');
     expect(() => k().nonceAleatorio()).toThrow('KEYSTORE_NO_DISPONIBLE');
   });
@@ -35,6 +36,7 @@ describe('Keystore sin módulo nativo (web y Jest)', () => {
 describe('Keystore con módulo nativo', () => {
   const nativo = {
     crearLlave: jest.fn(),
+    confirmarLlave: jest.fn(),
     firmar: jest.fn(),
     nonceAleatorio: jest.fn(),
   };
@@ -51,6 +53,15 @@ describe('Keystore con módulo nativo', () => {
       marca: '1',
     });
     expect(k.nonceAleatorio()).toBe('ab'.repeat(16));
+  });
+
+  it('confirmarLlave llega al módulo y conserva SIN_LLAVE si no hay llave nueva (HU-10)', async () => {
+    nativo.confirmarLlave.mockResolvedValueOnce(undefined);
+    await expect(cargar(nativo).confirmarLlave()).resolves.toBeUndefined();
+    nativo.confirmarLlave.mockRejectedValueOnce(
+      Object.assign(new Error('x'), { code: 'SIN_LLAVE' }),
+    );
+    expect(await codigoDe(cargar(nativo).confirmarLlave())).toBe('SIN_LLAVE');
   });
 
   it('el diálogo de huella recibe los textos de es-BO y el mensaje exacto', async () => {
@@ -128,6 +139,25 @@ describe('Token de integridad (Play Integrity real queda fuera)', () => {
     modo(valor, dev);
     expect(await codigoDe(cargar().pedirTokenIntegridad('d'))).toBe(
       'KEYSTORE_NO_DISPONIBLE',
+    );
+  });
+});
+
+describe('fallaDeLlave (HU-10 CA-1)', () => {
+  const { ErrorKeystore, fallaDeLlave } = cargar();
+  it.each([
+    ['LLAVE_ANULADA', 'dispositivo.llave_anulada.explicacion', 'llave_anulada'],
+    ['SIN_LLAVE', 'dispositivo.revincular.telefono_nuevo', 'sin_llave'],
+    ['SIN_BIOMETRIA', 'comun.biometria.sin_registrar', undefined],
+    ['BIOMETRIA_BLOQUEADA', 'comun.biometria.bloqueada', undefined],
+    [
+      'KEYSTORE_NO_DISPONIBLE',
+      'billetera.pantalla.keystore_no_disponible',
+      undefined,
+    ],
+  ] as const)('%s → %s', (codigo, clave, revincular) => {
+    expect(fallaDeLlave(new ErrorKeystore(codigo))).toEqual(
+      revincular ? { clave, revincular } : { clave },
     );
   });
 });
