@@ -65,3 +65,18 @@ describe('fechas del historial', () => {
     expect(claveDia(iso(2026, 1, 5))).toBe('2026-01-05');
   });
 });
+
+describe('formatearHora (reintentar)', () => {
+  const { formatearHora } = jest.requireActual('@/i18n');
+  const ahora = new Date(2026, 10, 10, 18, 24);
+  it('hoy: solo la hora', () => {
+    expect(
+      formatearHora(new Date(2026, 10, 10, 18, 39).toISOString(), ahora),
+    ).toBe('18:39');
+  });
+  it('otro día (bloqueo de 24 h): la hora con el día, para que no parezca vencido', () => {
+    expect(
+      formatearHora(new Date(2026, 10, 11, 18, 24).toISOString(), ahora),
+    ).toBe('18:24 del 11/11');
+  });
+});
