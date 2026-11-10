@@ -19,10 +19,11 @@ import { Boton, BotonIcono } from '@/componentes/Boton';
 import { BandaMarca } from '@/componentes/Estructura';
 import { Icono } from '@/componentes/Icono';
 import { Ilustracion } from '@/componentes/Ilustracion';
+import { BotonRevincular } from '@/componentes/BotonRevincular';
 import { Aviso } from '@/componentes/Mensajes';
 import { TarjetaSaldo } from '@/componentes/TarjetaSaldo';
 import { useSesion } from '@/contexto/sesion';
-import { ErrorKeystore } from '@/dispositivo/keystore';
+import { ErrorKeystore, fallaDeLlave } from '@/dispositivo/keystore';
 import { abrirHttps } from '@/enlaces';
 import { formatearMonto } from '@/formato';
 import { t } from '@/i18n';
@@ -50,6 +51,7 @@ type Vista =
       texto: string;
       tono: 'info' | 'peligro';
       reintentar: boolean;
+      revincular?: 'llave_anulada' | 'sin_llave';
     };
 
 /** Traduce el error a lo que ve la persona; nunca muestra códigos técnicos (DESIGN_SYSTEM §13.4). */
@@ -58,17 +60,21 @@ function vistaDe(error: unknown): Vista {
     texto: string,
     reintentar = true,
     tono: 'info' | 'peligro' = 'peligro',
+    revincular?: 'llave_anulada' | 'sin_llave',
   ): Vista => ({
     tipo: 'falla',
     texto,
     tono,
     reintentar,
+    revincular,
   });
-  if (error instanceof ErrorKeystore)
+  if (error instanceof ErrorKeystore) {
     // Cancelar la huella es una decisión de la persona, no un error: tono informativo.
-    return error.codigo === 'BIOMETRIA_CANCELADA'
-      ? falla(t('billetera.pantalla.biometria_cancelada'), true, 'info')
-      : falla(t('billetera.pantalla.keystore_no_disponible'), false);
+    if (error.codigo === 'BIOMETRIA_CANCELADA')
+      return falla(t('billetera.pantalla.biometria_cancelada'), true, 'info');
+    const { clave, revincular } = fallaDeLlave(error);
+    return falla(t(clave), false, 'peligro', revincular);
+  }
   if (!(error instanceof ErrorApi))
     return falla(t('comun.errores.desconocido'));
   switch (error.codigo) {
@@ -314,6 +320,7 @@ function Contenido() {
         {vista.tipo === 'falla' && (
           <View style={estilos.bloque}>
             <Aviso tono={vista.tono}>{vista.texto}</Aviso>
+            {vista.revincular && <BotonRevincular motivo={vista.revincular} />}
             {vista.reintentar && (
               <Boton
                 variante="secundario"

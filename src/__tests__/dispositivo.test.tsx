@@ -1,7 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import DispositivoPantalla from '@/app/dispositivo';
 import { ProveedorSesion } from '@/contexto/sesion';
+import { useLocalSearchParams } from 'expo-router';
 import {
+  confirmarLlave,
   crearLlave,
   ErrorKeystore,
   pedirTokenIntegridad,
@@ -20,6 +22,7 @@ jest.mock('expo-router', () => {
       <Texto>{`redirige:${href}`}</Texto>
     ),
     router: { push: jest.fn(), back: jest.fn() },
+    useLocalSearchParams: jest.fn(() => ({})),
   };
 });
 jest.mock(
@@ -42,6 +45,8 @@ jest.mock('@/identidad/liveness', () => ({
 }));
 jest.mock('@/dispositivo/keystore', () => ({
   crearLlave: jest.fn(),
+  confirmarLlave: jest.fn(),
+  fallaDeLlave: jest.requireActual('@/dispositivo/keystore').fallaDeLlave,
   pedirTokenIntegridad: jest.fn(),
   ErrorKeystore: class ErrorKeystore extends Error {
     codigo: string;
@@ -55,6 +60,8 @@ jest.mock('@/dispositivo/keystore', () => ({
 const llave = jest.mocked(crearLlave);
 const integridad = jest.mocked(pedirTokenIntegridad);
 const liveness = jest.mocked(ejecutarLiveness);
+const confirmar = jest.mocked(confirmarLlave);
+const parametros = jest.mocked(useLocalSearchParams);
 const PEM = '-----BEGIN PUBLIC KEY-----\nMFkw\n-----END PUBLIC KEY-----';
 const CON_SESION = {
   'POST /autenticacion/refrescar': r.sesionAprobada,
@@ -85,6 +92,8 @@ beforeEach(() => {
   jest.clearAllMocks();
   llave.mockResolvedValue(PEM);
   integridad.mockResolvedValue('token-de-play-integrity');
+  confirmar.mockResolvedValue(undefined);
+  parametros.mockReturnValue({});
 });
 
 describe('Vinculación de dispositivo', () => {
@@ -109,6 +118,8 @@ describe('Vinculación de dispositivo', () => {
       llavePublicaPem: PEM,
       modelo: 'Pixel 8',
     });
+    // La llave nueva pasa a firmar solo con el 201.
+    expect(confirmar).toHaveBeenCalledTimes(1);
     // Ya vinculado no se ofrece vincular de nuevo (CA-6).
     expect(
       screen.queryByRole('button', { name: 'Vincular este teléfono' }),
@@ -127,6 +138,7 @@ describe('Vinculación de dispositivo', () => {
       ),
     ).toBeTruthy();
     expect(screen.queryByText('Tu teléfono quedó vinculado.')).toBeNull();
+    expect(confirmar).not.toHaveBeenCalled();
   });
 
   it('CA-6: si la cuenta ya tiene un teléfono, muestra el existente y no deja vincular otro', async () => {
@@ -235,6 +247,7 @@ describe('Vinculación de dispositivo', () => {
         modelo: 'Pixel 8',
         sesionLivenessId: 'liveness-ses-123',
       });
+      expect(confirmar).toHaveBeenCalledTimes(1);
     });
 
     it('CA-10: revincula sin prueba de vida si no requiere identidad', async () => {
@@ -288,27 +301,74 @@ describe('Vinculación de dispositivo', () => {
           'Tu rostro no coincide con el de tu carnet verificado. No pudimos vincular este teléfono.',
         ),
       ).toBeTruthy();
+      // Rechazada: la llave anterior sigue siendo la que firma.
+      expect(confirmar).not.toHaveBeenCalled();
     });
 
-    it('CA-1: traduce error de LLAVE_ANULADA mostrando explicacion de huella nueva (nunca "actualiza la app")', async () => {
-      llave.mockRejectedValue(new ErrorKeystore('LLAVE_ANULADA'));
+    it.each([
+      [
+        'PRUEBA_VIDA_FALLIDA',
+        d.pruebaVidaFallida,
+        /No pudimos confirmar que eres una persona real/,
+      ],
+      [
+        'INTENTOS_AGOTADOS',
+        d.intentosAgotados,
+        /Podrás intentarlo de nuevo a las \d\d:\d\d/,
+      ],
+      [
+        'CONFLICTO_CONCURRENTE',
+        d.conflictoConcurrente,
+        /se estaba pasando a otro teléfono al mismo tiempo/,
+      ],
+    ])(
+      '%s: muestra su mensaje y no cambia de llave',
+      async (_c, resp, texto) => {
+        await abrir({
+          'GET /dispositivos/mi-dispositivo': d.vinculado,
+          'POST /dispositivos/revinculacion': d.desafioRevinculacion,
+          'POST /dispositivos/revincular': resp,
+        });
+        fireEvent.press(
+          await screen.findByRole('button', {
+            name: 'Pasar mi cuenta a este teléfono',
+          }),
+        );
+        expect(await screen.findByText(texto)).toBeTruthy();
+        expect(confirmar).not.toHaveBeenCalled();
+      },
+    );
 
+    it('CA-1: con la llave anulada explica la huella nueva y ofrece confirmar la identidad (nunca «Actualiza la app»)', async () => {
+      parametros.mockReturnValue({ motivo: 'llave_anulada' });
       await abrir({
-        'GET /dispositivos/mi-dispositivo': d.vinculado,
+        'GET /dispositivos/mi-dispositivo': [d.vinculado, d.vinculado],
         'POST /dispositivos/revinculacion': d.desafioRevinculacion,
+        'POST /dispositivos/revincular': d.revinculadoOk,
       });
-
-      const boton = await screen.findByRole('button', {
-        name: 'Pasar mi cuenta a este teléfono',
-      });
-      fireEvent.press(boton);
-
       expect(
         await screen.findByText(
           'Registraste una huella nueva. Por seguridad, confirma tu identidad para volver a activar este teléfono.',
         ),
       ).toBeTruthy();
       expect(screen.queryByText(/Actualiza la app/)).toBeNull();
+      // Una sola salida: no se repite el botón secundario.
+      expect(
+        screen.queryByRole('button', {
+          name: 'Pasar mi cuenta a este teléfono',
+        }),
+      ).toBeNull();
+      fireEvent.press(
+        screen.getByRole('button', { name: 'Confirmar mi identidad' }),
+      );
+      expect(
+        await screen.findByText('Tu teléfono quedó vinculado.'),
+      ).toBeTruthy();
+      expect(liveness).toHaveBeenCalledWith('liveness-ses-123');
+      expect(confirmar).toHaveBeenCalledTimes(1);
+      expect(
+        screen.queryByRole('button', { name: 'Confirmar mi identidad' }),
+      ).toBeNull();
     });
   });
 });

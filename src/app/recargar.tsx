@@ -27,9 +27,10 @@ import { ZonaAccion } from '@/componentes/Estructura';
 import { Icono } from '@/componentes/Icono';
 import { FilaMovimiento } from '@/componentes/FilaMovimiento';
 import { Ilustracion } from '@/componentes/Ilustracion';
+import { BotonRevincular } from '@/componentes/BotonRevincular';
 import { Aviso, EtiquetaEstado } from '@/componentes/Mensajes';
 import { useSesion } from '@/contexto/sesion';
-import { ErrorKeystore } from '@/dispositivo/keystore';
+import { ErrorKeystore, fallaDeLlave } from '@/dispositivo/keystore';
 import { formatearMonto } from '@/formato';
 import { t } from '@/i18n';
 import {
@@ -63,6 +64,7 @@ type Falla = {
   texto: string;
   tono: 'info' | 'peligro';
   accion?: 'identidad' | 'vincular';
+  revincular?: 'llave_anulada' | 'sin_llave';
 };
 
 /** Comprueba el monto escrito antes de enviarlo (RN-1, RN-7); el servidor vuelve a validarlo. Devuelve Bs o la clave del error. */
@@ -79,10 +81,15 @@ function fallaDe(error: unknown): Falla {
     texto: t(clave),
     tono: 'peligro',
   });
-  if (error instanceof ErrorKeystore)
-    return error.codigo === 'BIOMETRIA_CANCELADA'
-      ? { texto: t('billetera.recarga.biometria_cancelada'), tono: 'info' }
-      : peligro('billetera.pantalla.keystore_no_disponible');
+  if (error instanceof ErrorKeystore) {
+    if (error.codigo === 'BIOMETRIA_CANCELADA')
+      return {
+        texto: t('billetera.recarga.biometria_cancelada'),
+        tono: 'info',
+      };
+    const { clave, revincular } = fallaDeLlave(error);
+    return { ...peligro(clave), revincular };
+  }
   if (!(error instanceof ErrorApi)) return peligro('billetera.recarga.error');
   switch (error.codigo) {
     // CA-6: sin identidad verificada o sin billetera no se opera.
@@ -287,6 +294,7 @@ function Contenido() {
   const pie = (
     <>
       {falla && <Aviso tono={falla.tono}>{falla.texto}</Aviso>}
+      {falla?.revincular && <BotonRevincular motivo={falla.revincular} />}
       {falla?.accion === 'identidad' && (
         <Boton
           icono="verified_user"

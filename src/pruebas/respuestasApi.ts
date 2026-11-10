@@ -411,6 +411,20 @@ export const dispositivoReal = {
     codigo: 'ROSTRO_NO_COINCIDE',
     mensaje: 'Tu rostro no coincide con la foto del carnet verificado.',
   }),
+  // Códigos de HU-08 que reutiliza `revincular` (plan §3).
+  pruebaVidaFallida: ok(422, {
+    codigo: 'PRUEBA_VIDA_FALLIDA',
+    mensaje: 'No pudimos confirmar que eres una persona real.',
+  }),
+  intentosAgotados: ok(429, {
+    codigo: 'INTENTOS_AGOTADOS',
+    mensaje: 'Superaste los intentos de verificación.',
+    bloqueadoHasta: '2026-11-09T15:00:00.000Z',
+  }),
+  conflictoConcurrente: ok(409, {
+    codigo: 'CONFLICTO_CONCURRENTE',
+    mensaje: 'Otra revinculación de tu cuenta terminó al mismo tiempo.',
+  }),
 };
 
 // HU-08: formas según el contrato del backend (DTOs de `identidad`); el motor facial real no se probó.

@@ -33,11 +33,12 @@ import { BandaMarca, ZonaAccion } from '@/componentes/Estructura';
 import { Icono } from '@/componentes/Icono';
 import { Ilustracion } from '@/componentes/Ilustracion';
 import { MapaRuta } from '@/componentes/MapaRuta';
+import { BotonRevincular } from '@/componentes/BotonRevincular';
 import { Aviso, EtiquetaEstado } from '@/componentes/Mensajes';
 import { SelectorFecha } from '@/componentes/SelectorFecha';
 import { SelectorLugar } from '@/componentes/SelectorLugar';
 import { useSesion } from '@/contexto/sesion';
-import { ErrorKeystore } from '@/dispositivo/keystore';
+import { ErrorKeystore, fallaDeLlave } from '@/dispositivo/keystore';
 import { formatearDia, formatearHoraLocal, formatearMonto } from '@/formato';
 import { con, t } from '@/i18n';
 import { Lugar } from '@/servicios/geocoding';
@@ -87,6 +88,7 @@ interface Falla {
   texto: string;
   tono: 'info' | 'peligro';
   vincular?: boolean;
+  revincular?: 'llave_anulada' | 'sin_llave';
 }
 
 interface Publicado {
@@ -443,13 +445,15 @@ function Contenido() {
   const atenderError = (error: unknown) => {
     const peligro = (clave: string, titulo?: string) =>
       setFalla({ texto: t(clave), tono: 'peligro', titulo });
-    if (error instanceof ErrorKeystore)
-      return error.codigo === 'BIOMETRIA_CANCELADA'
-        ? setFalla({
-            texto: t('viajes.publicar.biometria_cancelada'),
-            tono: 'info',
-          })
-        : peligro('billetera.pantalla.keystore_no_disponible');
+    if (error instanceof ErrorKeystore) {
+      if (error.codigo === 'BIOMETRIA_CANCELADA')
+        return setFalla({
+          texto: t('viajes.publicar.biometria_cancelada'),
+          tono: 'info',
+        });
+      const { clave, revincular } = fallaDeLlave(error);
+      return setFalla({ texto: t(clave), tono: 'peligro', revincular });
+    }
     if (!(error instanceof ErrorApi))
       return peligro('comun.errores.desconocido');
     switch (error.codigo) {
@@ -605,6 +609,7 @@ function Contenido() {
             {falla.texto}
           </Aviso>
         )}
+        {falla?.revincular && <BotonRevincular motivo={falla.revincular} />}
         {falla?.vincular && (
           <Boton
             variante="secundario"

@@ -1,39 +1,8 @@
-import { Platform } from 'react-native';
 import * as AlmacenSeguro from 'expo-secure-store';
 import { cabecerasFirma } from '@/dispositivo/firma';
 
 const BASE = process.env.EXPO_PUBLIC_API_URL ?? 'http://10.0.2.2:3000/api/v1';
 const CLAVE_REFRESCO = 'uniride.refresco';
-
-async function guardarRefresco(valor: string): Promise<void> {
-  if (Platform.OS === 'web') {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem(CLAVE_REFRESCO, valor);
-    }
-    return;
-  }
-  await AlmacenSeguro.setItemAsync(CLAVE_REFRESCO, valor);
-}
-
-async function obtenerRefresco(): Promise<string | null> {
-  if (Platform.OS === 'web') {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      return window.localStorage.getItem(CLAVE_REFRESCO);
-    }
-    return null;
-  }
-  return await AlmacenSeguro.getItemAsync(CLAVE_REFRESCO);
-}
-
-async function borrarRefresco(): Promise<void> {
-  if (Platform.OS === 'web') {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.removeItem(CLAVE_REFRESCO);
-    }
-    return;
-  }
-  await AlmacenSeguro.deleteItemAsync(CLAVE_REFRESCO);
-}
 
 /** Error de la API con el `codigo` estable que el cliente traduce con su es-BO. */
 export class ErrorApi extends Error {
@@ -121,20 +90,20 @@ async function guardarSesion(r: {
   tokenRefresco: string;
 }): Promise<void> {
   tokenAcceso = r.tokenAcceso;
-  await guardarRefresco(r.tokenRefresco);
+  await AlmacenSeguro.setItemAsync(CLAVE_REFRESCO, r.tokenRefresco);
 }
 
 /** Pide un token de acceso nuevo con el refresco guardado; llamadas simultáneas comparten una sola petición. */
 export function renovarSesion(): Promise<boolean> {
   renovando ??= (async () => {
-    const tokenRefresco = await obtenerRefresco();
+    const tokenRefresco = await AlmacenSeguro.getItemAsync(CLAVE_REFRESCO);
     if (!tokenRefresco) return false;
     const r = await enviar('/autenticacion/refrescar', 'POST', {
       tokenRefresco,
     });
     if (!r.ok) {
       // Refresco rechazado (vencido, revocado o reusado): la sesión local ya no sirve.
-      await borrarRefresco();
+      await AlmacenSeguro.deleteItemAsync(CLAVE_REFRESCO);
       return false;
     }
     await guardarSesion(await r.json());
@@ -244,7 +213,7 @@ export async function restablecerContrasena(
 
 export async function cerrarSesion(): Promise<void> {
   try {
-    const tokenRefresco = await obtenerRefresco();
+    const tokenRefresco = await AlmacenSeguro.getItemAsync(CLAVE_REFRESCO);
     await solicitar<void>('/autenticacion/cerrar-sesion', 'POST', {
       tokenRefresco: tokenRefresco ?? undefined,
     });
@@ -252,7 +221,7 @@ export async function cerrarSesion(): Promise<void> {
     tokenAcceso = null;
     dispositivoId = null;
     viajesEncontrados.clear();
-    await borrarRefresco();
+    await AlmacenSeguro.deleteItemAsync(CLAVE_REFRESCO);
   }
 }
 
@@ -356,7 +325,7 @@ export const pedirDesafioAtestacion = () =>
     'POST',
   );
 
-/** Desafío para revincular o cambiar de teléfono (HU-10). */
+/** Desafío para volver a vincular o pasar la cuenta a otro teléfono (HU-10); `sesionLivenessId` si pide identidad. */
 export const pedirDesafioRevinculacion = () =>
   solicitar<{
     desafio: string;
@@ -381,7 +350,7 @@ export async function vincularDispositivo(datos: {
   return r;
 }
 
-/** Revincula el teléfono o pasa la cuenta a un nuevo teléfono (HU-10). */
+/** Reemplaza el teléfono activo por este (HU-10): el anterior queda inactivo y su llave deja de valer. */
 export async function revincularDispositivo(datos: {
   desafio: string;
   tokenIntegridad: string;
