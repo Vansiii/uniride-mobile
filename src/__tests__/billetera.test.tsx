@@ -227,6 +227,26 @@ describe('Billetera · creación y lectura firmada', () => {
     expect(firma).toHaveBeenCalledTimes(1);
   });
 
+  it('HU-29 CA-2: cancelar la huella al crearla no envía nada y dice que no se confirmó la creación', async () => {
+    firma.mockRejectedValueOnce(new ErrorKeystore('BIOMETRIA_CANCELADA'));
+    const { llamadas } = await abrir({
+      'GET /billetera/saldo': [h.noEncontrada, h.noEncontrada, saldo('0.00')],
+      'POST /billetera': b.creada,
+    });
+    expect(
+      await screen.findByText('No se confirmó la creación de tu billetera.'),
+    ).toBeTruthy();
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(llamadas.filter((l) => l.ruta === 'POST /billetera')).toHaveLength(
+      0,
+    );
+    await fireEvent.press(reintentar());
+    expect(await screen.findByText('Saldo disponible')).toBeTruthy();
+    expect(llamadas.filter((l) => l.ruta === 'POST /billetera')).toHaveLength(
+      1,
+    );
+  });
+
   it('carga al entrar y no vuelve a leer por cambios de foco o de pantalla', async () => {
     const { llamadas, rerender } = await abrir({
       'GET /billetera/mia': b.conSaldo,

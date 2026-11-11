@@ -149,9 +149,26 @@ function Contenido() {
           error.codigo !== 'BILLETERA_NO_ENCONTRADA'
         )
           throw error;
-        billetera = await crearBilletera({
-          dialogo: dialogoDe('crear_billetera'),
-        });
+        try {
+          billetera = await crearBilletera({
+            dialogo: dialogoDe('crear_billetera'),
+          });
+        } catch (creacion) {
+          // HU-29 CA-2: cancelar aquí es no confirmar la creación, no la lectura de la dirección.
+          const deFirma = fallaDeFirma(creacion, 'crear_billetera');
+          if (
+            creacion instanceof ErrorKeystore &&
+            creacion.codigo === 'BIOMETRIA_CANCELADA' &&
+            deFirma
+          )
+            return {
+              tipo: 'falla',
+              texto: deFirma.texto,
+              tono: 'info',
+              reintentar: true,
+            };
+          throw creacion;
+        }
         saldo = await consultarSaldo();
       }
       // La dirección sí pide huella, una vez al abrir. Con el nodo caído (503) el saldo se ve igual, sin dirección.
