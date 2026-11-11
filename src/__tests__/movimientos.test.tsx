@@ -27,7 +27,7 @@ jest.mock('expo-router', () => {
     Redirect: ({ href }: { href: string }) => (
       <Texto>{`redirige:${href}`}</Texto>
     ),
-    router: { push: jest.fn(), back: jest.fn() },
+    router: { push: jest.fn(), back: jest.fn(), navigate: jest.fn() },
     // Como el real: corre el callback al montar y lo deja a mano para simular "volver a la pantalla".
     useFocusEffect: (alEnfocar: () => void) => {
       const { useEffect } = jest.requireActual('react');
@@ -478,44 +478,22 @@ describe('Movimientos · CA-6 y errores', () => {
     expect(firma).not.toHaveBeenCalled();
   });
 
-  it('404 BILLETERA_NO_ENCONTRADA: reintenta la creación (HU-12) una vez y muestra la lista', async () => {
-    const { llamadas } = await abrir({
-      [RUTA]: [h.noEncontrada, h.pagina1],
-      'POST /billetera': b.creada,
-    });
-    expect(await screen.findByText('Pago de viaje recibido')).toBeTruthy();
-    expect(llamadas.filter((l) => l.ruta === 'POST /billetera')).toHaveLength(
-      1,
-    );
-    expect(llamadas.filter((l) => l.ruta === RUTA)).toHaveLength(2);
-  });
-
-  it('si el 404 persiste tras crear la billetera no entra en bucle: avisa y deja reintentar', async () => {
+  it('HU-29 CA-1: 404 BILLETERA_NO_ENCONTRADA no la crea aquí: lleva a Billetera, donde está su resumen', async () => {
     const { llamadas } = await abrir({
       [RUTA]: h.noEncontrada,
       'POST /billetera': b.creada,
     });
     expect(
-      await screen.findByText(/No pudimos cargar tus movimientos/),
+      await screen.findByText(/Tu billetera aún no está lista/),
     ).toBeTruthy();
     expect(llamadas.filter((l) => l.ruta === 'POST /billetera')).toHaveLength(
-      1,
+      0,
     );
-    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeTruthy();
-  });
-
-  it('si la creación falla, reintentar vuelve a crear la billetera', async () => {
-    const { llamadas } = await abrir({
-      [RUTA]: [h.noEncontrada, h.noEncontrada, h.pagina1],
-      'POST /billetera': [b.cadenaCaida, b.creada],
-    });
+    expect(firma).not.toHaveBeenCalled();
     await fireEvent.press(
-      await screen.findByRole('button', { name: 'Reintentar' }),
+      screen.getByRole('button', { name: 'Ir a Billetera' }),
     );
-    expect(await screen.findByText('Pago de viaje recibido')).toBeTruthy();
-    expect(llamadas.filter((l) => l.ruta === 'POST /billetera')).toHaveLength(
-      2,
-    );
+    expect(router.navigate).toHaveBeenCalledWith('/billetera');
   });
 
   it('403 CUENTA_SUSPENDIDA: su mensaje y sin reintentar', async () => {

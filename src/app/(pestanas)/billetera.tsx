@@ -24,7 +24,8 @@ import { Aviso } from '@/componentes/Mensajes';
 import { TarjetaSaldo } from '@/componentes/TarjetaSaldo';
 import { useSesion } from '@/contexto/sesion';
 import { ErrorKeystore } from '@/dispositivo/keystore';
-import { dialogoDe, fallaDeFirma } from '@/hooks/useAccionSensible';
+import { ConfirmacionBiometrica } from '@/componentes/ConfirmacionBiometrica';
+import { fallaDeFirma, useAccionSensible } from '@/hooks/useAccionSensible';
 import { abrirHttps } from '@/enlaces';
 import { formatearMonto } from '@/formato';
 import { t } from '@/i18n';
@@ -42,6 +43,8 @@ type Vista =
   | { tipo: 'cargando' }
   /** Identidad sin verificar: la billetera todavía no existe (HU-12 CA-4). */
   | { tipo: 'sin_billetera' }
+  /** Verificada sin billetera (falló la creación automática): resumen y botón con huella (HU-29 CA-1). */
+  | { tipo: 'crear'; cancelada?: string }
   /** Sin teléfono vinculado o firma rechazada: hay que vincular (HU-09). */
   | { tipo: 'vincular' }
   /** `billetera` es null si /mia dio 503 (nodo caído): se ve el saldo sin la dirección. */
@@ -138,42 +141,23 @@ function Contenido() {
       // Sin identidad verificada el servidor responde 403 sin importar la firma: no se gasta una huella para saberlo.
       if ((await consultarEstadoIdentidad()).estado !== 'verificada')
         return { tipo: 'sin_billetera' };
-      // El saldo va solo con token: no gasta huella. Billetera que aún no existe (404): se reintenta la creación una vez.
-      let billetera: Billetera | null = null;
+      // El saldo va solo con token: no gasta huella. Billetera que aún no existe (404): la persona la crea con su
+      // huella desde el resumen (HU-29 CA-1), nunca sin que lo pida.
       let saldo: Saldo;
       try {
         saldo = await consultarSaldo();
       } catch (error) {
         if (
-          !(error instanceof ErrorApi) ||
-          error.codigo !== 'BILLETERA_NO_ENCONTRADA'
+          error instanceof ErrorApi &&
+          error.codigo === 'BILLETERA_NO_ENCONTRADA'
         )
-          throw error;
-        try {
-          billetera = await crearBilletera({
-            dialogo: dialogoDe('crear_billetera'),
-          });
-        } catch (creacion) {
-          // HU-29 CA-2: cancelar aquí es no confirmar la creación, no la lectura de la dirección.
-          const deFirma = fallaDeFirma(creacion, 'crear_billetera');
-          if (
-            creacion instanceof ErrorKeystore &&
-            creacion.codigo === 'BIOMETRIA_CANCELADA' &&
-            deFirma
-          )
-            return {
-              tipo: 'falla',
-              texto: deFirma.texto,
-              tono: 'info',
-              reintentar: true,
-            };
-          throw creacion;
-        }
-        saldo = await consultarSaldo();
+          return { tipo: 'crear' };
+        throw error;
       }
       // La dirección sí pide huella, una vez al abrir. Con el nodo caído (503) el saldo se ve igual, sin dirección.
+      let billetera: Billetera | null = null;
       try {
-        billetera ??= await consultarMiBilletera();
+        billetera = await consultarMiBilletera();
       } catch (error) {
         if (!(error instanceof ErrorApi && error.estado === 503)) throw error;
       }
@@ -242,6 +226,37 @@ function Contenido() {
       void leer().then((v) => v && setVista(v));
     }, [leer, refrescarSaldo]),
   );
+
+  // Una huella por acción (RN-3); la creación ya trae la dirección, así que no se pide /mia.
+  const creacion = useAccionSensible('crear_billetera');
+  const crear = async () => {
+    if (enCurso.current) return;
+    enCurso.current = true;
+    let siguiente: Vista;
+    try {
+      const nueva = await creacion.ejecutar((opciones) =>
+        crearBilletera(opciones),
+      );
+      if (!nueva) return;
+      siguiente = {
+        tipo: 'lista',
+        saldo: await consultarSaldo(),
+        billetera: nueva,
+      };
+    } catch (error) {
+      // HU-29 CA-2: cancelar no envía nada; el resumen sigue con el aviso y el mismo botón.
+      siguiente =
+        error instanceof ErrorKeystore && error.codigo === 'BIOMETRIA_CANCELADA'
+          ? {
+              tipo: 'crear',
+              cancelada: fallaDeFirma(error, 'crear_billetera')?.texto,
+            }
+          : vistaDe(error);
+    } finally {
+      enCurso.current = false;
+    }
+    setVista(siguiente);
+  };
 
   // Lectura completa (la dirección pide huella): al reintentar una falla o al volver a pedir la dirección.
   const recargar = () => {
@@ -320,6 +335,27 @@ function Contenido() {
               icono="verified_user"
               etiqueta={t('billetera.pantalla.verificar')}
               alPresionar={() => router.push('/identidad')}
+            />
+          </View>
+        )}
+
+        {vista.tipo === 'crear' && (
+          <View style={estilos.resultado}>
+            <Ilustracion
+              icono="account_balance_wallet"
+              color={colores.primario}
+            />
+            <Text style={estilos.tituloResultado} accessibilityRole="header">
+              {t('billetera.pantalla.crear_titulo')}
+            </Text>
+            <Text style={estilos.textoResultado}>
+              {t('billetera.pantalla.crear_texto')}
+            </Text>
+            {vista.cancelada && <Aviso tono="info">{vista.cancelada}</Aviso>}
+            <ConfirmacionBiometrica
+              estado={creacion.estado}
+              etiqueta={t('billetera.pantalla.crear')}
+              alConfirmar={() => void crear()}
             />
           </View>
         )}

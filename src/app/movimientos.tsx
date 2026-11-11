@@ -12,7 +12,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   consultarMovimientos,
   consultarSaldo,
-  crearBilletera,
   ErrorApi,
   Movimiento,
   PaginaMovimientos,
@@ -39,7 +38,10 @@ const FILTROS: Record<Filtro, TipoMovimiento[]> = {
 };
 
 type Falla = (
-  { tipo: 'identidad' } | { tipo: 'error'; texto: string; reintentar: boolean }
+  | { tipo: 'identidad' }
+  /** Verificada sin billetera: se crea desde Billetera, con su resumen y la huella (HU-29 CA-1). */
+  | { tipo: 'sin_billetera' }
+  | { tipo: 'error'; texto: string; reintentar: boolean }
 ) & {
   /** Página que falló: el reintento pide esa misma. */
   pagina: number;
@@ -71,6 +73,8 @@ function fallaDe(error: unknown, pagina: number): Falla {
     // CA-6: sin identidad verificada no hay billetera.
     case 'IDENTIDAD_NO_VERIFICADA':
       return { tipo: 'identidad', pagina };
+    case 'BILLETERA_NO_ENCONTRADA':
+      return { tipo: 'sin_billetera', pagina };
     case 'CUENTA_SUSPENDIDA':
       return texto('billetera.pantalla.cuenta_suspendida', false);
     case 'SIN_CONEXION':
@@ -102,7 +106,6 @@ function Contenido() {
   );
   // Solo cuenta la respuesta de la última petición: un filtro nuevo descarta las anteriores.
   const peticion = useRef(0);
-  const yaCreo = useRef(false);
   // Hay una petición vigente: dos avisos de "fin de lista" seguidos no piden la misma página dos veces.
   const ocupado = useRef(false);
 
@@ -111,27 +114,14 @@ function Contenido() {
     setFalla(null);
     setFase(numero === 1 ? 'cargando' : 'mas');
   };
-  // Pide una página (con el reintento de creación de HU-12 si la billetera no existe) y devuelve qué pasó.
+  // Pide una página y devuelve qué pasó.
   const pedir = useCallback(
     async (f: Filtro, numero: number): Promise<Resultado> => {
       const id = ++peticion.current;
       ocupado.current = true;
       const leer = () => consultarMovimientos(numero, FILTROS[f]);
       try {
-        try {
-          return { id, numero, pagina: await leer() };
-        } catch (error) {
-          // Verificada pero sin billetera (404): el reintento de la creación, una sola vez.
-          if (
-            !(error instanceof ErrorApi) ||
-            error.codigo !== 'BILLETERA_NO_ENCONTRADA' ||
-            yaCreo.current
-          )
-            throw error;
-          await crearBilletera();
-          yaCreo.current = true;
-          return { id, numero, pagina: await leer() };
-        }
+        return { id, numero, pagina: await leer() };
       } catch (error) {
         return { id, numero, falla: fallaDe(error, numero) };
       }
@@ -348,6 +338,19 @@ function Contenido() {
                   anchoCompleto
                   etiqueta={t('billetera.pantalla.verificar')}
                   alPresionar={() => router.push('/identidad')}
+                />
+              </View>
+            )}
+            {falla?.tipo === 'sin_billetera' && (
+              <View style={estilos.bloque}>
+                <Aviso tono="info">
+                  {t('billetera.historial.sin_billetera')}
+                </Aviso>
+                <Boton
+                  icono="account_balance_wallet"
+                  anchoCompleto
+                  etiqueta={t('billetera.historial.ir_billetera')}
+                  alPresionar={() => router.navigate('/billetera')}
                 />
               </View>
             )}

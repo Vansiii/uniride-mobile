@@ -210,41 +210,57 @@ describe('Billetera · CA-5: saldo, dirección y enlace', () => {
 });
 
 describe('Billetera · creación y lectura firmada', () => {
-  it('sin billetera (404) la crea una sola vez con POST y la muestra', async () => {
+  const crearMia = () =>
+    screen.findByRole('button', { name: 'Crear mi billetera' });
+  const creaciones = (llamadas: { ruta: string }[]) =>
+    llamadas.filter((l) => l.ruta === 'POST /billetera').length;
+
+  it('HU-29 CA-1: sin billetera (404) muestra el resumen y no la crea hasta que la persona lo pide', async () => {
     const { llamadas } = await abrir({
       // HU-14 CA-6: verificada sin billetera, /saldo da 404 y la creación es el reintento de HU-12.
       'GET /billetera/saldo': [h.noEncontrada, saldo('0.00')],
       'POST /billetera': b.creada,
     });
+    await crearMia();
+    expect(screen.getByText('Tu billetera aún no está lista')).toBeTruthy();
+    expect(screen.getByText(/No mueve dinero/)).toBeTruthy();
+    expect(creaciones(llamadas)).toBe(0);
+    expect(firma).not.toHaveBeenCalled();
+  });
+
+  it('al tocar «Crear mi billetera» la crea una sola vez con el diálogo de esa acción y la muestra', async () => {
+    const { llamadas } = await abrir({
+      'GET /billetera/saldo': [h.noEncontrada, saldo('0.00')],
+      'POST /billetera': b.creada,
+    });
+    await fireEvent.press(await crearMia());
     expect(await screen.findByText('Saldo disponible')).toBeTruthy();
     expect(screen.getByLabelText('0,00 URC')).toBeTruthy();
     expect(screen.getByText('0x3021…6805')).toBeTruthy();
-    expect(llamadas.filter((l) => l.ruta === 'POST /billetera')).toHaveLength(
-      1,
-    );
-    // La creación ya trae la dirección: no se pide /mia. Una sola huella.
+    expect(creaciones(llamadas)).toBe(1);
+    // La creación ya trae la dirección: no se pide /mia. Una sola huella, con el texto de crear la billetera.
     expect(lecturas(llamadas)).toBe(0);
     expect(firma).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(firma.mock.calls[0])).toContain(
+      'Confirma la creación de tu billetera',
+    );
   });
 
-  it('HU-29 CA-2: cancelar la huella al crearla no envía nada y dice que no se confirmó la creación', async () => {
+  it('HU-29 CA-2: cancelar la huella al crearla no envía nada, avisa y deja el mismo botón', async () => {
     firma.mockRejectedValueOnce(new ErrorKeystore('BIOMETRIA_CANCELADA'));
     const { llamadas } = await abrir({
-      'GET /billetera/saldo': [h.noEncontrada, h.noEncontrada, saldo('0.00')],
+      'GET /billetera/saldo': [h.noEncontrada, saldo('0.00')],
       'POST /billetera': b.creada,
     });
+    await fireEvent.press(await crearMia());
     expect(
       await screen.findByText('No se confirmó la creación de tu billetera.'),
     ).toBeTruthy();
     expect(screen.queryByRole('alert')).toBeNull();
-    expect(llamadas.filter((l) => l.ruta === 'POST /billetera')).toHaveLength(
-      0,
-    );
-    await fireEvent.press(reintentar());
+    expect(creaciones(llamadas)).toBe(0);
+    await fireEvent.press(await crearMia());
     expect(await screen.findByText('Saldo disponible')).toBeTruthy();
-    expect(llamadas.filter((l) => l.ruta === 'POST /billetera')).toHaveLength(
-      1,
-    );
+    expect(creaciones(llamadas)).toBe(1);
   });
 
   it('carga al entrar y no vuelve a leer por cambios de foco o de pantalla', async () => {

@@ -322,6 +322,9 @@
       "sin_billetera_titulo": "Tu billetera se crea al verificar tu identidad",
       "sin_billetera_texto": "Con ella pagas y cobras viajes. No tienes que configurar llaves ni guardar contraseñas extra.",
       "verificar": "Verificar identidad",
+      "crear_titulo": "Tu billetera aún no está lista",
+      "crear_texto": "Se crea a tu nombre y vacía, para pagar y cobrar viajes. No mueve dinero. Te pediremos tu huella o rostro para confirmarlo.",
+      "crear": "Crear mi billetera",
       "vincular_texto": "Para ver tu billetera, primero vincula este teléfono. Al abrirla te pediremos tu huella o rostro, así nadie más puede verla.",
       "vincular": "Vincular mi teléfono",
       "cuenta_suspendida": "Tu cuenta está suspendida, por eso no podemos mostrar tu billetera. Comunícate con tu organización.",
@@ -341,6 +344,8 @@
       "identidad_requerida": "Verifica tu identidad para ver tus movimientos. Tu billetera se crea al verificarla."
     },
     "historial": {
+      "sin_billetera": "Tu billetera aún no está lista. Créala desde Billetera: te pediremos tu huella o rostro.",
+      "ir_billetera": "Ir a Billetera",
       "titulo": "Movimientos",
       "hoy": "Hoy",
       "vacio": "Todavía no tienes movimientos",
