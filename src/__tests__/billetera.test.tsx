@@ -246,6 +246,19 @@ describe('Billetera · creación y lectura firmada', () => {
     );
   });
 
+  it('si el saldo falla justo después de crearla, muestra la billetera nueva con el aviso y sin otra huella', async () => {
+    const { llamadas } = await abrir({
+      'GET /billetera/saldo': [h.noEncontrada, b.cadenaCaida],
+      'POST /billetera': b.creada,
+    });
+    await fireEvent.press(await crearMia());
+    expect(await screen.findByText('0x3021…6805')).toBeTruthy();
+    expect(screen.getByText(/No pudimos consultar tu saldo/)).toBeTruthy();
+    expect(screen.getByText(/último saldo sincronizado/)).toBeTruthy();
+    expect(lecturas(llamadas)).toBe(0);
+    expect(firma).toHaveBeenCalledTimes(1);
+  });
+
   it('HU-29 CA-2: cancelar la huella al crearla no envía nada, avisa y deja el mismo botón', async () => {
     firma.mockRejectedValueOnce(new ErrorKeystore('BIOMETRIA_CANCELADA'));
     const { llamadas } = await abrir({

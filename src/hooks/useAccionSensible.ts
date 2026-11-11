@@ -81,5 +81,8 @@ export function useAccionSensible(accion: AccionSensible) {
     [accion],
   );
 
-  return { estado, ejecutar };
+  /** Lee el candado, no el estado: dos toques en el mismo cuadro ven `reposo` los dos. */
+  const ocupado = useCallback(() => enCurso.current, []);
+
+  return { estado, ejecutar, ocupado };
 }

@@ -383,17 +383,17 @@ export async function consultarMiDispositivo(): Promise<MiDispositivo | null> {
   }
 }
 
-/**
- * Petición sensible (billetera, publicar viaje, reservar, handshakes): lleva la firma del dispositivo (A-08).
- * Una huella por petición: si solo venció la sesión, el servidor la rechaza antes de mirar la firma y gastar su
- * nonce, así que la misma firma vale al reenviarla. Otro 401 es de la firma y va tal cual a la pantalla.
- */
 /** Lo que una acción sensible (HU-29) agrega a la firma: el texto del diálogo y el aviso de que ya se firmó. */
 export interface OpcionesFirma {
   dialogo?: DialogoFirma;
   alFirmar?: () => void;
 }
 
+/**
+ * Petición sensible (billetera, publicar viaje, reservar, handshakes): lleva la firma del dispositivo (A-08).
+ * Una huella por petición: si solo venció la sesión, el servidor la rechaza antes de mirar la firma y gastar su
+ * nonce, así que la misma firma vale al reenviarla. Otro 401 es de la firma y va tal cual a la pantalla.
+ */
 export async function solicitarFirmado<T>(
   ruta: string,
   metodo: string,

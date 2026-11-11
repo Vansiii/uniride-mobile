@@ -266,6 +266,7 @@ function Contenido() {
   };
 
   const confirmar = async (orden: OrdenRecargaCreada) => {
+    if (accion.ocupado()) return;
     setFalla(null);
     try {
       const resultado = await accion.ejecutar(

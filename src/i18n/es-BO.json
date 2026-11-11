@@ -20,7 +20,7 @@
     },
     "biometria": {
       "sin_registrar": "Tu teléfono no tiene ninguna huella o rostro registrado. Agrega uno en los ajustes de tu teléfono.",
-      "bloqueada": "Tu teléfono bloqueó la huella por demasiados intentos. Desbloquéalo con tu PIN y vuelve a intentarlo.",
+      "bloqueada": "Tu teléfono bloqueó la huella por demasiados intentos. Desbloquéalo con tu PIN, patrón o contraseña y vuelve a intentarlo.",
       "no_confirmado": "No se confirmó {accion}.",
       "confirmando": "Confirmando…",
       "accion": {
@@ -389,7 +389,7 @@
       "qr": "Código QR de pago simulado",
       "etiqueta_simulado": "Pago simulado · red de prueba",
       "vence_en": "Vence en {tiempo}",
-      "instruccion": "No se cobra dinero real. Toca \"Simular pago\" y confirma con tu huella.",
+      "instruccion": "No se cobra dinero real. Toca el botón para simular el pago y confirma con tu huella.",
       "simular": "Simular pago de {monto} Bs",
       "en_camino": "Recarga en camino",
       "en_camino_texto": "Pagaste {monto} Bs. Estamos registrando tus {monto} URC en la red de prueba; puede tardar unos minutos.",

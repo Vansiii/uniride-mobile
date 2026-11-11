@@ -116,6 +116,15 @@ export default function BilleteraPantalla() {
   return <Contenido key={usuario?.id} />;
 }
 
+/** Una billetera recién creada no tiene fondos; `enLinea: false` muestra el aviso de sincronización. */
+const SALDO_NUEVO: Saldo = {
+  saldoTotal: '0.00',
+  saldoDisponible: '0.00',
+  saldoBloqueadoEscrow: '0.00',
+  moneda: 'URC',
+  enLinea: false,
+};
+
 function Contenido() {
   const { cargando, usuario } = useSesion();
   const [vista, setVista] = useState<Vista>({ tipo: 'cargando' });
@@ -240,7 +249,12 @@ function Contenido() {
       if (!nueva) return;
       siguiente = {
         tipo: 'lista',
-        saldo: await consultarSaldo(),
+        // Si falla el saldo, la billetera ya existe: se muestra con saldo 0 sin conexión y el aviso, sin otra huella.
+        saldo: await consultarSaldo().catch((error: unknown) => {
+          const v = vistaDe(error);
+          if (v.tipo === 'falla') setErrorRefresco(v.texto);
+          return SALDO_NUEVO;
+        }),
         billetera: nueva,
       };
     } catch (error) {

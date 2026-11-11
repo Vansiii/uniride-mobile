@@ -507,7 +507,7 @@ function Contenido() {
   };
 
   const publicar = async () => {
-    if (accion.estado !== 'reposo') return;
+    if (accion.ocupado()) return;
     const salida = leerSalida(fecha, hora);
     const monto = leerPrecio(precio, limites);
     const lugarRequerido = t('viajes.publicar.lugar_requerido');
