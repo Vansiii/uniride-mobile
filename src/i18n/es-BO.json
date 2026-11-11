@@ -15,11 +15,33 @@
     "errores": {
       "sin_conexion": "No hay conexión. Revisa tu internet e inténtalo de nuevo.",
       "desconocido": "Algo salió mal. Inténtalo de nuevo en unos minutos.",
-      "coordenadas_invalidas": "No pudimos leer ese punto de salida. Elige otro lugar."
+      "coordenadas_invalidas": "No pudimos leer ese punto de salida. Elige otro lugar.",
+      "peticion_expirada": "La comprobación de tu teléfono venció. Inténtalo de nuevo."
     },
     "biometria": {
       "sin_registrar": "Tu teléfono no tiene ninguna huella o rostro registrado. Agrega uno en los ajustes de tu teléfono.",
-      "bloqueada": "Tu teléfono bloqueó la huella por demasiados intentos. Desbloquéalo con tu PIN y vuelve a intentarlo."
+      "bloqueada": "Tu teléfono bloqueó la huella por demasiados intentos. Desbloquéalo con tu PIN y vuelve a intentarlo.",
+      "no_confirmado": "No se confirmó {accion}.",
+      "confirmando": "Confirmando…",
+      "accion": {
+        "recarga": "el pago",
+        "publicar": "la publicación de tu viaje",
+        "crear_billetera": "la creación de tu billetera"
+      },
+      "dialogo": {
+        "recarga": {
+          "titulo": "Confirma tu recarga",
+          "subtitulo": "Pagas {monto} Bs y recibes {monto} URC"
+        },
+        "publicar": {
+          "titulo": "Confirma la publicación de tu viaje",
+          "subtitulo": "{monto} URC por asiento"
+        },
+        "crear_billetera": {
+          "titulo": "Confirma la creación de tu billetera",
+          "subtitulo": "Usa tu huella o rostro para continuar."
+        }
+      }
     }
   },
   "autenticacion": {
@@ -306,7 +328,6 @@
       "servicio_no_disponible": "No pudimos consultar tu saldo en este momento. No se perdió nada; inténtalo de nuevo.",
       "biometria_cancelada": "Cancelaste la confirmación con tu huella, así que no mostramos tu billetera. Puedes volver a intentarlo cuando quieras.",
       "keystore_no_disponible": "No pudimos usar la llave de seguridad de tu teléfono. Inténtalo de nuevo.",
-      "peticion_expirada": "La comprobación de tu teléfono venció. Inténtalo de nuevo.",
       "movimientos": "Movimientos",
       "direccion_no_disponible": "No pudimos cargar la dirección de tu billetera por ahora.",
       "direccion_reintentar": "Cargar la dirección (pide tu huella)"
@@ -364,7 +385,7 @@
       "etiqueta_simulado": "Pago simulado · red de prueba",
       "vence_en": "Vence en {tiempo}",
       "instruccion": "No se cobra dinero real. Toca \"Simular pago\" y confirma con tu huella.",
-      "simular": "Simular pago",
+      "simular": "Simular pago de {monto} Bs",
       "en_camino": "Recarga en camino",
       "en_camino_texto": "Pagaste {monto} Bs. Estamos registrando tus {monto} URC en la red de prueba; puede tardar unos minutos.",
       "seguir_usando": "Puedes seguir usando la app mientras tanto.",
@@ -381,7 +402,6 @@
       "procesando_onchain": "Tu pago quedó registrado. Seguimos intentando sumar los URC; aparecerá como pendiente hasta lograrlo.",
       "identidad_requerida": "Verifica tu identidad para recargar. Tu billetera se crea al verificarla.",
       "vincular_requerido": "Para confirmar la recarga, primero vincula este teléfono.",
-      "biometria_cancelada": "Cancelaste la confirmación con tu huella, así que el pago no se confirmó. Puedes volver a intentarlo.",
       "cuenta_suspendida": "Tu cuenta está suspendida, por eso no puedes recargar. Comunícate con tu organización.",
       "error": "No pudimos completar este paso. Inténtalo de nuevo: una misma recarga nunca se cobra dos veces."
     }
@@ -444,7 +464,6 @@
       "viaje_solapado": "Ya tienes uno para {dia} a las {hora}. Deja al menos {horas} horas entre tus viajes.",
       "publicar": "Publicar viaje",
       "publicando": "Publicando…",
-      "biometria_cancelada": "Cancelaste la huella. Tu viaje no se publicó; tus datos siguen aquí.",
       "vincular_requerido": "Vincula este teléfono para publicar: cada viaje se firma desde él.",
       "vincular": "Vincular teléfono",
       "estado_publicado": "Publicado",

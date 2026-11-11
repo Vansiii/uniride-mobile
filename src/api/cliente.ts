@@ -1,5 +1,6 @@
 import * as AlmacenSeguro from 'expo-secure-store';
 import { cabecerasFirma } from '@/dispositivo/firma';
+import type { DialogoFirma } from '@/dispositivo/keystore';
 
 const BASE = process.env.EXPO_PUBLIC_API_URL ?? 'http://10.0.2.2:3000/api/v1';
 const CLAVE_REFRESCO = 'uniride.refresco';
@@ -387,10 +388,17 @@ export async function consultarMiDispositivo(): Promise<MiDispositivo | null> {
  * Una huella por petición: si solo venció la sesión, el servidor la rechaza antes de mirar la firma y gastar su
  * nonce, así que la misma firma vale al reenviarla. Otro 401 es de la firma y va tal cual a la pantalla.
  */
+/** Lo que una acción sensible (HU-29) agrega a la firma: el texto del diálogo y el aviso de que ya se firmó. */
+export interface OpcionesFirma {
+  dialogo?: DialogoFirma;
+  alFirmar?: () => void;
+}
+
 export async function solicitarFirmado<T>(
   ruta: string,
   metodo: string,
   cuerpo?: unknown,
+  opciones: OpcionesFirma = {},
 ): Promise<T> {
   const id = dispositivoId ?? (await consultarMiDispositivo())?.id;
   if (!id) throw new ErrorApi(0, 'DISPOSITIVO_NO_VINCULADO');
@@ -401,6 +409,8 @@ export async function solicitarFirmado<T>(
     metodo,
     url.pathname + url.search,
     texto,
+    opciones.dialogo,
+    opciones.alFirmar,
   );
   let respuesta = await enviar(ruta, metodo, cuerpo, firma);
   if (
@@ -490,8 +500,8 @@ export async function consultarMiBilletera(): Promise<Billetera | null> {
 }
 
 /** Reintento de la creación automática; idempotente: si ya existía devuelve la misma billetera. */
-export const crearBilletera = () =>
-  solicitarFirmado<Billetera>('/billetera', 'POST');
+export const crearBilletera = (opciones?: OpcionesFirma) =>
+  solicitarFirmado<Billetera>('/billetera', 'POST', undefined, opciones);
 
 /** Desglose de la billetera (HU-14): montos como texto de la API, nunca `Number`. Lectura con token, sin firma ni huella. */
 export interface Saldo {
@@ -557,8 +567,13 @@ export const crearRecarga = (monto: number) =>
   solicitar<OrdenRecargaCreada>('/billetera/recargas', 'POST', { monto });
 
 /** Pide la huella (CA-4). Idempotente: repetirla responde el estado actual y nunca acuña de nuevo (CA-3). */
-export const confirmarRecarga = (id: string) =>
-  solicitarFirmado<OrdenRecarga>(`/billetera/recargas/${id}/confirmar`, 'POST');
+export const confirmarRecarga = (id: string, opciones?: OpcionesFirma) =>
+  solicitarFirmado<OrdenRecarga>(
+    `/billetera/recargas/${id}/confirmar`,
+    'POST',
+    undefined,
+    opciones,
+  );
 
 /** Sin firma: consultar el estado nunca pide la huella. */
 export const consultarRecarga = (id: string) =>
@@ -647,9 +662,10 @@ export const consultarViaje = (id: string) =>
   solicitar<DetalleViaje>(`/viajes/${encodeURIComponent(id)}`, 'GET');
 
 /** Pide la huella (CA-7); se publica en la organización activa, que el cliente no envía (A-13). */
-export const publicarViaje = (datos: DatosViaje) =>
+export const publicarViaje = (datos: DatosViaje, opciones?: OpcionesFirma) =>
   solicitarFirmado<{ id: string; estado: string; cuposDisponibles: number }>(
     '/viajes',
     'POST',
     datos,
+    opciones,
   );

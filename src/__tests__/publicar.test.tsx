@@ -636,9 +636,7 @@ describe('HU-17 · rechazos del servidor', () => {
     await llenar();
     await publicar();
     expect(
-      await screen.findByText(
-        'Cancelaste la huella. Tu viaje no se publicó; tus datos siguen aquí.',
-      ),
+      await screen.findByText('No se confirmó la publicación de tu viaje.'),
     ).toBeTruthy();
     expect(envios(llamadas)).toHaveLength(0);
     // Con el foco en un campo, Android deja el aviso fuera de la vista.

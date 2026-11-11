@@ -23,7 +23,8 @@ import { BotonRevincular } from '@/componentes/BotonRevincular';
 import { Aviso } from '@/componentes/Mensajes';
 import { TarjetaSaldo } from '@/componentes/TarjetaSaldo';
 import { useSesion } from '@/contexto/sesion';
-import { ErrorKeystore, fallaDeLlave } from '@/dispositivo/keystore';
+import { ErrorKeystore } from '@/dispositivo/keystore';
+import { dialogoDe, fallaDeFirma } from '@/hooks/useAccionSensible';
 import { abrirHttps } from '@/enlaces';
 import { formatearMonto } from '@/formato';
 import { t } from '@/i18n';
@@ -68,13 +69,18 @@ function vistaDe(error: unknown): Vista {
     reintentar,
     revincular,
   });
-  if (error instanceof ErrorKeystore) {
-    // Cancelar la huella es una decisión de la persona, no un error: tono informativo.
-    if (error.codigo === 'BIOMETRIA_CANCELADA')
-      return falla(t('billetera.pantalla.biometria_cancelada'), true, 'info');
-    const { clave, revincular } = fallaDeLlave(error);
-    return falla(t(clave), false, 'peligro', revincular);
-  }
+  // Cancelar la huella al abrir es una decisión de la persona, no un error: tono informativo y reintentar.
+  if (error instanceof ErrorKeystore && error.codigo === 'BIOMETRIA_CANCELADA')
+    return falla(t('billetera.pantalla.biometria_cancelada'), true, 'info');
+  const deFirma = fallaDeFirma(error, 'crear_billetera');
+  // Una llave que no sirve no se arregla reintentando; la sesión vencida o la red, sí.
+  if (deFirma)
+    return falla(
+      deFirma.texto,
+      !(error instanceof ErrorKeystore),
+      deFirma.tono,
+      deFirma.revincular,
+    );
   if (!(error instanceof ErrorApi))
     return falla(t('comun.errores.desconocido'));
   switch (error.codigo) {
@@ -87,10 +93,6 @@ function vistaDe(error: unknown): Vista {
       return falla(t('billetera.pantalla.cuenta_suspendida'), false);
     case 'SERVICIO_BLOCKCHAIN_NO_DISPONIBLE':
       return falla(t('billetera.pantalla.servicio_no_disponible'));
-    case 'PETICION_EXPIRADA':
-      return falla(t('billetera.pantalla.peticion_expirada'));
-    case 'SIN_CONEXION':
-      return falla(t('comun.errores.sin_conexion'));
     default:
       return error.estado === 503
         ? falla(t('billetera.pantalla.servicio_no_disponible'))
@@ -147,7 +149,9 @@ function Contenido() {
           error.codigo !== 'BILLETERA_NO_ENCONTRADA'
         )
           throw error;
-        billetera = await crearBilletera();
+        billetera = await crearBilletera({
+          dialogo: dialogoDe('crear_billetera'),
+        });
         saldo = await consultarSaldo();
       }
       // La dirección sí pide huella, una vez al abrir. Con el nodo caído (503) el saldo se ve igual, sin dirección.

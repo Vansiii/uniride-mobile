@@ -28,11 +28,12 @@ import { Icono } from '@/componentes/Icono';
 import { FilaMovimiento } from '@/componentes/FilaMovimiento';
 import { Ilustracion } from '@/componentes/Ilustracion';
 import { BotonRevincular } from '@/componentes/BotonRevincular';
+import { ConfirmacionBiometrica } from '@/componentes/ConfirmacionBiometrica';
 import { Aviso, EtiquetaEstado } from '@/componentes/Mensajes';
 import { useSesion } from '@/contexto/sesion';
-import { ErrorKeystore, fallaDeLlave } from '@/dispositivo/keystore';
+import { fallaDeFirma, useAccionSensible } from '@/hooks/useAccionSensible';
 import { formatearMonto } from '@/formato';
-import { t } from '@/i18n';
+import { con, t } from '@/i18n';
 import {
   colores,
   espacio,
@@ -81,15 +82,8 @@ function fallaDe(error: unknown): Falla {
     texto: t(clave),
     tono: 'peligro',
   });
-  if (error instanceof ErrorKeystore) {
-    if (error.codigo === 'BIOMETRIA_CANCELADA')
-      return {
-        texto: t('billetera.recarga.biometria_cancelada'),
-        tono: 'info',
-      };
-    const { clave, revincular } = fallaDeLlave(error);
-    return { ...peligro(clave), revincular };
-  }
+  const deFirma = fallaDeFirma(error, 'recarga');
+  if (deFirma) return deFirma;
   if (!(error instanceof ErrorApi)) return peligro('billetera.recarga.error');
   switch (error.codigo) {
     // CA-6: sin identidad verificada o sin billetera no se opera.
@@ -109,10 +103,6 @@ function fallaDe(error: unknown): Falla {
       };
     case 'CUENTA_SUSPENDIDA':
       return peligro('billetera.recarga.cuenta_suspendida');
-    case 'PETICION_EXPIRADA':
-      return peligro('billetera.pantalla.peticion_expirada');
-    case 'SIN_CONEXION':
-      return peligro('comun.errores.sin_conexion');
     default:
       return peligro('billetera.recarga.error');
   }
@@ -166,6 +156,7 @@ function Contenido() {
   const [ahora, setAhora] = useState(() => Date.now());
   // Dos toques seguidos no crean dos órdenes ni piden dos huellas.
   const ocupado = useRef(false);
+  const accion = useAccionSensible('recarga');
 
   // `delConfirmar`: solo la respuesta de confirmar puede decir que el pago se repitió. `pendiente` no cambia de paso.
   const aplicar = useCallback((orden: OrdenRecarga, delConfirmar = false) => {
@@ -274,20 +265,18 @@ function Contenido() {
     }
   };
 
-  const confirmar = async (ordenId: string) => {
-    if (ocupado.current) return;
-    ocupado.current = true;
-    setEnviando(true);
+  const confirmar = async (orden: OrdenRecargaCreada) => {
     setFalla(null);
     try {
-      aplicar(await confirmarRecarga(ordenId), true);
+      const resultado = await accion.ejecutar(
+        (opciones) => confirmarRecarga(orden.ordenId, opciones),
+        orden.monto,
+      );
+      if (resultado) aplicar(resultado, true);
     } catch (error) {
       if (error instanceof ErrorApi && error.codigo === 'ORDEN_EXPIRADA')
         setPaso({ tipo: 'vencida' });
       else setFalla(fallaDe(error));
-    } finally {
-      ocupado.current = false;
-      setEnviando(false);
     }
   };
 
@@ -455,11 +444,12 @@ function Contenido() {
             {pie}
           </ScrollView>
           <ZonaAccion>
-            <Boton
-              anchoCompleto
-              cargando={enviando}
-              etiqueta={t('billetera.recarga.simular')}
-              alPresionar={() => void confirmar(paso.orden.ordenId)}
+            <ConfirmacionBiometrica
+              estado={accion.estado}
+              etiqueta={con('billetera.recarga.simular', {
+                monto: formatearMonto(paso.orden.monto),
+              })}
+              alConfirmar={() => void confirmar(paso.orden)}
             />
           </ZonaAccion>
         </>

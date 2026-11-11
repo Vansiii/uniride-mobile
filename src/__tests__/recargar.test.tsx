@@ -50,7 +50,9 @@ const AHORA = Date.parse('2026-11-07T15:00:00.000Z');
 
 const veces = (llamadas: { ruta: string }[], ruta: string) =>
   llamadas.filter((l) => l.ruta === ruta).length;
-const boton = (name: string) => screen.getByRole('button', { name });
+const boton = (name: string | RegExp) => screen.getByRole('button', { name });
+/** El botón de la acción sensible dice el monto (HU-29). */
+const PAGAR = /^Simular pago de /;
 const otroMonto = () => screen.getByLabelText('Otro monto');
 
 async function abrir(rutas: Parameters<typeof simularFetch>[0] = {}) {
@@ -278,7 +280,7 @@ describe('Recargar · confirmación (CA-1, CA-3, CA-4, RN-6)', () => {
       [CONFIRMAR]: o.procesando(),
       [CONSULTAR]: [o.procesando(200), o.completada],
     });
-    await fireEvent.press(boton('Simular pago'));
+    await fireEvent.press(boton(PAGAR));
     expect(await screen.findByText('Recarga en camino')).toBeTruthy();
     expect(screen.getByText('+50,00')).toBeTruthy();
     expect(
@@ -324,8 +326,8 @@ describe('Recargar · confirmación (CA-1, CA-3, CA-4, RN-6)', () => {
         }),
     );
     const { llamadas } = await abrirQr({ [CONFIRMAR]: o.procesando() });
-    await fireEvent.press(boton('Simular pago'));
-    await fireEvent.press(boton('Simular pago'));
+    await fireEvent.press(boton(PAGAR));
+    await fireEvent.press(boton(PAGAR));
     soltar({ firma: 'firma-de-prueba', marca: '1' });
     await screen.findByText('Recarga en camino');
     expect(firma).toHaveBeenCalledTimes(1);
@@ -334,7 +336,7 @@ describe('Recargar · confirmación (CA-1, CA-3, CA-4, RN-6)', () => {
 
   it('CA-3: una orden ya acreditada avisa que no se sumó dos veces', async () => {
     await abrirQr({ [CONFIRMAR]: o.completada });
-    await fireEvent.press(boton('Simular pago'));
+    await fireEvent.press(boton(PAGAR));
     expect(await screen.findByText('Recarga acreditada')).toBeTruthy();
     expect(
       screen.getByText(
@@ -346,19 +348,17 @@ describe('Recargar · confirmación (CA-1, CA-3, CA-4, RN-6)', () => {
   it('cancelar la huella no envía nada y se puede reintentar', async () => {
     firma.mockRejectedValueOnce(new ErrorKeystore('BIOMETRIA_CANCELADA'));
     const { llamadas } = await abrirQr({ [CONFIRMAR]: o.procesando() });
-    await fireEvent.press(boton('Simular pago'));
-    expect(
-      await screen.findByText(/Cancelaste la confirmación con tu huella/),
-    ).toBeTruthy();
+    await fireEvent.press(boton(PAGAR));
+    expect(await screen.findByText('No se confirmó el pago.')).toBeTruthy();
     expect(veces(llamadas, CONFIRMAR)).toBe(0);
-    await fireEvent.press(boton('Simular pago'));
+    await fireEvent.press(boton(PAGAR));
     expect(await screen.findByText('Recarga en camino')).toBeTruthy();
   });
 
   it('sin llave en el teléfono no finge el pago', async () => {
     firma.mockRejectedValue(new ErrorKeystore('KEYSTORE_NO_DISPONIBLE'));
     const { llamadas } = await abrirQr();
-    await fireEvent.press(boton('Simular pago'));
+    await fireEvent.press(boton(PAGAR));
     expect(
       await screen.findByText(/No pudimos usar la llave de seguridad/),
     ).toBeTruthy();
@@ -369,7 +369,7 @@ describe('Recargar · confirmación (CA-1, CA-3, CA-4, RN-6)', () => {
   it('HU-10 CA-1: con la llave anulada no paga y lleva a confirmar la identidad', async () => {
     firma.mockRejectedValue(new ErrorKeystore('LLAVE_ANULADA'));
     const { llamadas } = await abrirQr();
-    await fireEvent.press(boton('Simular pago'));
+    await fireEvent.press(boton(PAGAR));
     expect(
       await screen.findByText(
         'Registraste una huella nueva. Por seguridad, confirma tu identidad para volver a activar este teléfono.',
@@ -385,7 +385,7 @@ describe('Recargar · confirmación (CA-1, CA-3, CA-4, RN-6)', () => {
 
   it('CA-4: firma rechazada lleva a vincular el teléfono y no acredita', async () => {
     await abrirQr({ [CONFIRMAR]: o.firmaInvalida });
-    await fireEvent.press(boton('Simular pago'));
+    await fireEvent.press(boton(PAGAR));
     expect(
       await screen.findByText(
         'Para confirmar la recarga, primero vincula este teléfono.',
@@ -398,7 +398,7 @@ describe('Recargar · confirmación (CA-1, CA-3, CA-4, RN-6)', () => {
 
   it('teléfono sin vincular: no pide huella', async () => {
     await abrirQr({ 'GET /dispositivos/mi-dispositivo': d.sinDispositivo });
-    await fireEvent.press(boton('Simular pago'));
+    await fireEvent.press(boton(PAGAR));
     expect(
       await screen.findByText(
         'Para confirmar la recarga, primero vincula este teléfono.',
@@ -409,19 +409,19 @@ describe('Recargar · confirmación (CA-1, CA-3, CA-4, RN-6)', () => {
 
   it('CA-5: el servidor rechaza una orden vencida', async () => {
     await abrirQr({ [CONFIRMAR]: o.ordenExpirada });
-    await fireEvent.press(boton('Simular pago'));
+    await fireEvent.press(boton(PAGAR));
     expect(await screen.findByText('Este QR venció')).toBeTruthy();
   });
 
   it('sin conexión al confirmar se reintenta sobre la misma orden, con otra firma', async () => {
     const { llamadas } = await abrirQr();
-    await fireEvent.press(boton('Simular pago'));
+    await fireEvent.press(boton(PAGAR));
     expect(await screen.findByText(/conexión/i)).toBeTruthy();
     simularFetch({
       'GET /dispositivos/mi-dispositivo': d.vinculado,
       [CONFIRMAR]: o.procesando(),
     });
-    await fireEvent.press(boton('Simular pago'));
+    await fireEvent.press(boton(PAGAR));
     expect(await screen.findByText('Recarga en camino')).toBeTruthy();
     expect(firma).toHaveBeenCalledTimes(2);
     expect(veces(llamadas, CREAR)).toBe(1);
@@ -432,7 +432,7 @@ describe('Recargar · confirmación (CA-1, CA-3, CA-4, RN-6)', () => {
       [CONFIRMAR]: o.procesando(),
       [CONSULTAR]: o.procesando(200),
     });
-    await fireEvent.press(boton('Simular pago'));
+    await fireEvent.press(boton(PAGAR));
     await screen.findByText('Recarga en camino');
     await avanzar(29_000);
     expect(screen.queryByText(/Seguimos intentando/)).toBeNull();
@@ -449,7 +449,7 @@ describe('Recargar · confirmación (CA-1, CA-3, CA-4, RN-6)', () => {
       [CONFIRMAR]: o.procesando(),
       [CONSULTAR]: { estado: 403, cuerpo: { codigo: 'CUENTA_SUSPENDIDA' } },
     });
-    await fireEvent.press(boton('Simular pago'));
+    await fireEvent.press(boton(PAGAR));
     await screen.findByText('Recarga en camino');
     await avanzar(3_000);
     expect(veces(llamadas, CONSULTAR)).toBe(1);
@@ -466,17 +466,15 @@ describe('Recargar · confirmación (CA-1, CA-3, CA-4, RN-6)', () => {
     firma.mockRejectedValueOnce(new ErrorKeystore('BIOMETRIA_CANCELADA'));
     await abrirQr({ [CONSULTAR]: { ...o.creada(), estado: 200 } });
     await avanzar(15 * 60_000);
-    await fireEvent.press(boton('Simular pago'));
-    await screen.findByText(/Cancelaste la confirmación con tu huella/);
+    await fireEvent.press(boton(PAGAR));
+    await screen.findByText('No se confirmó el pago.');
     await avanzar(3_000);
-    expect(
-      screen.getByText(/Cancelaste la confirmación con tu huella/),
-    ).toBeTruthy();
+    expect(screen.getByText('No se confirmó el pago.')).toBeTruthy();
   });
 
   it('mientras se acredita, una falla de red no la da por perdida', async () => {
     await abrirQr({ [CONFIRMAR]: o.procesando() });
-    await fireEvent.press(boton('Simular pago'));
+    await fireEvent.press(boton(PAGAR));
     await screen.findByText('Recarga en camino');
     await avanzar(9_000);
     expect(screen.getByText('Recarga en camino')).toBeTruthy();
@@ -491,7 +489,7 @@ describe('Recargar · confirmación (CA-1, CA-3, CA-4, RN-6)', () => {
       [CONFIRMAR]: o.procesando(),
       [CONSULTAR]: o.procesando(200),
     });
-    await fireEvent.press(boton('Simular pago'));
+    await fireEvent.press(boton(PAGAR));
     await screen.findByText('Recarga en camino');
     await fireEvent.press(boton('Cerrar'));
     expect(router.back).toHaveBeenCalled();
