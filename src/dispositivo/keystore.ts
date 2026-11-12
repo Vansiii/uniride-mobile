@@ -114,15 +114,25 @@ export async function confirmarLlave(): Promise<void> {
   }
 }
 
-/** Tras pedir la biometría, firma `antes + marca + despues` (UTF-8) con la llave privada y devuelve firma y marca. */
+/** Lo que dice el diálogo biométrico del sistema: la acción y su monto (HU-29 CA-1). */
+export interface DialogoFirma {
+  titulo: string;
+  subtitulo: string;
+}
+
+/**
+ * Tras pedir la biometría, firma `antes + marca + despues` (UTF-8) con la llave privada y devuelve firma y marca.
+ * Sin `dialogo` (lecturas firmadas) el diálogo pide confirmar que es la persona, sin nombrar una acción.
+ */
 export async function firmar(
   antes: string,
   despues: string,
+  dialogo?: DialogoFirma,
 ): Promise<FirmaConMarca> {
   try {
     return await modulo().firmar(antes, despues, {
-      titulo: t('dispositivo.autenticacion.titulo'),
-      subtitulo: t('dispositivo.autenticacion.subtitulo'),
+      titulo: dialogo?.titulo ?? t('dispositivo.autenticacion.titulo'),
+      subtitulo: dialogo?.subtitulo ?? t('dispositivo.autenticacion.subtitulo'),
       cancelar: t('dispositivo.autenticacion.cancelar'),
     });
   } catch (error) {

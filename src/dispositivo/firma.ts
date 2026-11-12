@@ -1,4 +1,4 @@
-import { firmar, nonceAleatorio } from './keystore';
+import { type DialogoFirma, firmar, nonceAleatorio } from './keystore';
 import { sha256Hex } from './sha256';
 
 /** Lo que va antes y después de TIMESTAMP en el mensaje canónico. */
@@ -36,11 +36,16 @@ export async function cabecerasFirma(
   metodo: string,
   ruta: string,
   cuerpo: string,
+  dialogo?: DialogoFirma,
+  /** Se llama al firmar, antes de enviar: la pantalla pasa de «esperando la huella» a «enviando». */
+  alFirmar?: () => void,
 ): Promise<Record<string, string>> {
   const nonce = nonceAleatorio();
   const { firma, marca } = await firmar(
     ...partesDelMensaje(metodo, ruta, nonce, cuerpo),
+    dialogo,
   );
+  alFirmar?.();
   return {
     'X-Dispositivo-Id': dispositivoId,
     'X-Timestamp': marca,

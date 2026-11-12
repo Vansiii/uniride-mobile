@@ -34,11 +34,12 @@ import { Icono } from '@/componentes/Icono';
 import { Ilustracion } from '@/componentes/Ilustracion';
 import { MapaRuta } from '@/componentes/MapaRuta';
 import { BotonRevincular } from '@/componentes/BotonRevincular';
+import { ConfirmacionBiometrica } from '@/componentes/ConfirmacionBiometrica';
 import { Aviso, EtiquetaEstado } from '@/componentes/Mensajes';
 import { SelectorFecha } from '@/componentes/SelectorFecha';
 import { SelectorLugar } from '@/componentes/SelectorLugar';
 import { useSesion } from '@/contexto/sesion';
-import { ErrorKeystore, fallaDeLlave } from '@/dispositivo/keystore';
+import { fallaDeFirma, useAccionSensible } from '@/hooks/useAccionSensible';
 import { formatearDia, formatearHoraLocal, formatearMonto } from '@/formato';
 import { con, t } from '@/i18n';
 import { Lugar } from '@/servicios/geocoding';
@@ -163,7 +164,6 @@ function Contenido() {
   const [precio, setPrecio] = useState('');
   const [errores, setErrores] = useState<Errores>({});
   const [falla, setFalla] = useState<Falla | null>(null);
-  const [enviando, setEnviando] = useState(false);
   const [publicado, setPublicado] = useState<Publicado | null>(null);
   const desplazable = useRef<ScrollViewInstance>(null);
   const posiciones = useRef<Partial<Record<CampoFormulario, number>>>({});
@@ -172,7 +172,7 @@ function Contenido() {
   const entradaHora = useRef<TextInputInstance>(null);
   const entradaPrecio = useRef<TextInputInstance>(null);
   // Dos toques seguidos no piden dos huellas.
-  const ocupado = useRef(false);
+  const accion = useAccionSensible('publicar');
 
   const aprobada = Boolean(
     usuario?.membresias.some((m) => m.estado === 'aprobada'),
@@ -445,15 +445,8 @@ function Contenido() {
   const atenderError = (error: unknown) => {
     const peligro = (clave: string, titulo?: string) =>
       setFalla({ texto: t(clave), tono: 'peligro', titulo });
-    if (error instanceof ErrorKeystore) {
-      if (error.codigo === 'BIOMETRIA_CANCELADA')
-        return setFalla({
-          texto: t('viajes.publicar.biometria_cancelada'),
-          tono: 'info',
-        });
-      const { clave, revincular } = fallaDeLlave(error);
-      return setFalla({ texto: t(clave), tono: 'peligro', revincular });
-    }
+    const deFirma = fallaDeFirma(error, 'publicar');
+    if (deFirma) return setFalla(deFirma);
     if (!(error instanceof ErrorApi))
       return peligro('comun.errores.desconocido');
     switch (error.codigo) {
@@ -508,17 +501,13 @@ function Contenido() {
           tono: 'info',
           vincular: true,
         });
-      case 'PETICION_EXPIRADA':
-        return peligro('billetera.pantalla.peticion_expirada');
-      case 'SIN_CONEXION':
-        return peligro('comun.errores.sin_conexion');
       default:
         return peligro('comun.errores.desconocido');
     }
   };
 
   const publicar = async () => {
-    if (ocupado.current) return;
+    if (accion.ocupado()) return;
     const salida = leerSalida(fecha, hora);
     const monto = leerPrecio(precio, limites);
     const lugarRequerido = t('viajes.publicar.lugar_requerido');
@@ -556,20 +545,26 @@ function Contenido() {
       return;
     }
     const fechaHoraSalida = salida.toISOString();
-    ocupado.current = true;
-    setEnviando(true);
     try {
-      await publicarViaje({
-        origenNombre: origen.nombre,
-        origenLat: origen.lat,
-        origenLng: origen.lng,
-        destinoNombre: destino.nombre,
-        destinoLat: destino.lat,
-        destinoLng: destino.lng,
-        fechaHoraSalida,
-        cuposTotales: asientos,
-        precioPorAsiento: monto,
-      });
+      const viaje = await accion.ejecutar(
+        (opciones) =>
+          publicarViaje(
+            {
+              origenNombre: origen.nombre,
+              origenLat: origen.lat,
+              origenLng: origen.lng,
+              destinoNombre: destino.nombre,
+              destinoLat: destino.lat,
+              destinoLng: destino.lng,
+              fechaHoraSalida,
+              cuposTotales: asientos,
+              precioPorAsiento: monto,
+            },
+            opciones,
+          ),
+        monto.toFixed(2),
+      );
+      if (!viaje) return;
       setPublicado({
         salida: fechaHoraSalida,
         origen: origen.nombre,
@@ -583,9 +578,6 @@ function Contenido() {
       irA(
         error instanceof ErrorApi ? CAMPO_DEL_ERROR[error.codigo] : undefined,
       );
-    } finally {
-      ocupado.current = false;
-      setEnviando(false);
     }
   };
 
@@ -784,15 +776,11 @@ function Contenido() {
         </Entra>
       </ScrollView>
       <ZonaAccion enPestanas>
-        <Boton
-          anchoCompleto
-          cargando={enviando}
-          etiqueta={t(
-            enviando
-              ? 'viajes.publicar.publicando'
-              : 'viajes.publicar.publicar',
-          )}
-          alPresionar={() => void publicar()}
+        <ConfirmacionBiometrica
+          estado={accion.estado}
+          etiqueta={t('viajes.publicar.publicar')}
+          enviando={t('viajes.publicar.publicando')}
+          alConfirmar={() => void publicar()}
         />
       </ZonaAccion>
     </KeyboardAvoidingView>
