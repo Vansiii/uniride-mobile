@@ -49,6 +49,7 @@ jest.mock('expo-secure-store', () => ({
 jest.mock('expo-clipboard', () => ({ setStringAsync: jest.fn() }));
 jest.mock('@/dispositivo/keystore', () => ({
   firmar: jest.fn(),
+  fallaDeLlave: jest.requireActual('@/dispositivo/keystore').fallaDeLlave,
   nonceAleatorio: () => 'a1b2c3d4e5f60718293a4b5c6d7e8f90',
   ErrorKeystore: class ErrorKeystore extends Error {
     codigo: string;
@@ -479,9 +480,37 @@ describe('Billetera · estados', () => {
     firma.mockRejectedValue(new ErrorKeystore('KEYSTORE_NO_DISPONIBLE'));
     await abrir({ 'GET /billetera/mia': b.conSaldo });
     expect(
-      await screen.findByText(/no puede usar la llave de seguridad/),
+      await screen.findByText(/No pudimos usar la llave de seguridad/),
     ).toBeTruthy();
     expect(screen.queryByText('Saldo disponible')).toBeNull();
+  });
+
+  it('HU-10 CA-1: con la llave anulada por una huella nueva explica y lleva a confirmar la identidad', async () => {
+    firma.mockRejectedValue(new ErrorKeystore('LLAVE_ANULADA'));
+    await abrir({ 'GET /billetera/mia': b.conSaldo });
+    expect(
+      await screen.findByText(
+        'Registraste una huella nueva. Por seguridad, confirma tu identidad para volver a activar este teléfono.',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText(/Actualiza la app/)).toBeNull();
+    await fireEvent.press(
+      screen.getByRole('button', { name: 'Confirmar mi identidad' }),
+    );
+    expect(router.push).toHaveBeenCalledWith(
+      '/dispositivo?motivo=llave_anulada',
+    );
+  });
+
+  it('HU-10: un teléfono sin la llave ofrece pasar la cuenta a este teléfono', async () => {
+    firma.mockRejectedValue(new ErrorKeystore('SIN_LLAVE'));
+    await abrir({ 'GET /billetera/mia': b.conSaldo });
+    await fireEvent.press(
+      await screen.findByRole('button', {
+        name: 'Pasar mi cuenta a este teléfono',
+      }),
+    );
+    expect(router.push).toHaveBeenCalledWith('/dispositivo?motivo=sin_llave');
   });
 
   it('sin conexión: mensaje común y reintentar', async () => {

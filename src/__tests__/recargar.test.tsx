@@ -31,6 +31,7 @@ jest.mock('expo-secure-store', () => ({
 }));
 jest.mock('@/dispositivo/keystore', () => ({
   firmar: jest.fn(),
+  fallaDeLlave: jest.requireActual('@/dispositivo/keystore').fallaDeLlave,
   nonceAleatorio: () => 'a1b2c3d4e5f60718293a4b5c6d7e8f90',
   ErrorKeystore: class ErrorKeystore extends Error {
     codigo: string;
@@ -359,10 +360,27 @@ describe('Recargar · confirmación (CA-1, CA-3, CA-4, RN-6)', () => {
     const { llamadas } = await abrirQr();
     await fireEvent.press(boton('Simular pago'));
     expect(
-      await screen.findByText(/no puede usar la llave de seguridad/),
+      await screen.findByText(/No pudimos usar la llave de seguridad/),
     ).toBeTruthy();
     expect(veces(llamadas, CONFIRMAR)).toBe(0);
     expect(screen.queryByText('Recarga en camino')).toBeNull();
+  });
+
+  it('HU-10 CA-1: con la llave anulada no paga y lleva a confirmar la identidad', async () => {
+    firma.mockRejectedValue(new ErrorKeystore('LLAVE_ANULADA'));
+    const { llamadas } = await abrirQr();
+    await fireEvent.press(boton('Simular pago'));
+    expect(
+      await screen.findByText(
+        'Registraste una huella nueva. Por seguridad, confirma tu identidad para volver a activar este teléfono.',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText(/Actualiza la app/)).toBeNull();
+    expect(veces(llamadas, CONFIRMAR)).toBe(0);
+    await fireEvent.press(boton('Confirmar mi identidad'));
+    expect(router.push).toHaveBeenCalledWith(
+      '/dispositivo?motivo=llave_anulada',
+    );
   });
 
   it('CA-4: firma rechazada lleva a vincular el teléfono y no acredita', async () => {

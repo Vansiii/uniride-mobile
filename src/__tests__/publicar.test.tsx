@@ -645,6 +645,26 @@ describe('HU-17 · rechazos del servidor', () => {
     expect(soltar).toHaveBeenCalled();
   });
 
+  it('HU-10 CA-1: con la llave anulada no publica y lleva a confirmar la identidad', async () => {
+    mockFirmar.mockRejectedValue(new ErrorKeystore('LLAVE_ANULADA'));
+    const { llamadas } = await abrir();
+    await llenar();
+    await publicar();
+    expect(
+      await screen.findByText(
+        'Registraste una huella nueva. Por seguridad, confirma tu identidad para volver a activar este teléfono.',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText(/Actualiza la app/)).toBeNull();
+    expect(envios(llamadas)).toHaveLength(0);
+    await fireEvent.press(
+      screen.getByRole('button', { name: 'Confirmar mi identidad' }),
+    );
+    expect(mockRouter.push).toHaveBeenCalledWith(
+      '/dispositivo?motivo=llave_anulada',
+    );
+  });
+
   it('dos toques seguidos piden una sola huella', async () => {
     const { llamadas } = await abrir({ 'POST /viajes': vj.publicado });
     await llenar();

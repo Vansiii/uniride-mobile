@@ -16,6 +16,10 @@
       "sin_conexion": "No hay conexión. Revisa tu internet e inténtalo de nuevo.",
       "desconocido": "Algo salió mal. Inténtalo de nuevo en unos minutos.",
       "coordenadas_invalidas": "No pudimos leer ese punto de salida. Elige otro lugar."
+    },
+    "biometria": {
+      "sin_registrar": "Tu teléfono no tiene ninguna huella o rostro registrado. Agrega uno en los ajustes de tu teléfono.",
+      "bloqueada": "Tu teléfono bloqueó la huella por demasiados intentos. Desbloquéalo con tu PIN y vuelve a intentarlo."
     }
   },
   "autenticacion": {
@@ -219,7 +223,18 @@
       "desafio_invalido": "La comprobación venció. Inténtalo de nuevo.",
       "llave_invalida": "No pudimos registrar la llave de seguridad de tu teléfono.",
       "servicio_no_disponible": "No pudimos comprobar tu teléfono por un problema del servicio. No se guardó nada; inténtalo más tarde.",
-      "keystore_no_disponible": "Esta versión de la app todavía no puede vincular el teléfono. Actualiza la app e inténtalo de nuevo."
+      "keystore_no_disponible": "Esta versión de la app todavía no puede vincular el teléfono. Inténtalo de nuevo."
+    },
+    "llave_anulada": {
+      "explicacion": "Registraste una huella nueva. Por seguridad, confirma tu identidad para volver a activar este teléfono.",
+      "confirmar": "Confirmar mi identidad"
+    },
+    "revincular": {
+      "boton": "Pasar mi cuenta a este teléfono",
+      "telefono_nuevo": "Tu cuenta está vinculada a otro teléfono. Para usar este, confirma tu identidad.",
+      "revinculando": "Vinculando…",
+      "rostro_no_coincide": "Tu rostro no coincide con el de tu carnet verificado. No pudimos vincular este teléfono.",
+      "concurrente": "Tu cuenta se estaba pasando a otro teléfono al mismo tiempo. Revisa cuál quedó vinculado y vuelve a intentarlo si hace falta."
     },
     "autenticacion": {
       "titulo": "Confirma que eres tú",
@@ -290,7 +305,7 @@
       "cuenta_suspendida": "Tu cuenta está suspendida, por eso no podemos mostrar tu billetera. Comunícate con tu organización.",
       "servicio_no_disponible": "No pudimos consultar tu saldo en este momento. No se perdió nada; inténtalo de nuevo.",
       "biometria_cancelada": "Cancelaste la confirmación con tu huella, así que no mostramos tu billetera. Puedes volver a intentarlo cuando quieras.",
-      "keystore_no_disponible": "Esta versión de la app no puede usar la llave de seguridad de tu teléfono. Actualiza la app e inténtalo de nuevo.",
+      "keystore_no_disponible": "No pudimos usar la llave de seguridad de tu teléfono. Inténtalo de nuevo.",
       "peticion_expirada": "La comprobación de tu teléfono venció. Inténtalo de nuevo.",
       "movimientos": "Movimientos",
       "direccion_no_disponible": "No pudimos cargar la dirección de tu billetera por ahora.",

@@ -1,8 +1,10 @@
 package expo.modules.llavedispositivo
 
+import android.content.Context
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyInfo
+import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.KeyProperties
 import android.security.keystore.StrongBoxUnavailableException
 import android.util.Base64
@@ -28,6 +30,9 @@ import java.security.spec.ECGenParameterSpec
 
 private const val PROVEEDOR = "AndroidKeyStore"
 private const val ALIAS = "uniride.llave.dispositivo"
+private const val ALIAS_ALTERNO = "$ALIAS.2"
+private const val PREFERENCIAS = "uniride.llave"
+private const val CLAVE_ACTIVA = "alias_activo"
 
 private fun noDisponible(motivo: String, causa: Throwable? = null) =
   CodedException("KEYSTORE_NO_DISPONIBLE", motivo, causa)
@@ -55,6 +60,8 @@ class LlaveDispositivoModule : Module() {
 
     AsyncFunction("crearLlave") { crearLlave() }
 
+    AsyncFunction("confirmarLlave") { confirmarLlave() }
+
     AsyncFunction("firmar") { antes: String, despues: String, textos: TextosHuella, promesa: Promise ->
       firmar(antes, despues, textos, promesa)
     }.runOnQueue(Queues.MAIN)
@@ -69,29 +76,57 @@ class LlaveDispositivoModule : Module() {
 
   private fun crearLlave(): String {
     val contexto = appContext.reactContext ?: throw noDisponible("Sin contexto de la app")
-    if (BiometricManager.from(contexto).canAuthenticate(BIOMETRIC_STRONG) != BiometricManager.BIOMETRIC_SUCCESS) {
+    val puede = BiometricManager.from(contexto).canAuthenticate(BIOMETRIC_STRONG)
+    if (puede != BiometricManager.BIOMETRIC_SUCCESS) {
+      if (puede == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED || puede == BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE) {
+        throw CodedException("SIN_BIOMETRIA", "El teléfono no tiene biometría fuerte configurada", null)
+      }
       throw noDisponible("El teléfono no tiene biometría fuerte lista")
     }
+    // HU-10: la llave nueva va al otro alias; la que firma no se toca hasta que el servidor la acepte.
+    val alias = aliasPendiente(contexto)
     val par = try {
-      generarPar(strongBox = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
+      generarPar(alias, strongBox = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
     } catch (_: StrongBoxUnavailableException) {
-      generarPar(strongBox = false)
+      generarPar(alias, strongBox = false)
     }
     // RN-2: en un teléfono sin TEE el Keystore cae a software sin avisar; esa llave no sirve.
     val info = KeyFactory.getInstance(par.private.algorithm, PROVEEDOR)
       .getKeySpec(par.private, KeyInfo::class.java)
     @Suppress("DEPRECATION")
     if (!info.isInsideSecureHardware) {
-      KeyStore.getInstance(PROVEEDOR).apply { load(null) }.deleteEntry(ALIAS)
+      almacen().deleteEntry(alias)
       throw noDisponible("La llave no quedó en hardware seguro")
     }
     val cuerpo = Base64.encodeToString(par.public.encoded, Base64.NO_WRAP).chunked(64).joinToString("\n")
     return "-----BEGIN PUBLIC KEY-----\n$cuerpo\n-----END PUBLIC KEY-----\n"
   }
 
-  private fun generarPar(strongBox: Boolean) =
+  private fun almacen() = KeyStore.getInstance(PROVEEDOR).apply { load(null) }
+
+  private fun preferencias(contexto: Context) = contexto.getSharedPreferences(PREFERENCIAS, Context.MODE_PRIVATE)
+
+  /** Sin preferencia guardada, la activa es `ALIAS`: así siguen valiendo las llaves creadas antes de HU-10. */
+  private fun aliasActivo(contexto: Context) = preferencias(contexto).getString(CLAVE_ACTIVA, ALIAS) ?: ALIAS
+
+  private fun aliasPendiente(contexto: Context) = if (aliasActivo(contexto) == ALIAS) ALIAS_ALTERNO else ALIAS
+
+  /** El servidor aceptó la llave nueva: pasa a ser la que firma y la anterior se borra. */
+  private fun confirmarLlave() {
+    val contexto = appContext.reactContext ?: throw noDisponible("Sin contexto de la app")
+    val nuevo = aliasPendiente(contexto)
+    val anterior = aliasActivo(contexto)
+    val llaves = almacen()
+    if (!llaves.containsAlias(nuevo)) throw CodedException("SIN_LLAVE", "No hay llave nueva que confirmar", null)
+    if (!preferencias(contexto).edit().putString(CLAVE_ACTIVA, nuevo).commit()) {
+      throw noDisponible("No se pudo guardar la llave activa")
+    }
+    llaves.deleteEntry(anterior)
+  }
+
+  private fun generarPar(alias: String, strongBox: Boolean) =
     KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_EC, PROVEEDOR).run {
-      val spec = KeyGenParameterSpec.Builder(ALIAS, KeyProperties.PURPOSE_SIGN)
+      val spec = KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_SIGN)
         .setAlgorithmParameterSpec(ECGenParameterSpec("secp256r1"))
         .setDigests(KeyProperties.DIGEST_SHA256)
         .setUserAuthenticationRequired(true)
@@ -115,11 +150,15 @@ class LlaveDispositivoModule : Module() {
     val actividad = appContext.currentActivity as? FragmentActivity
       ?: return promesa.reject(noDisponible("La app no está en primer plano"))
     val firma = try {
-      val llave = KeyStore.getInstance(PROVEEDOR).apply { load(null) }.getKey(ALIAS, null) as? PrivateKey
-        ?: return promesa.reject(noDisponible("Este teléfono no tiene llave"))
+      val llave = almacen().getKey(aliasActivo(actividad), null) as? PrivateKey
+        ?: return promesa.reject(CodedException("SIN_LLAVE", "Este teléfono no tiene llave", null))
       Signature.getInstance("SHA256withECDSA").apply { initSign(llave) }
+    } catch (error: KeyPermanentlyInvalidatedException) {
+      return promesa.reject(CodedException("LLAVE_ANULADA", "Se registró una huella nueva", error))
     } catch (error: Exception) {
-      // Incluye KeyPermanentlyInvalidatedException: se registró otra huella y la llave ya no vale (A-04).
+      if (error.cause is KeyPermanentlyInvalidatedException) {
+        return promesa.reject(CodedException("LLAVE_ANULADA", "Se registró una huella nueva", error))
+      }
       return promesa.reject(noDisponible("La llave no se puede usar", error))
     }
 
@@ -154,15 +193,22 @@ class LlaveDispositivoModule : Module() {
             codigo == BiometricPrompt.ERROR_USER_CANCELED ||
             codigo == BiometricPrompt.ERROR_CANCELED ||
             codigo == BiometricPrompt.ERROR_TIMEOUT
-          promesa.reject(
-            if (cancelada) {
-              CodedException("BIOMETRIA_CANCELADA", texto.toString(), null)
-            } else {
-              noDisponible(texto.toString())
-            }
-          )
+          val bloqueada = codigo == BiometricPrompt.ERROR_LOCKOUT ||
+            codigo == BiometricPrompt.ERROR_LOCKOUT_PERMANENT
+          val sinBiometria = codigo == BiometricPrompt.ERROR_NO_BIOMETRICS ||
+            codigo == BiometricPrompt.ERROR_HW_NOT_PRESENT ||
+            codigo == BiometricPrompt.ERROR_HW_UNAVAILABLE
+
+          val excepcion = when {
+            cancelada -> CodedException("BIOMETRIA_CANCELADA", texto.toString(), null)
+            bloqueada -> CodedException("BIOMETRIA_BLOQUEADA", texto.toString(), null)
+            sinBiometria -> CodedException("SIN_BIOMETRIA", texto.toString(), null)
+            else -> noDisponible(texto.toString())
+          }
+          promesa.reject(excepcion)
         }
       }
     ).authenticate(aviso, BiometricPrompt.CryptoObject(firma))
   }
 }
+

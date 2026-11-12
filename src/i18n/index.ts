@@ -20,11 +20,19 @@ export const con = (clave: string, valores: Record<string, string | number>) =>
     t(clave),
   );
 
-/** Hora local en 24 h ("07:46") de una fecha ISO, para decir cuándo se puede reintentar. */
-export function formatearHora(iso: unknown): string {
-  return new Date(String(iso)).toLocaleTimeString('es-BO', {
+/**
+ * Hora local en 24 h ("07:46") de una fecha ISO, para decir cuándo se puede reintentar. Si no es hoy agrega el día
+ * ("18:24 del 11/11"): un bloqueo de 24 h termina a la misma hora de mañana y solo la hora parecería ya vencido.
+ */
+export function formatearHora(iso: unknown, ahora = new Date()): string {
+  const fecha = new Date(String(iso));
+  const hora = fecha.toLocaleTimeString('es-BO', {
     hour: '2-digit',
     minute: '2-digit',
     hourCycle: 'h23',
   });
+  if (fecha.toDateString() === ahora.toDateString()) return hora;
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+  return `${hora} del ${dia}/${mes}`;
 }

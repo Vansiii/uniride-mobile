@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import * as Dispositivo from 'expo-device';
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,6 +9,8 @@ import {
   ErrorApi,
   MiDispositivo,
   pedirDesafioAtestacion,
+  pedirDesafioRevinculacion,
+  revincularDispositivo,
   vincularDispositivo,
 } from '@/api/cliente';
 import { Entra, Esqueleto } from '@/componentes/Animado';
@@ -18,11 +20,14 @@ import { Ilustracion } from '@/componentes/Ilustracion';
 import { Aviso } from '@/componentes/Mensajes';
 import { useSesion } from '@/contexto/sesion';
 import {
+  confirmarLlave,
   crearLlave,
   ErrorKeystore,
+  fallaDeLlave,
   pedirTokenIntegridad,
 } from '@/dispositivo/keystore';
-import { t } from '@/i18n';
+import { ejecutarLiveness, ErrorLiveness } from '@/identidad/liveness';
+import { formatearHora, t } from '@/i18n';
 import {
   colores,
   espacio,
@@ -33,12 +38,15 @@ import {
 
 /** Traduce el `codigo` de la API; nunca muestra códigos técnicos (DESIGN_SYSTEM §13.4). */
 function textoDe(error: unknown): string {
-  if (error instanceof ErrorKeystore)
-    return t(
-      error.codigo === 'BIOMETRIA_CANCELADA'
-        ? 'dispositivo.autenticacion.cancelada'
-        : 'dispositivo.vinculacion.keystore_no_disponible',
-    );
+  if (error instanceof ErrorLiveness)
+    return t('identidad.verificacion.liveness_no_disponible');
+  if (error instanceof ErrorKeystore) {
+    if (error.codigo === 'BIOMETRIA_CANCELADA')
+      return t('dispositivo.autenticacion.cancelada');
+    if (error.codigo === 'KEYSTORE_NO_DISPONIBLE')
+      return t('dispositivo.vinculacion.keystore_no_disponible');
+    return t(fallaDeLlave(error).clave);
+  }
   if (!(error instanceof ErrorApi)) return t('comun.errores.desconocido');
   switch (error.codigo) {
     case 'DISPOSITIVO_NO_INTEGRO':
@@ -49,6 +57,17 @@ function textoDe(error: unknown): string {
       return t('dispositivo.vinculacion.desafio_invalido');
     case 'LLAVE_INVALIDA':
       return t('dispositivo.vinculacion.llave_invalida');
+    case 'ROSTRO_NO_COINCIDE':
+      return t('dispositivo.revincular.rostro_no_coincide');
+    case 'PRUEBA_VIDA_FALLIDA':
+      return t('identidad.verificacion.prueba_vida_fallida');
+    case 'INTENTOS_AGOTADOS':
+      return t('identidad.verificacion.intentos_agotados').replace(
+        '{hora}',
+        formatearHora(error.datos.bloqueadoHasta),
+      );
+    case 'CONFLICTO_CONCURRENTE':
+      return t('dispositivo.revincular.concurrente');
     case 'SERVICIO_NO_DISPONIBLE':
       return t('dispositivo.vinculacion.servicio_no_disponible');
     case 'SIN_CONEXION':
@@ -58,9 +77,16 @@ function textoDe(error: unknown): string {
   }
 }
 
-/** Vincular teléfono (HU-09): la cuenta queda atada a este teléfono con una llave del Keystore (un dispositivo por cuenta). */
+/**
+ * Vincular teléfono (HU-09): la cuenta queda atada a este teléfono con una llave del Keystore (un dispositivo por
+ * cuenta). HU-10: volver a vincularlo, o pasar la cuenta a este, con prueba de identidad. `motivo` llega de una firma
+ * que falló porque la llave se anuló (huella nueva) o porque este teléfono no la tiene.
+ */
 export default function DispositivoPantalla() {
   const { cargando, usuario } = useSesion();
+  const { motivo } = useLocalSearchParams<{
+    motivo?: 'llave_anulada' | 'sin_llave';
+  }>();
   const { top } = useSafeAreaInsets();
   const [consultando, setConsultando] = useState(true);
   const [dispositivo, setDispositivo] = useState<MiDispositivo | null>(null);
@@ -69,6 +95,10 @@ export default function DispositivoPantalla() {
   const [falla, setFalla] = useState<string | null>(null);
   const [vinculando, setVinculando] = useState(false);
   const [recienVinculado, setRecienVinculado] = useState(false);
+  const [revinculando, setRevinculando] = useState(false);
+  const [revinculado, setRevinculado] = useState(false);
+  // Con la llave anulada o ausente, volver a vincular es lo único que sirve: va abajo como acción principal.
+  const pideRevincular = !!motivo && !revinculado;
 
   useEffect(() => {
     if (cargando || !usuario) return;
@@ -97,6 +127,10 @@ export default function DispositivoPantalla() {
     setIntento((n) => n + 1);
   };
 
+  // Si la consulta también falla se ofrece reintentar, no «Vincular»: la cuenta sí tiene un teléfono activo.
+  const mostrarElQueQuedo = () =>
+    consultarMiDispositivo().then(setDispositivo, () => setSinConsulta(true));
+
   const vincular = async () => {
     setFalla(null);
     setVinculando(true);
@@ -111,6 +145,7 @@ export default function DispositivoPantalla() {
         llavePublicaPem,
         modelo: Dispositivo.modelName ?? 'Android',
       });
+      await confirmarLlave();
       setDispositivo(await consultarMiDispositivo());
       setRecienVinculado(true);
     } catch (error) {
@@ -119,10 +154,44 @@ export default function DispositivoPantalla() {
         error.codigo === 'DISPOSITIVO_YA_VINCULADO'
       )
         // Otra sesión lo vinculó antes: se muestra el que quedó.
-        setDispositivo(await consultarMiDispositivo().catch(() => null));
+        await mostrarElQueQuedo();
       setFalla(textoDe(error));
     } finally {
       setVinculando(false);
+    }
+  };
+
+  const revincular = async () => {
+    setFalla(null);
+    // El éxito de una vinculación anterior no debe quedar junto al resultado de esta.
+    setRecienVinculado(false);
+    setRevinculando(true);
+    try {
+      const { desafio, requiereIdentidad, sesionLivenessId } =
+        await pedirDesafioRevinculacion();
+      if (requiereIdentidad && sesionLivenessId) {
+        await ejecutarLiveness(sesionLivenessId);
+      }
+      const llavePublicaPem = await crearLlave();
+      const tokenIntegridad = await pedirTokenIntegridad(desafio);
+      await revincularDispositivo({
+        desafio,
+        tokenIntegridad,
+        llavePublicaPem,
+        modelo: Dispositivo.modelName ?? 'Android',
+        sesionLivenessId: requiereIdentidad ? sesionLivenessId : undefined,
+      });
+      // Solo con el 201 la llave nueva pasa a firmar: un rechazo deja la anterior intacta.
+      await confirmarLlave();
+      setDispositivo(await consultarMiDispositivo());
+      setRevinculado(true);
+    } catch (error) {
+      if (error instanceof ErrorApi && error.codigo === 'CONFLICTO_CONCURRENTE')
+        // Otra revinculación ganó: se muestra el teléfono que quedó.
+        await mostrarElQueQuedo();
+      setFalla(textoDe(error));
+    } finally {
+      setRevinculando(false);
     }
   };
 
@@ -140,8 +209,17 @@ export default function DispositivoPantalla() {
         </Text>
       </View>
       <ScrollView contentContainerStyle={estilos.contenido}>
-        {recienVinculado && (
+        {(recienVinculado || revinculado) && (
           <Aviso tono="exito">{t('dispositivo.vinculacion.vinculado')}</Aviso>
+        )}
+        {pideRevincular && (
+          <Aviso tono="aviso">
+            {t(
+              motivo === 'llave_anulada'
+                ? 'dispositivo.llave_anulada.explicacion'
+                : 'dispositivo.revincular.telefono_nuevo',
+            )}
+          </Aviso>
         )}
         {falla && <Aviso tono="peligro">{falla}</Aviso>}
         {consultando ? (
@@ -172,6 +250,19 @@ export default function DispositivoPantalla() {
                 {new Date(dispositivo.vinculadoEn).toLocaleDateString('es-BO')}
               </Text>
             </View>
+            {!pideRevincular && !revinculado && (
+              <Boton
+                variante="secundario"
+                cargando={revinculando}
+                anchoCompleto
+                etiqueta={t(
+                  revinculando
+                    ? 'dispositivo.revincular.revinculando'
+                    : 'dispositivo.revincular.boton',
+                )}
+                alPresionar={revincular}
+              />
+            )}
           </Entra>
         ) : (
           <Entra style={estilos.hero}>
@@ -185,6 +276,23 @@ export default function DispositivoPantalla() {
           </Entra>
         )}
       </ScrollView>
+      {!consultando && !sinConsulta && dispositivo && pideRevincular && (
+        <ZonaAccion>
+          <Boton
+            anchoCompleto
+            icono="verified_user"
+            cargando={revinculando}
+            etiqueta={t(
+              revinculando
+                ? 'dispositivo.revincular.revinculando'
+                : motivo === 'llave_anulada'
+                  ? 'dispositivo.llave_anulada.confirmar'
+                  : 'dispositivo.revincular.boton',
+            )}
+            alPresionar={revincular}
+          />
+        </ZonaAccion>
+      )}
       {!consultando && !sinConsulta && !dispositivo && (
         <ZonaAccion>
           <Boton

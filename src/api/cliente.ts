@@ -325,6 +325,15 @@ export const pedirDesafioAtestacion = () =>
     'POST',
   );
 
+/** Desafío para volver a vincular o pasar la cuenta a otro teléfono (HU-10); `sesionLivenessId` si pide identidad. */
+export const pedirDesafioRevinculacion = () =>
+  solicitar<{
+    desafio: string;
+    expiraEn: string;
+    requiereIdentidad: boolean;
+    sesionLivenessId?: string;
+  }>('/dispositivos/revinculacion', 'POST');
+
 /** El servidor valida la atestación y guarda solo la llave PÚBLICA; la privada nunca sale del Keystore. */
 export async function vincularDispositivo(datos: {
   desafio: string;
@@ -334,6 +343,23 @@ export async function vincularDispositivo(datos: {
 }): Promise<{ id: string; estado: 'vinculado' }> {
   const r = await solicitar<{ id: string; estado: 'vinculado' }>(
     '/dispositivos/vincular',
+    'POST',
+    datos,
+  );
+  dispositivoId = r.id;
+  return r;
+}
+
+/** Reemplaza el teléfono activo por este (HU-10): el anterior queda inactivo y su llave deja de valer. */
+export async function revincularDispositivo(datos: {
+  desafio: string;
+  tokenIntegridad: string;
+  llavePublicaPem: string;
+  modelo: string;
+  sesionLivenessId?: string;
+}): Promise<{ id: string; estado: 'vinculado' }> {
+  const r = await solicitar<{ id: string; estado: 'vinculado' }>(
+    '/dispositivos/revincular',
     'POST',
     datos,
   );

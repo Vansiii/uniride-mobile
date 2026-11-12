@@ -392,6 +392,39 @@ export const dispositivoReal = {
     codigo: 'DISPOSITIVO_YA_VINCULADO',
     mensaje: 'Ya tienes un dispositivo vinculado.',
   }),
+  desafioRevinculacion: ok(201, {
+    desafio: 'ZGVzYWZpby1yZXZpbmN1bGFjaW9u',
+    expiraEn: '2026-11-08T15:05:00.000Z',
+    requiereIdentidad: true,
+    sesionLivenessId: 'liveness-ses-123',
+  }),
+  desafioRevinculacionSinIdentidad: ok(201, {
+    desafio: 'ZGVzYWZpby1yZXZpbmN1bGFjaW9u',
+    expiraEn: '2026-11-08T15:05:00.000Z',
+    requiereIdentidad: false,
+  }),
+  revinculadoOk: ok(201, {
+    id: '0b6f1d3a-7c2e-4a55-9d21-5f8e3b9c4a10',
+    estado: 'vinculado',
+  }),
+  rostroNoCoincide: ok(422, {
+    codigo: 'ROSTRO_NO_COINCIDE',
+    mensaje: 'Tu rostro no coincide con la foto del carnet verificado.',
+  }),
+  // Códigos de HU-08 que reutiliza `revincular` (plan §3).
+  pruebaVidaFallida: ok(422, {
+    codigo: 'PRUEBA_VIDA_FALLIDA',
+    mensaje: 'No pudimos confirmar que eres una persona real.',
+  }),
+  intentosAgotados: ok(429, {
+    codigo: 'INTENTOS_AGOTADOS',
+    mensaje: 'Superaste los intentos de verificación.',
+    bloqueadoHasta: '2026-11-09T15:00:00.000Z',
+  }),
+  conflictoConcurrente: ok(409, {
+    codigo: 'CONFLICTO_CONCURRENTE',
+    mensaje: 'Otra revinculación de tu cuenta terminó al mismo tiempo.',
+  }),
 };
 
 // HU-08: formas según el contrato del backend (DTOs de `identidad`); el motor facial real no se probó.
