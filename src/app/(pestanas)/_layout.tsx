@@ -5,8 +5,8 @@ import { Icono } from '@/componentes/Icono';
 import { t } from '@/i18n';
 
 /**
- * Barra de pestañas (DESIGN_SYSTEM §6.1): ícono y etiqueta siempre. Solo están las pestañas que ya existen; Mis viajes
- * y Perfil se suman con sus historias. Cada pestaña se monta al entrar por primera vez y se
+ * Barra de pestañas (DESIGN_SYSTEM §6.1): ícono y etiqueta siempre. Solo están las pestañas que ya existen.
+ * Cada pestaña se monta al entrar por primera vez y se
  * queda montada: cambiar de pestaña no la reinicia (en Billetera cada lectura pide la huella). Publicar relee sus requisitos al volver.
  */
 export default function Pestanas() {
@@ -14,10 +14,12 @@ export default function Pestanas() {
     <Tabs
       tabBar={(props) => <BarraPestanas {...props} />}
       screenOptions={{ headerShown: false, animation: 'fade' }}
-      // Publicar tiene fondo claro; las demás pestañas abren con la banda de marca.
+      // Publicar y Mis viajes tienen fondo claro; las demás pestañas abren con la banda de marca.
       screenListeners={({ route }) => ({
         focus: () =>
-          setStatusBarStyle(route.name === 'publicar' ? 'dark' : 'light'),
+          setStatusBarStyle(
+            ['publicar', 'viajes'].includes(route.name) ? 'dark' : 'light',
+          ),
       })}
     >
       <Tabs.Screen
@@ -26,6 +28,15 @@ export default function Pestanas() {
           title: t('inicio.pestana'),
           tabBarIcon: ({ color }) => (
             <Icono nombre="search" color={color as string} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="viajes"
+        options={{
+          title: t('reservas.mis_viajes.pestana'),
+          tabBarIcon: ({ color }) => (
+            <Icono nombre="directions_car" color={color as string} />
           ),
         }}
       />

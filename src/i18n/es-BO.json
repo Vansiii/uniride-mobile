@@ -26,7 +26,8 @@
       "accion": {
         "recarga": "el pago",
         "publicar": "la publicación de tu viaje",
-        "crear_billetera": "la creación de tu billetera"
+        "crear_billetera": "la creación de tu billetera",
+        "reservar": "la reserva de tu asiento"
       },
       "dialogo": {
         "recarga": {
@@ -40,6 +41,10 @@
         "crear_billetera": {
           "titulo": "Confirma la creación de tu billetera",
           "subtitulo": "Usa tu huella o rostro para continuar."
+        },
+        "reservar": {
+          "titulo": "Confirma tu reserva",
+          "subtitulo": "{monto} URC quedan en garantía hasta que termine el viaje"
         }
       }
     }
@@ -528,6 +533,83 @@
       "garantia": "Al reservar, el pasaje queda en garantía y solo se paga a {conductor} cuando el viaje se verifica.",
       "reservar_pronto": "Reservar · disponible pronto",
       "subtitulo": "¿A dónde vas hoy?"
+    },
+    "reservar": {
+      "boton": "Reservar y pagar {precio}",
+      "enviando": "Reservando…",
+      "resumen_titulo": "Tu pasaje",
+      "saldo_disponible": "Saldo disponible",
+      "saldo_despues": "Saldo disponible después",
+      "recargar": "Recargar saldo",
+      "faltante": "Te faltan {monto} URC para reservar este viaje.",
+      "saldo_insuficiente": "Tu saldo disponible no alcanza para este pasaje. Recarga para reservarlo.",
+      "sin_asientos": "Ya no quedan asientos en este viaje.",
+      "viaje_propio": "Este viaje es tuyo: no puedes reservarlo.",
+      "ya_reservado": "Ya tienes una reserva en este viaje.",
+      "no_disponible": "Este viaje ya no admite reservas.",
+      "ver_mis_viajes": "Ver mis viajes",
+      "identidad_requerida": "Verifica tu identidad para reservar viajes y pagar con tu billetera.",
+      "vincular_requerido": "Vincula este teléfono para reservar: cada reserva se confirma con tu huella o rostro.",
+      "cuenta_suspendida": "Tu cuenta está suspendida, por eso no puedes reservar viajes. Comunícate con tu organización.",
+      "error": "No pudimos reservar el viaje. Inténtalo de nuevo.",
+      "garantia_resumen": "Pagas {precio} y queda en garantía; el conductor lo cobra solo cuando el viaje se verifique.",
+      "no_disponible_boton": "No admite reservas"
+    },
+    "estado": {
+      "publicado": "Publicado",
+      "reservado": "Reservado",
+      "en_curso": "En curso",
+      "verificado": "Verificado",
+      "pagado": "Pagado",
+      "cancelado": "Cancelado",
+      "expirado": "Expirado"
+    }
+  },
+  "reservas": {
+    "estado": {
+      "pendiente": "Pendiente",
+      "confirmada": "Confirmada",
+      "abordada": "A bordo",
+      "verificada": "Verificada",
+      "pagada": "Pagada",
+      "fallida": "No se completó",
+      "verificacion_fallida": "Verificación fallida"
+    },
+    "resultado": {
+      "titulo": "Tu reserva",
+      "pendiente_titulo": "Dejando tu pasaje en garantía",
+      "pendiente_texto": "Tu asiento ya está apartado. Estamos registrando {monto} URC en garantía; no tienes que hacer nada.",
+      "pendiente_demora": "La red de pagos tarda más de lo normal. Seguimos intentando y tu asiento sigue apartado.",
+      "confirmada_titulo": "Reserva confirmada",
+      "confirmada_texto": "Tu pasaje de {monto} URC quedó en garantía. Se le paga al conductor solo cuando el viaje se verifique.",
+      "fallida_titulo": "No se completó tu reserva",
+      "fallida_texto": "No se descontó nada de tu saldo y el asiento quedó libre. Puedes intentarlo otra vez.",
+      "otro_estado_texto": "Tu reserva está {estado}.",
+      "en_garantia": "En garantía",
+      "transaccion": "Ver la transacción",
+      "salida": "Salida",
+      "conductor": "Conductor",
+      "intentar_otra_vez": "Intentar otra vez",
+      "ver_mis_viajes": "Ver mis viajes",
+      "no_encontrada": "No encontramos esta reserva.",
+      "actualizar": "Actualizar"
+    },
+    "mis_viajes": {
+      "pestana": "Mis viajes",
+      "titulo": "Mis viajes",
+      "reservas_titulo": "Mis reservas",
+      "publicados_titulo": "Viajes que ofrezco",
+      "sin_reservas": "Todavía no reservaste ningún viaje.",
+      "sin_publicados": "No publicaste ningún viaje.",
+      "buscar": "Buscar un viaje",
+      "publicar": "Publicar un viaje",
+      "ver_pasajeros": "Ver pasajeros",
+      "ocultar_pasajeros": "Ocultar pasajeros",
+      "sin_pasajeros": "Aún no hay pasajeros.",
+      "pasajeros_error": "No pudimos cargar a tus pasajeros. Inténtalo de nuevo.",
+      "error": "No pudimos cargar tus viajes. Revisa tu conexión e inténtalo de nuevo.",
+      "activo_titulo": "Tu próximo viaje",
+      "reserva_accesible": "Reserva con {conductor}, de {origen} a {destino}, {dia} a las {hora}, {estado}, {monto} URC en garantía"
     }
   }
 }

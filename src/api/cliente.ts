@@ -643,6 +643,104 @@ export interface DetalleViaje {
 /** Lo último encontrado: el detalle no trae distancia ni insignias. En memoria y no por la ruta: un enlace no puede inventar una insignia. */
 export const viajesEncontrados = new Map<string, ViajeEncontrado>();
 
+/** Estados de la reserva (HU-19 RN-10). */
+export type EstadoReserva =
+  | 'pendiente'
+  | 'confirmada'
+  | 'abordada'
+  | 'verificada'
+  | 'pagada'
+  | 'fallida'
+  | 'verificacion_fallida';
+
+/** Estados en los que la reserva sigue viva para el pasajero. */
+export const RESERVA_ACTIVA: EstadoReserva[] = [
+  'pendiente',
+  'confirmada',
+  'abordada',
+];
+
+export interface ReservaCreada {
+  reservaId: string;
+  estado: EstadoReserva;
+  /** URC con 2 decimales, como texto de la API. */
+  monto: string;
+  viajeId: string;
+}
+
+export interface Reserva {
+  reservaId: string;
+  estado: EstadoReserva;
+  monto: string;
+  creadoEn: string;
+  viaje: {
+    id: string;
+    origenNombre: string;
+    destinoNombre: string;
+    fechaHoraSalida: string;
+    estado: string;
+    /** Nombre de pila. */
+    conductor: string;
+  };
+}
+
+export interface ReservaDetalle extends Reserva {
+  /** Transacción del bloqueo en garantía; `null` mientras está pendiente. */
+  hashTx: string | null;
+  exploradorUrl: string | null;
+}
+
+export interface PasajeroViaje {
+  reservaId: string;
+  nombre: string;
+  estado: EstadoReserva;
+}
+
+export interface MiViaje {
+  id: string;
+  origenNombre: string;
+  destinoNombre: string;
+  fechaHoraSalida: string;
+  cuposDisponibles: number;
+  precioPorAsiento: number;
+  estado: string;
+}
+
+/**
+ * Pide la huella (HU-29). El monto, el conductor y el estado los fija el servidor: solo viaja la clave de idempotencia,
+ * así un reintento tras perder la respuesta devuelve la misma reserva (CA-4).
+ */
+export const reservarAsiento = (
+  viajeId: string,
+  claveIdempotencia: string,
+  opciones?: OpcionesFirma,
+) =>
+  solicitarFirmado<ReservaCreada>(
+    `/viajes/${encodeURIComponent(viajeId)}/reservas`,
+    'POST',
+    { claveIdempotencia },
+    opciones,
+  );
+
+/** Sin firma: consultar nunca pide la huella. */
+export const consultarReserva = (id: string) =>
+  solicitar<ReservaDetalle>(`/reservas/${encodeURIComponent(id)}`, 'GET');
+
+export const consultarMisReservas = () =>
+  solicitar<{ reservas: Reserva[] }>('/reservas/mias', 'GET').then(
+    (r) => r.reservas,
+  );
+
+export const consultarMisViajes = () =>
+  solicitar<MiViaje[]>('/viajes/mis-viajes', 'GET');
+
+/** Solo el conductor del viaje: nombre de pila y estado de cada pasajero. */
+export const consultarPasajerosDelViaje = (viajeId: string) =>
+  solicitar<PasajeroViaje[]>(
+    `/viajes/${encodeURIComponent(viajeId)}/pasajeros`,
+    'GET',
+  );
+
 /** Con token y membresía aprobada, sin firma: buscar no pide huella (RN-6 de HU-18). */
 export async function buscarViajes(consulta: {
   origenLat: string;

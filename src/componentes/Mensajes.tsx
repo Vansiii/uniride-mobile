@@ -75,7 +75,21 @@ const estados: Record<string, [Tono | 'neutro', NombreIcono]> = {
   // Movimiento confirmado: sin etiqueta, es el caso normal (4.1.2).
   'movimiento.pendiente': ['neutro', 'hourglass_top'],
   'movimiento.fallido': ['peligro', 'error'],
+  // Estados de la reserva (HU-19 RN-10): cada uno con tono, ícono y texto.
+  'reserva.pendiente': ['neutro', 'hourglass_top'],
+  'reserva.confirmada': ['exito', 'check_circle'],
+  'reserva.abordada': ['info', 'directions_car'],
+  'reserva.verificada': ['exito', 'verified'],
+  'reserva.pagada': ['exito', 'payments'],
+  'reserva.fallida': ['peligro', 'error'],
+  'reserva.verificacion_fallida': ['peligro', 'error'],
   'viaje.publicado': ['info', 'campaign'],
+  // Estados del viaje que se ven en «Mis viajes» (D-23).
+  'viaje.reservado': ['exito', 'check_circle'],
+  'viaje.en_curso': ['info', 'directions_car'],
+  'viaje.pagado': ['exito', 'payments'],
+  'viaje.cancelado': ['peligro', 'cancel'],
+  'viaje.expirado': ['neutro', 'timer_off'],
   'viaje.verificado': ['exito', 'verified'],
   // `new_releases` se dibuja igual que `verified`: «Nuevo» parecía otra verificación.
   'viaje.nuevo': ['info', 'auto_awesome'],
@@ -94,7 +108,7 @@ export function EtiquetaEstado({
   estado,
   texto,
 }: {
-  dominio: 'membresia' | 'movimiento' | 'viaje';
+  dominio: 'membresia' | 'movimiento' | 'viaje' | 'reserva';
   estado: string;
   /** Texto visible ya traducido. */
   texto: string;

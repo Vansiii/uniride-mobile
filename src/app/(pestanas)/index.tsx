@@ -13,6 +13,7 @@ import { Boton, BotonIcono } from '@/componentes/Boton';
 import { BandaMarca } from '@/componentes/Estructura';
 import { FormularioBusqueda } from '@/componentes/FormularioBusqueda';
 import { Icono } from '@/componentes/Icono';
+import { ViajeActivo } from '@/componentes/ViajeActivo';
 import { t } from '@/i18n';
 import {
   colores,
@@ -120,6 +121,7 @@ export default function Inicio() {
           </Entra>
         </BandaMarca>
         <FormularioBusqueda key={usuario.id} />
+        <ViajeActivo key={`activo-${usuario.id}`} />
         <Entra indice={3} style={estilos.atajos}>
           <Atajo
             icono="receipt_long"
