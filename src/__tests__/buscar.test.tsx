@@ -536,7 +536,7 @@ describe('HU-18 · resultados', () => {
 });
 
 describe('HU-18 · detalle', () => {
-  it('muestra los datos públicos; Reservar queda deshabilitado', async () => {
+  it('muestra los datos públicos y el botón de reservar', async () => {
     const [viaje] = VIAJES;
     mockParametros.valor = { id: viaje.id };
     await abrir(<DetalleViajePantalla />, {
@@ -549,10 +549,11 @@ describe('HU-18 · detalle', () => {
     expect(screen.getByText('Asientos libres')).toBeTruthy();
     expect(screen.getByText('2 de 3')).toBeTruthy();
     expect(screen.getByText(/solo se paga a Carlos/)).toBeTruthy();
+    // Reservar y pagar es de HU-19 (reservar.test.tsx): aquí basta con que el botón esté y se pueda tocar.
     const reservar = screen.getByRole('button', {
-      name: 'Reservar · disponible pronto',
+      name: 'Reservar y pagar 10,00 URC',
     });
-    expect(reservar.props.accessibilityState.disabled).toBe(true);
+    expect(reservar.props.accessibilityState.disabled).toBe(false);
     expect(screen.queryByText('Este viaje ya no está disponible.')).toBeNull();
   });
 

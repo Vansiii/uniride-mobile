@@ -5,7 +5,8 @@ import { formatearMonto } from '@/formato';
 import { con, t } from '@/i18n';
 
 /** Acciones de la RN-1 de HU-29 que ya existen en la app. Una nueva agrega su texto en `comun.biometria`. */
-export type AccionSensible = 'recarga' | 'publicar' | 'crear_billetera';
+export type AccionSensible =
+  'recarga' | 'publicar' | 'crear_billetera' | 'reservar';
 
 /** `firmando`: el diálogo del sistema está abierto. `enviando`: ya firmó y espera al servidor (CA-9). */
 export type EstadoAccion = 'reposo' | 'firmando' | 'enviando';

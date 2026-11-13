@@ -1244,6 +1244,112 @@ export const viajeReal = {
   }),
 };
 
+// HU-19: capturadas de un backend propio (PostgreSQL local, cadena simulada, 12/11/2026) con un conductor, un pasajero
+// verificado con billetera y un viaje de 10,50 URC. Cambian los identificadores y las fechas (a 2099, como el resto);
+// los mensajes de error son los del backend. El bloqueo real contra EscrowUniRide se probó aparte, en Hardhat local.
+const RESERVA_ID = '0a48bcec-9aa1-4dbf-a192-be3d560e148a';
+const VIAJE_RESERVADO = '3f6b1c2e-9d4a-4e7b-8a10-2c5d7e9f1b34';
+const HASH_BLOQUEO =
+  '0x7b53e2bc15b2bed8801d58623c0ca41b75d81c07caa8a1316f9eb9b71eb809d8';
+const viajeDeReserva = {
+  id: VIAJE_RESERVADO,
+  origenNombre: 'Av. Busch',
+  destinoNombre: 'UAGRM, Módulos',
+  fechaHoraSalida: '2099-03-10T12:20:00.000Z',
+  conductor: 'Carlos',
+};
+const reservaDetalle = (
+  estado: string,
+  viaje: string,
+  hashTx: string | null,
+) => ({
+  reservaId: RESERVA_ID,
+  estado,
+  monto: '10.50',
+  creadoEn: '2099-03-10T09:00:00.000Z',
+  viaje: { ...viajeDeReserva, estado: viaje },
+  hashTx,
+  exploradorUrl: null,
+});
+
+export const reservaReal = {
+  reservaId: RESERVA_ID,
+  viajeId: VIAJE_RESERVADO,
+  hashTx: HASH_BLOQUEO,
+  /** POST /viajes/{id}/reservas → 201 */
+  creada: ok(201, {
+    reservaId: RESERVA_ID,
+    estado: 'pendiente',
+    monto: '10.50',
+    viajeId: VIAJE_RESERVADO,
+  }),
+  /** La misma clave otra vez → 200 con la reserva original. */
+  repetida: ok(200, {
+    reservaId: RESERVA_ID,
+    estado: 'confirmada',
+    monto: '10.50',
+    viajeId: VIAJE_RESERVADO,
+  }),
+  saldoInsuficiente: ok(409, {
+    codigo: 'SALDO_INSUFICIENTE',
+    mensaje:
+      'Tu saldo disponible no alcanza para este pasaje. Recarga para reservarlo.',
+    faltante: '5.50',
+  }),
+  sinAsientos: ok(409, {
+    codigo: 'SIN_ASIENTOS',
+    mensaje: 'Ya no quedan asientos en este viaje.',
+  }),
+  viajePropio: ok(409, {
+    codigo: 'VIAJE_PROPIO',
+    mensaje: 'No puedes reservar tu propio viaje.',
+  }),
+  yaReservado: ok(409, {
+    codigo: 'YA_RESERVADO',
+    mensaje: 'Ya tienes una reserva en este viaje.',
+  }),
+  noDisponible: ok(409, {
+    codigo: 'VIAJE_NO_DISPONIBLE',
+    mensaje: 'Este viaje ya no admite reservas.',
+  }),
+  /** GET /reservas/{id} */
+  pendiente: ok(200, reservaDetalle('pendiente', 'publicado', null)),
+  confirmada: ok(200, reservaDetalle('confirmada', 'reservado', HASH_BLOQUEO)),
+  fallida: ok(200, reservaDetalle('fallida', 'publicado', null)),
+  /** GET /reservas/mias → 200 */
+  mias: ok(200, {
+    reservas: [
+      {
+        reservaId: RESERVA_ID,
+        estado: 'confirmada',
+        monto: '10.50',
+        creadoEn: '2099-03-10T09:00:00.000Z',
+        viaje: { ...viajeDeReserva, estado: 'reservado' },
+      },
+    ],
+  }),
+  /** GET /viajes/mis-viajes → 200 */
+  misViajes: ok(200, [
+    {
+      id: VIAJE_RESERVADO,
+      origenNombre: 'Av. Busch',
+      destinoNombre: 'UAGRM, Módulos',
+      fechaHoraSalida: '2099-03-10T12:20:00.000Z',
+      cuposDisponibles: 2,
+      precioPorAsiento: 10.5,
+      estado: 'reservado',
+    },
+  ]),
+  /** GET /viajes/{id}/pasajeros → 200 */
+  pasajeros: ok(200, [
+    { reservaId: RESERVA_ID, nombre: 'Prueba', estado: 'confirmada' },
+  ]),
+  noEncontrada: ok(404, {
+    codigo: 'RESERVA_NO_ENCONTRADA',
+    mensaje: 'No se encontró lo que buscas.',
+  }),
+};
+
 /** `fetch` falso que responde según "MÉTODO /ruta"; lo que no está en `rutas` falla como una caída de red. */
 export function simularFetch(
   rutas: Record<string, RespuestaSimulada | RespuestaSimulada[]>,
