@@ -122,15 +122,15 @@ export default function MostrarCodigoPantalla() {
     [viajeId, tipo],
   );
 
-  // Bajada: la llave del seguimiento ya vale; sin ella (app reinstalada, llave vencida) se pide la huella.
+  // Con el viaje en curso la llave del seguimiento ya vale (bajada, o volver al código de abordaje): crear otra
+  // reemplazaría la del teléfono antes de que el servidor la acepte. Sin ella (app reinstalada) se pide la huella.
   useEffect(() => {
-    if (tipo !== 'bajada') return;
     void llaveDelSeguimiento({ rol: 'conductor', id: viajeId }).then((id) => {
       if (!id || !montada.current) return;
       setLlave(id);
       void renovar(id);
     });
-  }, [tipo, viajeId, renovar]);
+  }, [viajeId, renovar]);
 
   // HU-23 CA-1: con el primer pasajero a bordo empieza a compartir la posición; con otra llave, sigue con esa.
   const algunoAbordo = pasajeros.some((p) => yaAbordo(p.estado));

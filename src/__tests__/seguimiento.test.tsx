@@ -282,6 +282,51 @@ describe('HU-23 · seguimiento en segundo plano (CA-1, CA-2, CA-12)', () => {
     expect(cuerpos(llamadas, POS_VIAJE)).toHaveLength(1);
   });
 
+  it('un lote rechazado por su contenido (400) se descarta y no frena los siguientes', async () => {
+    simularFetch({});
+    await iniciarSeguimiento({ ...PASAJERO, llaveTrayectoId: LLAVE_ID });
+    const lecturas = Array.from({ length: 61 }, (_, i) => lectura(i * 15));
+    await gps(...lecturas);
+    const { llamadas } = simularFetch({
+      [POS_RESERVA]: [tr.loteInvalido, tr.aceptadas],
+    });
+    await enviarCola();
+    expect(cuerpos(llamadas, POS_RESERVA).map((l) => l.length)).toEqual([
+      60, 1,
+    ]);
+    await enviarCola();
+    expect(cuerpos(llamadas, POS_RESERVA)).toHaveLength(2);
+  });
+
+  it('con la cola llena, lo que se descarta mientras un lote viaja no borra puntos sin enviar', async () => {
+    simularFetch({});
+    await iniciarSeguimiento({ ...PASAJERO, llaveTrayectoId: LLAVE_ID });
+    const lecturas = Array.from({ length: 1441 }, (_, i) => lectura(i * 15));
+    await gps(...lecturas.slice(0, 1440));
+    // El primer envío queda en vuelo hasta que llega otra lectura, que empuja fuera la más vieja (tope 1440).
+    let soltar = () => {};
+    const enVuelo = new Promise<void>((r) => (soltar = r));
+    const { llamadas, falso } = simularFetch({ [POS_RESERVA]: tr.aceptadas });
+    const responder = falso.getMockImplementation()!;
+    falso.mockImplementationOnce(async (url, init) => {
+      await enVuelo;
+      return responder(url, init);
+    });
+    const envio = enviarCola();
+    await waitFor(() => expect(falso).toHaveBeenCalledTimes(1));
+    const llegada = gps(lecturas[1440]);
+    soltar();
+    await envio;
+    await llegada;
+    await enviarCola();
+    const enviados = cuerpos(llamadas, POS_RESERVA)
+      .flat()
+      .map((pt) => pt.tomadaEn);
+    expect(enviados.slice(60)).toEqual(
+      lecturas.slice(60).map((l) => l.timestamp),
+    );
+  });
+
   it('la llave vencida (401) no pierde los puntos: esperan a la llave nueva', async () => {
     simularFetch({ [POS_VIAJE]: p.firmaTrayecto });
     await iniciarSeguimiento({ ...CONDUCTOR, llaveTrayectoId: 'vieja' });
@@ -413,6 +458,22 @@ describe('HU-23 · conductor', () => {
     expect(mockRouter.replace).toHaveBeenCalledWith(
       `/viaje-activo/${VIAJE}?rol=conductor`,
     );
+  });
+
+  it('volver al código de abordaje con el viaje en curso usa la llave del seguimiento: no crea otra ni pide huella', async () => {
+    await iniciarSeguimiento({ ...CONDUCTOR, llaveTrayectoId: 'llave-c' });
+    mockParametros.valor = { viajeId: VIAJE };
+    simularFetch(BASE_CONDUCTOR);
+    await render(
+      <ProveedorSesion>
+        <MostrarCodigoPantalla />
+      </ProveedorSesion>,
+    );
+    expect(
+      await screen.findByLabelText('Código QR de abordaje'),
+    ).toBeTruthy();
+    expect(crearLlaveTrayecto).not.toHaveBeenCalled();
+    expect(firmar).not.toHaveBeenCalled();
   });
 
   it('el código de bajada usa la llave del seguimiento: sin huella y con tipo bajada (CA-3, RN-7)', async () => {

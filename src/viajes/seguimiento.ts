@@ -182,18 +182,38 @@ async function vaciar(ruta: string, e: Entrada) {
         ruta,
         lote,
       );
-      e.cola.splice(0, lote.length);
+      quitarEnviados(e.cola, lote);
       e.sinConexion = false;
       e.firmaVencida = false;
     } catch (error) {
       const codigo = error instanceof ErrorApi ? error.codigo : '';
       if (error instanceof ErrorApi && error.estado === 409)
         return detenerSeguimiento(e.seguimiento);
+      // Un lote que el servidor rechaza por su contenido no pasará nunca: se descarta para no frenar los siguientes.
+      // El 401 (llave vencida) espera a la llave nueva y el 429 a que pase el límite.
+      if (
+        error instanceof ErrorApi &&
+        error.estado >= 400 &&
+        error.estado < 500 &&
+        error.estado !== 401 &&
+        error.estado !== 429
+      ) {
+        quitarEnviados(e.cola, lote);
+        continue;
+      }
       e.sinConexion = codigo === 'SIN_CONEXION';
       e.firmaVencida = codigo === 'FIRMA_TRAYECTO_INVALIDA';
       return;
     }
   }
+}
+
+/**
+ * Quita de la cabeza lo que se envió. Mientras el lote viajaba, `alRecibir` pudo descartar los más viejos por el
+ * tope: se corta hasta el último del lote que siga en la cola, no `lote.length`, para no perder puntos sin enviar.
+ */
+function quitarEnviados(cola: PosicionEncuentro[], lote: PosicionEncuentro[]) {
+  cola.splice(0, cola.indexOf(lote[lote.length - 1]) + 1);
 }
 
 /** Puntos nuevos del GPS a cada cola activa; exportado para las pruebas. */

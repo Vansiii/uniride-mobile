@@ -1434,6 +1434,11 @@ export const trayectoReal = {
     codigo: 'RESERVA_NO_ABORDADA',
     mensaje: 'Esta reserva no está a bordo.',
   }),
+  /** Lote que el `ValidationPipe` rechaza (forma de `VALIDACION_FALLIDA` del backend). */
+  loteInvalido: ok(400, {
+    codigo: 'VALIDACION_FALLIDA',
+    mensaje: 'Los datos enviados no son válidos.',
+  }),
   /** Conductor sin nadie a bordo. */
   noEnCurso: ok(409, {
     codigo: 'VIAJE_NO_EN_CURSO',
