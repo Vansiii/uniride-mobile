@@ -31,6 +31,7 @@ import java.security.spec.ECGenParameterSpec
 private const val PROVEEDOR = "AndroidKeyStore"
 private const val ALIAS = "uniride.llave.dispositivo"
 private const val ALIAS_ALTERNO = "$ALIAS.2"
+private const val ALIAS_TRAYECTO = "uniride.llave.trayecto"
 private const val PREFERENCIAS = "uniride.llave"
 private const val CLAVE_ACTIVA = "alias_activo"
 
@@ -66,6 +67,10 @@ class LlaveDispositivoModule : Module() {
       firmar(antes, despues, textos, promesa)
     }.runOnQueue(Queues.MAIN)
 
+    AsyncFunction("crearLlaveTrayecto") { crearLlaveTrayecto() }
+
+    AsyncFunction("firmarTrayecto") { antes: String, despues: String -> firmarTrayecto(antes, despues) }
+
     // Hermes no trae `crypto.getRandomValues`.
     Function("nonceAleatorio") {
       val bytes = ByteArray(16)
@@ -84,11 +89,25 @@ class LlaveDispositivoModule : Module() {
       throw noDisponible("El teléfono no tiene biometría fuerte lista")
     }
     // HU-10: la llave nueva va al otro alias; la que firma no se toca hasta que el servidor la acepte.
-    val alias = aliasPendiente(contexto)
+    return crearEnHardware(aliasPendiente(contexto), conBiometria = true)
+  }
+
+  /**
+   * Llave de trayecto (HU-22 RN-9, D-22): otra P-256 no exportable en hardware, **sin** biometría, para firmar los
+   * códigos que se renuevan cada 25 s. Su uso lo autoriza el servidor: la registra dentro de una petición con huella
+   * y solo vale para ese viaje. Se reemplaza en cada viaje: crear una nueva borra la anterior.
+   */
+  private fun crearLlaveTrayecto(): String {
+    almacen().deleteEntry(ALIAS_TRAYECTO)
+    return crearEnHardware(ALIAS_TRAYECTO, conBiometria = false)
+  }
+
+  /** Par nuevo en `alias` y su llave pública en PEM (SPKI); falla si el Keystore no lo dejó en hardware. */
+  private fun crearEnHardware(alias: String, conBiometria: Boolean): String {
     val par = try {
-      generarPar(alias, strongBox = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
+      generarPar(alias, conBiometria, strongBox = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
     } catch (_: StrongBoxUnavailableException) {
-      generarPar(alias, strongBox = false)
+      generarPar(alias, conBiometria, strongBox = false)
     }
     // RN-2: en un teléfono sin TEE el Keystore cae a software sin avisar; esa llave no sirve.
     val info = KeyFactory.getInstance(par.private.algorithm, PROVEEDOR)
@@ -100,6 +119,23 @@ class LlaveDispositivoModule : Module() {
     }
     val cuerpo = Base64.encodeToString(par.public.encoded, Base64.NO_WRAP).chunked(64).joinToString("\n")
     return "-----BEGIN PUBLIC KEY-----\n$cuerpo\n-----END PUBLIC KEY-----\n"
+  }
+
+  /** Firma `antes + hora + despues` con la llave de trayecto, sin diálogo (D-22). */
+  private fun firmarTrayecto(antes: String, despues: String): Map<String, String> {
+    val llave = almacen().getKey(ALIAS_TRAYECTO, null) as? PrivateKey
+      ?: throw CodedException("SIN_LLAVE", "Este teléfono no tiene llave de trayecto", null)
+    val marca = System.currentTimeMillis().toString()
+    val firma = try {
+      Signature.getInstance("SHA256withECDSA").run {
+        initSign(llave)
+        update((antes + marca + despues).toByteArray(Charsets.UTF_8))
+        sign()
+      }
+    } catch (error: Exception) {
+      throw noDisponible("El Keystore no firmó", error)
+    }
+    return mapOf("firma" to Base64.encodeToString(firma, Base64.NO_WRAP), "marca" to marca)
   }
 
   private fun almacen() = KeyStore.getInstance(PROVEEDOR).apply { load(null) }
@@ -124,14 +160,15 @@ class LlaveDispositivoModule : Module() {
     llaves.deleteEntry(anterior)
   }
 
-  private fun generarPar(alias: String, strongBox: Boolean) =
+  private fun generarPar(alias: String, conBiometria: Boolean, strongBox: Boolean) =
     KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_EC, PROVEEDOR).run {
       val spec = KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_SIGN)
         .setAlgorithmParameterSpec(ECGenParameterSpec("secp256r1"))
         .setDigests(KeyProperties.DIGEST_SHA256)
-        .setUserAuthenticationRequired(true)
-        .setInvalidatedByBiometricEnrollment(true)
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+      if (conBiometria) {
+        spec.setUserAuthenticationRequired(true).setInvalidatedByBiometricEnrollment(true)
+      }
+      if (conBiometria && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
         // 0 s de validez: la autenticación vale para una sola operación, y solo con biometría fuerte.
         spec.setUserAuthenticationParameters(0, KeyProperties.AUTH_BIOMETRIC_STRONG)
       }

@@ -1,4 +1,9 @@
-import { type DialogoFirma, firmar, nonceAleatorio } from './keystore';
+import {
+  type DialogoFirma,
+  firmar,
+  firmarTrayecto,
+  nonceAleatorio,
+} from './keystore';
 import { sha256Hex } from './sha256';
 
 /** Lo que va antes y después de TIMESTAMP en el mensaje canónico. */
@@ -39,8 +44,9 @@ export async function cabecerasFirma(
   dialogo?: DialogoFirma,
   /** Se llama al firmar, antes de enviar: la pantalla pasa de «esperando la huella» a «enviando». */
   alFirmar?: () => void,
+  /** El `X-Nonce` ya elegido, cuando el cuerpo lo cita (token de Play Integrity pedido con él, HU-22 RN-5). */
+  nonce = nonceAleatorio(),
 ): Promise<Record<string, string>> {
-  const nonce = nonceAleatorio();
   const { firma, marca } = await firmar(
     ...partesDelMensaje(metodo, ruta, nonce, cuerpo),
     dialogo,
@@ -48,6 +54,25 @@ export async function cabecerasFirma(
   alFirmar?.();
   return {
     'X-Dispositivo-Id': dispositivoId,
+    'X-Timestamp': marca,
+    'X-Nonce': nonce,
+    'X-Firma': firma,
+  };
+}
+
+/** Encabezados firmados con la llave de trayecto (D-22): sin diálogo, para el código que se renueva solo (RN-6). */
+export async function cabecerasFirmaTrayecto(
+  llaveTrayectoId: string,
+  metodo: string,
+  ruta: string,
+  cuerpo: string,
+): Promise<Record<string, string>> {
+  const nonce = nonceAleatorio();
+  const { firma, marca } = await firmarTrayecto(
+    ...partesDelMensaje(metodo, ruta, nonce, cuerpo),
+  );
+  return {
+    'X-Llave-Trayecto-Id': llaveTrayectoId,
     'X-Timestamp': marca,
     'X-Nonce': nonce,
     'X-Firma': firma,
