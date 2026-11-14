@@ -1350,6 +1350,69 @@ export const reservaReal = {
   }),
 };
 
+const NONCE_ENCUENTRO = 'q7Vb2m9XkLp4Rt8Zc1Nw6Hs3Jd5Fg0Ya2Ue7Io4Pl9K';
+const LLAVE_TRAYECTO_ID = '6d2f8a41-3c9e-4b7a-9e15-8f0c2a7d4b63';
+const pasajeroDe = (estado: string) => [
+  { reservaId: RESERVA_ID, nombre: 'Prueba', estado },
+];
+const desafio = (nonce: string, estado = 'confirmada') =>
+  ok(201, {
+    nonce,
+    venceEn: '2099-03-10T12:00:30.000Z',
+    qrTexto: `uniride://encuentro/${nonce}`,
+    qrImagenBase64: 'iVBORw0KGgo=',
+    pasajeros: pasajeroDe(estado),
+  });
+
+/** HU-22: respuestas del backend de presencia, con las formas de Swagger y de su prueba real. */
+export const presenciaReal = {
+  nonce: NONCE_ENCUENTRO,
+  llaveTrayectoId: LLAVE_TRAYECTO_ID,
+  /** POST /viajes/{id}/llave-trayecto → 201 */
+  llave: ok(201, { llaveTrayectoId: LLAVE_TRAYECTO_ID }),
+  /** POST /viajes/{id}/desafios → 201 */
+  desafio: desafio(NONCE_ENCUENTRO),
+  otroDesafio: desafio('Z'.repeat(43)),
+  desafioAbordado: desafio('Y'.repeat(43), 'abordada'),
+  pasajerosAbordados: ok(200, pasajeroDe('abordada')),
+  /** POST /reservas/{id}/abordaje → 200 */
+  abordada: ok(200, { estado: 'abordada', yaVerificado: false }),
+  yaAbordada: ok(200, { estado: 'abordada', yaVerificado: true }),
+  fueraDeVentana: ok(409, {
+    codigo: 'FUERA_DE_VENTANA',
+    mensaje: 'Fuera del horario de abordaje.',
+    desde: '2099-03-10T11:50:00.000Z',
+    hasta: '2099-03-10T12:35:00.000Z',
+  }),
+  firmaTrayecto: ok(401, {
+    codigo: 'FIRMA_TRAYECTO_INVALIDA',
+    mensaje:
+      'No pudimos comprobar que la petición viene de tu teléfono vinculado.',
+  }),
+  codigoInvalido: ok(409, {
+    codigo: 'CODIGO_INVALIDO',
+    mensaje:
+      'Ese código ya no sirve. Escanea el que muestra ahora el conductor.',
+  }),
+  distancia: ok(422, {
+    codigo: 'DISTANCIA',
+    mensaje: 'Estás demasiado lejos del conductor para confirmar el abordaje.',
+    distanciaM: 61,
+  }),
+  simulada: ok(422, {
+    codigo: 'UBICACION_SIMULADA',
+    mensaje: 'No pudimos confirmar tu ubicación.',
+  }),
+  noIntegro: ok(422, {
+    codigo: 'DISPOSITIVO_NO_INTEGRO',
+    mensaje: 'Este teléfono no puede verificar viajes.',
+  }),
+  sinReserva: ok(409, {
+    codigo: 'SIN_RESERVA',
+    mensaje: 'No tienes una reserva en este viaje.',
+  }),
+};
+
 /** `fetch` falso que responde según "MÉTODO /ruta"; lo que no está en `rutas` falla como una caída de red. */
 export function simularFetch(
   rutas: Record<string, RespuestaSimulada | RespuestaSimulada[]>,

@@ -27,7 +27,9 @@
         "recarga": "el pago",
         "publicar": "la publicación de tu viaje",
         "crear_billetera": "la creación de tu billetera",
-        "reservar": "la reserva de tu asiento"
+        "reservar": "la reserva de tu asiento",
+        "mostrar_codigo": "la apertura del código de abordaje",
+        "abordar": "tu abordaje"
       },
       "dialogo": {
         "recarga": {
@@ -45,6 +47,14 @@
         "reservar": {
           "titulo": "Confirma tu reserva",
           "subtitulo": "{monto} URC quedan en garantía hasta que termine el viaje"
+        },
+        "mostrar_codigo": {
+          "titulo": "Confirma que eres el conductor",
+          "subtitulo": "Para mostrar el código de abordaje"
+        },
+        "abordar": {
+          "titulo": "Confirma tu abordaje",
+          "subtitulo": "Verificamos que estás junto al conductor"
         }
       }
     }
@@ -609,7 +619,51 @@
       "pasajeros_error": "No pudimos cargar a tus pasajeros. Inténtalo de nuevo.",
       "error": "No pudimos cargar tus viajes. Revisa tu conexión e inténtalo de nuevo.",
       "activo_titulo": "Tu próximo viaje",
-      "reserva_accesible": "Reserva con {conductor}, de {origen} a {destino}, {dia} a las {hora}, {estado}, {monto} URC en garantía"
+      "reserva_accesible": "Reserva con {conductor}, de {origen} a {destino}, {dia} a las {hora}, {estado}, {monto} URC en garantía",
+      "mostrar_codigo": "Mostrar código de abordaje"
+    }
+  },
+  "presencia": {
+    "abordaje": {
+      "titulo_conductor": "Código de abordaje",
+      "intro_conductor": "Tus pasajeros escanean este código para verificar que se encontraron contigo. Se renueva solo.",
+      "boton_mostrar": "Mostrar código",
+      "preparando": "Preparando el código…",
+      "qr": "Código QR de abordaje",
+      "nuevo_en": "Nuevo código en {segundos} s",
+      "recordatorio": "El pasajero debe estar a menos de 50 m.",
+      "pasajeros": "Pasajeros",
+      "pasajero_esperando": "Esperando",
+      "pasajero_verificado": "Verificado ✓",
+      "titulo_pasajero": "Escanear código",
+      "boton_escanear": "Escanear código del conductor",
+      "apunta": "Apunta al código del teléfono de {nombre}",
+      "placa": "Vehículo con placa {placa}",
+      "boton_confirmar": "Confirmar abordaje",
+      "verificando": "Verificando…",
+      "leido": "Código leído. Confirma con tu huella.",
+      "volver_a_escanear": "Volver a escanear",
+      "verificado": "Abordaje verificado",
+      "verificado_texto": "Tu viaje está en curso. ¡Buen viaje!",
+      "ya_verificado": "Tu abordaje ya estaba verificado.",
+      "codigo_invalido": "Ese código ya no sirve. Escanea el que muestra ahora el conductor.",
+      "qr_ajeno": "Ese no es un código de abordaje de UniRide.",
+      "distancia": "Estás a más de 50 m del conductor (a {distancia} m). Acércate y vuelve a escanear.",
+      "ubicacion_simulada": "No pudimos confirmar tu ubicación. Desactiva cualquier app que cambie tu ubicación.",
+      "integridad": "Este teléfono no puede verificar viajes.",
+      "sin_reserva": "No tienes una reserva en este viaje.",
+      "fuera_de_ventana": "El código se puede mostrar de {desde} a {hasta}.",
+      "sin_reservas": "Este viaje no tiene reservas confirmadas.",
+      "senal_gps": "La señal de ubicación es débil. Sal a un lugar abierto y vuelve a intentarlo.",
+      "activa_ubicacion": "Activa tu ubicación para verificar el abordaje.",
+      "permiso_ubicacion": "UniRide necesita tu ubicación para verificar el abordaje. Dale permiso en los ajustes del teléfono.",
+      "permiso_camara": "UniRide necesita la cámara para leer el código. Dale permiso en los ajustes del teléfono.",
+      "dar_permiso_camara": "Permitir cámara",
+      "abrir_ajustes": "Abrir ajustes",
+      "sin_conexion": "Sin conexión. El código sigue en la pantalla del conductor; vuelve a escanear cuando tengas señal.",
+      "servicio_no_disponible": "No pudimos verificar ahora. Vuelve a intentarlo en un momento.",
+      "firma_vencida": "El código dejó de renovarse. Confirma otra vez con tu huella.",
+      "error": "No pudimos completar la verificación. Vuelve a intentarlo."
     }
   }
 }

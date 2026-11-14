@@ -69,6 +69,14 @@ function ViajePublicado({ viaje }: { viaje: MiViaje }) {
         </Text>
         <Text style={estilos.enfasis}>{precioUrc(viaje.precioPorAsiento)}</Text>
       </View>
+      {/* HU-22: con reservas, el conductor muestra el código; la ventana de abordaje la decide el servidor (CA-11). */}
+      {(viaje.estado === 'reservado' || viaje.estado === 'en_curso') && (
+        <Boton
+          icono="qr_code_2"
+          etiqueta={t('reservas.mis_viajes.mostrar_codigo')}
+          alPresionar={() => router.push(`/abordaje/mostrar/${viaje.id}`)}
+        />
+      )}
       <Boton
         variante="secundario"
         icono={abierto ? 'expand_less' : 'expand_more'}
