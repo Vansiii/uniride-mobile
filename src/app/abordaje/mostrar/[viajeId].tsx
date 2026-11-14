@@ -208,6 +208,14 @@ export default function MostrarCodigoPantalla() {
           <>
             <Aviso tono={falla.tono}>{falla.texto}</Aviso>
             {falla.revincular && <BotonRevincular motivo={falla.revincular} />}
+            {falla.vincular && (
+              <Boton
+                variante="secundario"
+                icono="smartphone"
+                etiqueta={t('billetera.pantalla.vincular')}
+                alPresionar={() => router.push('/dispositivo')}
+              />
+            )}
             {falla.ajustes && (
               <Boton
                 variante="secundario"

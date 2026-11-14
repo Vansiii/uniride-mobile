@@ -254,6 +254,21 @@ describe('HU-22 · «Mostrar código» del conductor (CA-1)', () => {
     }
   });
 
+  it('sin teléfono vinculado pide vincularlo y lleva a «Mi teléfono», sin registrar llave', async () => {
+    const { llamadas } = await abrirConductor({
+      'GET /dispositivos/mi-dispositivo': d.sinDispositivo,
+    });
+    await fireEvent.press(boton(MOSTRAR));
+    expect(
+      await screen.findByText(
+        /^Vincula este teléfono para verificar el abordaje/,
+      ),
+    ).toBeTruthy();
+    await fireEvent.press(boton('Vincular mi teléfono'));
+    expect(mockRouter.push).toHaveBeenCalledWith('/dispositivo');
+    expect(veces(llamadas, LLAVE)).toBe(0);
+  });
+
   it('fuera de la ventana no hay código y dice desde y hasta cuándo (CA-11)', async () => {
     const { llamadas } = await abrirConductor({ [LLAVE]: p.fueraDeVentana });
     await fireEvent.press(boton(MOSTRAR));

@@ -662,6 +662,7 @@
       "abrir_ajustes": "Abrir ajustes",
       "sin_conexion": "Sin conexión. El código sigue en la pantalla del conductor; vuelve a escanear cuando tengas señal.",
       "servicio_no_disponible": "No pudimos verificar ahora. Vuelve a intentarlo en un momento.",
+      "vincular_requerido": "Vincula este teléfono para verificar el abordaje: el código y cada escaneo se firman desde él.",
       "firma_vencida": "El código dejó de renovarse. Confirma otra vez con tu huella.",
       "error": "No pudimos completar la verificación. Vuelve a intentarlo."
     }

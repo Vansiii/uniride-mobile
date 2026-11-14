@@ -16,6 +16,8 @@ export const yaAbordo = (estado: string) => ABORDADAS.has(estado);
 export type FallaAbordaje = FallaFirma & {
   /** Android ya no muestra el diálogo de permiso: queda ir a los ajustes. */
   ajustes?: boolean;
+  /** El teléfono no está vinculado (o su firma ya no vale): la salida es «Mi teléfono». */
+  vincular?: boolean;
 };
 
 /** El nonce del QR `uniride://encuentro/<nonce>` (32 bytes en base64url); `null` si no es un código de UniRide. */
@@ -83,6 +85,13 @@ export function fallaDeAbordaje(
           hasta: formatearHora(error.datos.hasta),
         }),
         tono: 'info',
+      };
+    case 'DISPOSITIVO_NO_VINCULADO':
+    case 'FIRMA_DISPOSITIVO_INVALIDA':
+      return {
+        texto: t('presencia.abordaje.vincular_requerido'),
+        tono: 'info',
+        vincular: true,
       };
     case 'SIN_RESERVAS':
       return { texto: t('presencia.abordaje.sin_reservas'), tono: 'info' };

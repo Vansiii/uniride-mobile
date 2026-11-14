@@ -239,6 +239,14 @@ export default function EscanearCodigoPantalla() {
             {paso.falla.revincular && (
               <BotonRevincular motivo={paso.falla.revincular} />
             )}
+            {paso.falla.vincular && (
+              <Boton
+                variante="secundario"
+                icono="smartphone"
+                etiqueta={t('billetera.pantalla.vincular')}
+                alPresionar={() => router.push('/dispositivo')}
+              />
+            )}
             {paso.falla.ajustes && (
               <Boton
                 variante="secundario"
