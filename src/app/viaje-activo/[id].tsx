@@ -88,11 +88,11 @@ export default function ViajeActivoPantalla() {
   if (cargando) return null;
   if (!usuario) return <Redirect href="/iniciar-sesion" />;
 
-  // HU-24: hecha la bajada (reserva verificada o viaje verificado), ya no hay código que mostrar ni escanear.
+  // HU-24: hecha la bajada (verificada, pagada o fallida: es definitiva; o el viaje verificado), ya no hay código.
   const bajadaHecha =
     estado !== undefined &&
     (rol === 'pasajero'
-      ? PAGABLES.has(estado)
+      ? PAGABLES.has(estado) || estado === 'verificacion_fallida'
       : estado === 'verificado' || estado === 'pagado');
 
   const permitirSiempre = async () => {

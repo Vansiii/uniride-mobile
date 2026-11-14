@@ -1338,6 +1338,11 @@ export const reservaReal = {
       pagoReserva('pendiente', null),
     ),
   ),
+  /** HU-23: la bajada no pasó la evaluación del trayecto; el pasaje sigue en garantía. */
+  noVerificada: ok(
+    200,
+    reservaDetalle('verificacion_fallida', 'en_curso', HASH_BLOQUEO),
+  ),
   /** HU-24: liberación confirmada en la red. */
   pagada: ok(
     200,

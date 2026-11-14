@@ -674,4 +674,18 @@ describe('HU-23 · «Viaje en curso»', () => {
       screen.queryByRole('button', { name: 'Escanear QR de bajada' }),
     ).toBeNull();
   });
+
+  it('con la verificación fallida la bajada ya está hecha: no ofrece escanear otra vez', async () => {
+    mockParametros.valor = { id: RESERVA, rol: 'pasajero' };
+    simularFetch({ ...SESION, [`GET /reservas/${RESERVA}`]: rr.noVerificada });
+    await render(
+      <ProveedorSesion>
+        <ViajeActivoPantalla />
+      </ProveedorSesion>,
+    );
+    expect(await screen.findByText('Verificación fallida')).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: 'Escanear QR de bajada' }),
+    ).toBeNull();
+  });
 });
