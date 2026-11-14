@@ -413,6 +413,20 @@ describe('HU-22 · «Escanear QR» del pasajero (CA-2)', () => {
     expect(mockRouter.replace).toHaveBeenCalledWith('/viajes');
   });
 
+  it('sin teléfono vinculado pide vincularlo y lleva a «Mi teléfono»', async () => {
+    await abrirPasajero({
+      'GET /dispositivos/mi-dispositivo': d.sinDispositivo,
+    });
+    await leer(QR);
+    expect(
+      await screen.findByText(
+        /^Vincula este teléfono para verificar el abordaje/,
+      ),
+    ).toBeTruthy();
+    await fireEvent.press(boton('Vincular mi teléfono'));
+    expect(mockRouter.push).toHaveBeenCalledWith('/dispositivo');
+  });
+
   it('la cámara entrega el mismo código muchas veces: se envía una sola vez', async () => {
     const { llamadas } = await abrirPasajero();
     const lectura = mockCamara.leer;
