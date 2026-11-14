@@ -54,7 +54,7 @@ jest.mock('@/dispositivo/keystore', () => ({
   firmar: jest.fn((antes: string, despues: string) =>
     mockFirmaCon(mockPar)(antes, despues),
   ),
-  firmarTrayecto: jest.fn((antes: string, despues: string) =>
+  firmarTrayecto: jest.fn((_rol: string, antes: string, despues: string) =>
     mockFirmaCon(mockParTrayecto)(antes, despues),
   ),
   nonceAleatorio: () =>
@@ -214,7 +214,13 @@ describe('Firma con la llave de trayecto (HU-22, D-22)', () => {
   it('firma el mismo mensaje canónico con la llave de trayecto, sin huella, y la cabecera nombra la llave', async () => {
     jest.mocked(firmar).mockClear();
     const cuerpo = '{"tipo":"abordaje"}';
-    const c = await cabecerasFirmaTrayecto('llave-1', 'POST', RUTA, cuerpo);
+    const c = await cabecerasFirmaTrayecto(
+      'conductor',
+      'llave-1',
+      'POST',
+      RUTA,
+      cuerpo,
+    );
     expect(Object.keys(c).sort()).toEqual(
       ['X-Firma', 'X-Llave-Trayecto-Id', 'X-Nonce', 'X-Timestamp'].sort(),
     );
@@ -276,6 +282,8 @@ describe('Firma con la llave de trayecto (HU-22, D-22)', () => {
       ),
     ).toBe(true);
     expect(firmarTrayecto).toHaveBeenCalledTimes(1);
+    // HU-23: el código lo firma la llave del conductor, no la de un viaje como pasajero.
+    expect(jest.mocked(firmarTrayecto).mock.calls[0][0]).toBe('conductor');
     expect(firmar).not.toHaveBeenCalled();
   });
 

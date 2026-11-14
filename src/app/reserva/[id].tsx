@@ -238,6 +238,17 @@ export default function ReservaPantalla() {
               />
             )}
             {/* HU-22: cada pasajero hace su abordaje (RN-7); la ventana la decide el servidor. */}
+            {/* HU-23: a bordo, el seguimiento y la bajada. */}
+            {estado === 'abordada' && (
+              <Boton
+                anchoCompleto
+                icono="near_me"
+                etiqueta={t('presencia.trayecto.ver_viaje')}
+                alPresionar={() =>
+                  router.push(`/viaje-activo/${reserva.reservaId}?rol=pasajero`)
+                }
+              />
+            )}
             {estado === 'confirmada' && (
               <Boton
                 anchoCompleto
@@ -251,7 +262,9 @@ export default function ReservaPantalla() {
             <Boton
               anchoCompleto
               variante={
-                estado === 'fallida' || estado === 'confirmada'
+                estado === 'fallida' ||
+                estado === 'confirmada' ||
+                estado === 'abordada'
                   ? 'secundario'
                   : 'primario'
               }

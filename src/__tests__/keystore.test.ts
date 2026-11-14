@@ -30,10 +30,10 @@ describe('Keystore sin módulo nativo (web y Jest)', () => {
     expect(await codigoDe(k().confirmarLlave())).toBe('KEYSTORE_NO_DISPONIBLE');
     expect(await codigoDe(k().firmar('m', 'n'))).toBe('KEYSTORE_NO_DISPONIBLE');
     expect(() => k().nonceAleatorio()).toThrow('KEYSTORE_NO_DISPONIBLE');
-    expect(await codigoDe(k().crearLlaveTrayecto())).toBe(
+    expect(await codigoDe(k().crearLlaveTrayecto('conductor'))).toBe(
       'KEYSTORE_NO_DISPONIBLE',
     );
-    expect(await codigoDe(k().firmarTrayecto('m', 'n'))).toBe(
+    expect(await codigoDe(k().firmarTrayecto('conductor', 'm', 'n'))).toBe(
       'KEYSTORE_NO_DISPONIBLE',
     );
   });
@@ -50,18 +50,21 @@ describe('Keystore con módulo nativo', () => {
   };
   beforeEach(() => jest.resetAllMocks());
 
-  it('llave de trayecto (HU-22): pública y firma tal como salen, sin textos de diálogo; SIN_LLAVE se conserva', async () => {
+  it('llave de trayecto (HU-22): pública y firma tal como salen, sin textos de diálogo, con el rol (HU-23); SIN_LLAVE se conserva', async () => {
     nativo.crearLlaveTrayecto.mockResolvedValue('PEM-T');
     nativo.firmarTrayecto.mockResolvedValue({ firma: 'Rg==', marca: '2' });
     const k = cargar(nativo);
-    expect(await k.crearLlaveTrayecto()).toBe('PEM-T');
-    expect(await k.firmarTrayecto('a', 'b')).toEqual({
+    expect(await k.crearLlaveTrayecto('pasajero')).toBe('PEM-T');
+    expect(nativo.crearLlaveTrayecto).toHaveBeenCalledWith('pasajero');
+    expect(await k.firmarTrayecto('conductor', 'a', 'b')).toEqual({
       firma: 'Rg==',
       marca: '2',
     });
-    expect(nativo.firmarTrayecto).toHaveBeenCalledWith('a', 'b');
+    expect(nativo.firmarTrayecto).toHaveBeenCalledWith('conductor', 'a', 'b');
     nativo.firmarTrayecto.mockRejectedValue({ code: 'SIN_LLAVE' });
-    expect(await codigoDe(k.firmarTrayecto('a', 'b'))).toBe('SIN_LLAVE');
+    expect(await codigoDe(k.firmarTrayecto('pasajero', 'a', 'b'))).toBe(
+      'SIN_LLAVE',
+    );
   });
 
   it('devuelve la llave pública y la firma tal como salen del Keystore', async () => {

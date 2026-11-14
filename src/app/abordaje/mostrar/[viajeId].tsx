@@ -10,6 +10,7 @@ import {
   type PasajeroViaje,
   pedirDesafio,
   registrarLlaveTrayecto,
+  type TipoEncuentro,
 } from '@/api/cliente';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { AvisoFallaAbordaje } from '@/componentes/AvisoFallaAbordaje';
@@ -32,8 +33,10 @@ import {
   fallaDeUbicacion,
   RENOVAR_MS,
   SONDEO_MS,
+  texto,
   yaAbordo,
 } from '@/viajes/abordaje';
+import { iniciarSeguimiento, llaveDelSeguimiento } from '@/viajes/seguimiento';
 
 /**
  * «Mostrar código» del conductor (HU-22 CA-1, DESIGN_SYSTEM §10.4): una huella al entrar registra la llave de
@@ -42,7 +45,12 @@ import {
 export default function MostrarCodigoPantalla() {
   const { cargando, usuario } = useSesion();
   const { top } = useSafeAreaInsets();
-  const { viajeId } = useLocalSearchParams<{ viajeId: string }>();
+  const { viajeId, tipo: tipoParam } = useLocalSearchParams<{
+    viajeId: string;
+    tipo?: string;
+  }>();
+  // HU-23: el mismo código sirve para la bajada, firmado con la llave que ya sigue el viaje.
+  const tipo: TipoEncuentro = tipoParam === 'bajada' ? 'bajada' : 'abordaje';
   const accion = useAccionSensible('mostrar_codigo');
   const [llave, setLlave] = useState<string | null>(null);
   const [desafio, setDesafio] = useState<Desafio | null>(null);
@@ -73,13 +81,14 @@ export default function MostrarCodigoPantalla() {
         if (!montada.current) return;
         if (lectura.tipo !== 'ok') {
           setDesafio(null);
-          setFalla(fallaDeUbicacion(lectura));
+          setFalla(fallaDeUbicacion(lectura, tipo));
           return;
         }
         const nuevo = await pedirDesafio(
           llaveTrayectoId,
           viajeId,
           lectura.posicion,
+          tipo,
         );
         if (!montada.current) return;
         abordados.current = contarAbordados(nuevo.pasajeros);
@@ -105,13 +114,34 @@ export default function MostrarCodigoPantalla() {
           });
           return;
         }
-        setFalla(fallaDeAbordaje(error, 'mostrar_codigo'));
+        setFalla(fallaDeAbordaje(error, 'mostrar_codigo', tipo));
       } finally {
         pidiendo.current = false;
       }
     },
-    [viajeId],
+    [viajeId, tipo],
   );
+
+  // Bajada: la llave del seguimiento ya vale; sin ella (app reinstalada, llave vencida) se pide la huella.
+  useEffect(() => {
+    if (tipo !== 'bajada') return;
+    void llaveDelSeguimiento({ rol: 'conductor', id: viajeId }).then((id) => {
+      if (!id || !montada.current) return;
+      setLlave(id);
+      void renovar(id);
+    });
+  }, [tipo, viajeId, renovar]);
+
+  // HU-23 CA-1: con el primer pasajero a bordo empieza a compartir la posición; con otra llave, sigue con esa.
+  const algunoAbordo = pasajeros.some((p) => yaAbordo(p.estado));
+  useEffect(() => {
+    if (llave && algunoAbordo)
+      void iniciarSeguimiento({
+        rol: 'conductor',
+        id: viajeId,
+        llaveTrayectoId: llave,
+      });
+  }, [llave, algunoAbordo, viajeId]);
 
   // Reloj de la cuenta regresiva y renovación a los 25 s.
   useEffect(() => {
@@ -154,8 +184,9 @@ export default function MostrarCodigoPantalla() {
     setFalla(null);
     try {
       const lectura = await posicionParaEncuentro();
-      if (lectura.tipo !== 'ok') return setFalla(fallaDeUbicacion(lectura));
-      const llavePublicaPem = await crearLlaveTrayecto();
+      if (lectura.tipo !== 'ok')
+        return setFalla(fallaDeUbicacion(lectura, tipo));
+      const llavePublicaPem = await crearLlaveTrayecto('conductor');
       const nonce = nonceAleatorio();
       const tokenIntegridad = await pedirTokenIntegridad(nonce);
       const r = await accion.ejecutar((opciones) =>
@@ -169,7 +200,8 @@ export default function MostrarCodigoPantalla() {
       setLlave(r.llaveTrayectoId);
       await renovar(r.llaveTrayectoId);
     } catch (error) {
-      if (montada.current) setFalla(fallaDeAbordaje(error, 'mostrar_codigo'));
+      if (montada.current)
+        setFalla(fallaDeAbordaje(error, 'mostrar_codigo', tipo));
     }
   };
 
@@ -187,14 +219,14 @@ export default function MostrarCodigoPantalla() {
           alPresionar={() => router.back()}
         />
         <Text style={estilos.titulo} accessibilityRole="header">
-          {t('presencia.abordaje.titulo_conductor')}
+          {texto(tipo, 'titulo_conductor')}
         </Text>
       </View>
 
       <ScrollView contentContainerStyle={estilos.contenido}>
         {!llave && (
           <Text style={estilos.secundario}>
-            {t('presencia.abordaje.intro_conductor')}
+            {texto(tipo, 'intro_conductor')}
           </Text>
         )}
 
@@ -222,7 +254,7 @@ export default function MostrarCodigoPantalla() {
           <>
             <View style={estilos.qr}>
               <Image
-                accessibilityLabel={t('presencia.abordaje.qr')}
+                accessibilityLabel={texto(tipo, 'qr')}
                 source={{
                   uri: `data:image/png;base64,${desafio.qrImagenBase64}`,
                 }}
@@ -260,15 +292,23 @@ export default function MostrarCodigoPantalla() {
               return (
                 <View key={p.reservaId} style={estilos.fila}>
                   <Text style={estilos.enfasis}>{p.nombre}</Text>
-                  <EtiquetaEstado
-                    dominio="reserva"
-                    estado={listo ? 'verificada' : 'pendiente'}
-                    texto={t(
-                      listo
-                        ? 'presencia.abordaje.pasajero_verificado'
-                        : 'presencia.abordaje.pasajero_esperando',
-                    )}
-                  />
+                  {tipo === 'bajada' ? (
+                    <EtiquetaEstado
+                      dominio="reserva"
+                      estado={p.estado}
+                      texto={t(`reservas.estado.${p.estado}`)}
+                    />
+                  ) : (
+                    <EtiquetaEstado
+                      dominio="reserva"
+                      estado={listo ? 'verificada' : 'pendiente'}
+                      texto={t(
+                        listo
+                          ? 'presencia.abordaje.pasajero_verificado'
+                          : 'presencia.abordaje.pasajero_esperando',
+                      )}
+                    />
+                  )}
                 </View>
               );
             })}
@@ -276,6 +316,19 @@ export default function MostrarCodigoPantalla() {
         )}
       </ScrollView>
 
+      {tipo === 'abordaje' && algunoAbordo && (
+        <ZonaAccion>
+          <Boton
+            anchoCompleto
+            variante="secundario"
+            icono="near_me"
+            etiqueta={t('presencia.trayecto.ver_viaje')}
+            alPresionar={() =>
+              router.replace(`/viaje-activo/${viajeId}?rol=conductor`)
+            }
+          />
+        </ZonaAccion>
+      )}
       {!llave && (
         <ZonaAccion>
           <ConfirmacionBiometrica

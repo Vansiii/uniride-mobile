@@ -38,7 +38,10 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "UniRide usa tu ubicación para buscar viajes que salgan cerca de ti."
+          "locationWhenInUsePermission": "UniRide usa tu ubicación para buscar viajes que salgan cerca de ti.",
+          "locationAlwaysAndWhenInUsePermission": "UniRide comparte tu ubicación cada 15 s durante el viaje, también con la pantalla apagada, para verificar que viajaron juntos.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
         }
       ],
       [

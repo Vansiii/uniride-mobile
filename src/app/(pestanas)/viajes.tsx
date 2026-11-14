@@ -77,6 +77,17 @@ function ViajePublicado({ viaje }: { viaje: MiViaje }) {
           alPresionar={() => router.push(`/abordaje/mostrar/${viaje.id}`)}
         />
       )}
+      {/* HU-23: con pasajeros a bordo, el seguimiento y la bajada. */}
+      {viaje.estado === 'en_curso' && (
+        <Boton
+          variante="secundario"
+          icono="near_me"
+          etiqueta={t('presencia.trayecto.ver_viaje')}
+          alPresionar={() =>
+            router.push(`/viaje-activo/${viaje.id}?rol=conductor`)
+          }
+        />
+      )}
       <Boton
         variante="secundario"
         icono={abierto ? 'expand_less' : 'expand_more'}

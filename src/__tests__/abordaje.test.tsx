@@ -431,8 +431,11 @@ describe('HU-22 · «Escanear QR» del pasajero (CA-2)', () => {
     expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledWith(
       'Abordaje verificado',
     );
-    await fireEvent.press(boton('Ver mis viajes'));
-    expect(mockRouter.replace).toHaveBeenCalledWith('/viajes');
+    expect(crearLlaveTrayecto).toHaveBeenCalledWith('pasajero');
+    await fireEvent.press(boton('Ver viaje en curso'));
+    expect(mockRouter.replace).toHaveBeenCalledWith(
+      `/viaje-activo/${RESERVA}?rol=pasajero`,
+    );
   });
 
   it('sin teléfono vinculado pide vincularlo y lleva a «Mi teléfono»', async () => {

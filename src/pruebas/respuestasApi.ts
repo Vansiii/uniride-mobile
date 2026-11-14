@@ -1315,6 +1315,7 @@ export const reservaReal = {
   /** GET /reservas/{id} */
   pendiente: ok(200, reservaDetalle('pendiente', 'publicado', null)),
   confirmada: ok(200, reservaDetalle('confirmada', 'reservado', HASH_BLOQUEO)),
+  abordada: ok(200, reservaDetalle('abordada', 'en_curso', HASH_BLOQUEO)),
   fallida: ok(200, reservaDetalle('fallida', 'publicado', null)),
   /** GET /reservas/mias → 200 */
   mias: ok(200, {
@@ -1382,7 +1383,12 @@ export const presenciaReal = {
     pasajeros: pasajeroDe('abordada'),
   }),
   /** POST /reservas/{id}/abordaje → 200 */
-  abordada: ok(200, { estado: 'abordada', yaVerificado: false }),
+  /** HU-23: el abordaje devuelve la llave con la que el pasajero firma sus posiciones (prueba real del 14/11). */
+  abordada: ok(200, {
+    estado: 'abordada',
+    yaVerificado: false,
+    llaveTrayectoId: LLAVE_TRAYECTO_ID,
+  }),
   yaAbordada: ok(200, { estado: 'abordada', yaVerificado: true }),
   fueraDeVentana: ok(409, {
     codigo: 'FUERA_DE_VENTANA',
@@ -1416,6 +1422,38 @@ export const presenciaReal = {
   sinReserva: ok(409, {
     codigo: 'SIN_RESERVA',
     mensaje: 'No tienes una reserva en este viaje.',
+  }),
+};
+
+/** HU-23: seguimiento y bajada, con las formas de la prueba real de la API (14/11). */
+export const trayectoReal = {
+  /** POST /viajes/{id}/posiciones y /reservas/{id}/posiciones → 202 */
+  aceptadas: ok(202, { aceptados: 20, ignorados: 0 }),
+  /** Tras la bajada del pasajero. */
+  noAbordada: ok(409, {
+    codigo: 'RESERVA_NO_ABORDADA',
+    mensaje: 'Esta reserva no está a bordo.',
+  }),
+  /** Conductor sin nadie a bordo. */
+  noEnCurso: ok(409, {
+    codigo: 'VIAJE_NO_EN_CURSO',
+    mensaje: 'Este viaje no está en curso.',
+  }),
+  /** POST /reservas/{id}/bajada → 200 */
+  verificada: ok(200, {
+    estado: 'verificada',
+    motivo: null,
+    yaVerificado: false,
+  }),
+  saltoImposible: ok(200, {
+    estado: 'verificacion_fallida',
+    motivo: 'salto_imposible',
+    yaVerificado: false,
+  }),
+  datosInsuficientes: ok(200, {
+    estado: 'verificacion_fallida',
+    motivo: 'datos_insuficientes',
+    yaVerificado: false,
   }),
 };
 

@@ -665,6 +665,40 @@
       "vincular_requerido": "Vincula este teléfono para verificar el abordaje: el código y cada escaneo se firman desde él.",
       "firma_vencida": "El código dejó de renovarse. Confirma otra vez con tu huella.",
       "error": "No pudimos completar la verificación. Vuelve a intentarlo."
+    },
+    "bajada": {
+      "titulo_conductor": "Código de bajada",
+      "intro_conductor": "Tu pasajero escanea este código al bajar para verificar el viaje. Se renueva solo.",
+      "qr": "Código QR de bajada",
+      "titulo_pasajero": "Escanear código de bajada",
+      "verificado": "Viaje verificado",
+      "verificado_texto": "Tu viaje quedó verificado. ¡Gracias por viajar con UniRide!",
+      "ya_verificado": "Este viaje ya estaba verificado.",
+      "no_verificado": "Viaje no verificado",
+      "no_abordada": "Esta reserva no está a bordo: no hay bajada que verificar.",
+      "viaje_no_en_curso": "Este viaje ya no está en curso.",
+      "qr_ajeno": "Ese no es un código de bajada de UniRide.",
+      "activa_ubicacion": "Activa tu ubicación para verificar la bajada.",
+      "permiso_ubicacion": "UniRide necesita tu ubicación para verificar la bajada. Dale permiso en los ajustes del teléfono.",
+      "vincular_requerido": "Vincula este teléfono para verificar la bajada: el código y cada escaneo se firman desde él.",
+      "error": "No pudimos verificar la bajada. Vuelve a intentarlo."
+    },
+    "trayecto": {
+      "titulo": "En viaje a {destino}",
+      "titulo_sin_destino": "Viaje en curso",
+      "compartiendo": "Compartiendo tu ubicación cada 15 s",
+      "notificacion_titulo": "UniRide · Viaje en curso",
+      "sin_conexion": "Sin señal. Guardamos tus posiciones y las enviamos cuando vuelva la conexión.",
+      "activa_ubicacion": "Tu ubicación está apagada. Actívala: sin ella el viaje puede no verificarse.",
+      "permiso_segundo_plano": "Para seguir con la pantalla apagada, UniRide necesita tu ubicación «Todo el tiempo». Sin ese permiso el viaje puede no verificarse.",
+      "permitir_siempre": "Permitir todo el tiempo",
+      "detenido": "Ya no se comparte tu ubicación en este viaje.",
+      "firma_vencida": "Tus posiciones dejaron de aceptarse porque cambió la llave de este teléfono. Vuelve a confirmar con tu huella desde el código del viaje.",
+      "verificacion_fallida": "No pudimos verificar que viajaron juntos. El pago queda retenido mientras se revisa.",
+      "datos_insuficientes": "No hay suficientes datos del trayecto. El pago queda retenido mientras se revisa.",
+      "bajada_conductor": "Mostrar código de bajada",
+      "bajada_pasajero": "Escanear QR de bajada",
+      "ver_viaje": "Ver viaje en curso"
     }
   }
 }
