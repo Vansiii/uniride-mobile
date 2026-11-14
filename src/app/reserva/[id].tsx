@@ -237,9 +237,24 @@ export default function ReservaPantalla() {
                 }
               />
             )}
+            {/* HU-22: cada pasajero hace su abordaje (RN-7); la ventana la decide el servidor. */}
+            {estado === 'confirmada' && (
+              <Boton
+                anchoCompleto
+                icono="qr_code_scanner"
+                etiqueta={t('presencia.abordaje.boton_escanear')}
+                alPresionar={() =>
+                  router.push(`/abordaje/escanear/${reserva.reservaId}`)
+                }
+              />
+            )}
             <Boton
               anchoCompleto
-              variante={estado === 'fallida' ? 'secundario' : 'primario'}
+              variante={
+                estado === 'fallida' || estado === 'confirmada'
+                  ? 'secundario'
+                  : 'primario'
+              }
               etiqueta={t('reservas.resultado.ver_mis_viajes')}
               alPresionar={() => router.replace('/viajes')}
             />

@@ -1,5 +1,5 @@
 import * as AlmacenSeguro from 'expo-secure-store';
-import { cabecerasFirma } from '@/dispositivo/firma';
+import { cabecerasFirma, cabecerasFirmaTrayecto } from '@/dispositivo/firma';
 import type { DialogoFirma } from '@/dispositivo/keystore';
 
 const BASE = process.env.EXPO_PUBLIC_API_URL ?? 'http://10.0.2.2:3000/api/v1';
@@ -387,6 +387,8 @@ export async function consultarMiDispositivo(): Promise<MiDispositivo | null> {
 export interface OpcionesFirma {
   dialogo?: DialogoFirma;
   alFirmar?: () => void;
+  /** `X-Nonce` elegido antes de armar el cuerpo, cuando este lo cita (token de integridad, HU-22 RN-5). */
+  nonce?: string;
 }
 
 /**
@@ -411,7 +413,18 @@ export async function solicitarFirmado<T>(
     texto,
     opciones.dialogo,
     opciones.alFirmar,
+    opciones.nonce,
   );
+  return enviarFirmado<T>(ruta, metodo, cuerpo, firma);
+}
+
+/** Envía con la firma ya hecha; si solo venció la sesión, renueva y reenvía la misma firma (su nonce no se gastó). */
+async function enviarFirmado<T>(
+  ruta: string,
+  metodo: string,
+  cuerpo: unknown,
+  firma: Record<string, string>,
+): Promise<T> {
   let respuesta = await enviar(ruta, metodo, cuerpo, firma);
   if (
     respuesta.status === 401 &&
@@ -426,6 +439,23 @@ export async function solicitarFirmado<T>(
   )
     respuesta = await enviar(ruta, metodo, cuerpo, firma);
   return leer<T>(respuesta);
+}
+
+/** Petición firmada con la llave de trayecto (D-22): sin huella, para renovar el código del abordaje. */
+async function solicitarFirmadoTrayecto<T>(
+  llaveTrayectoId: string,
+  ruta: string,
+  metodo: string,
+  cuerpo: unknown,
+): Promise<T> {
+  const url = new URL(`${BASE}${ruta}`);
+  const firma = await cabecerasFirmaTrayecto(
+    llaveTrayectoId,
+    metodo,
+    url.pathname + url.search,
+    JSON.stringify(cuerpo),
+  );
+  return enviarFirmado<T>(ruta, metodo, cuerpo, firma);
 }
 
 export type EstadoIdentidad =
@@ -765,5 +795,73 @@ export const publicarViaje = (datos: DatosViaje, opciones?: OpcionesFirma) =>
     '/viajes',
     'POST',
     datos,
+    opciones,
+  );
+
+/** Posición del GPS para el encuentro (HU-22 RN-4); el servidor decide si sirve. */
+export interface PosicionEncuentro {
+  lat: number;
+  lng: number;
+  precisionM: number;
+  tomadaEn: number;
+  simulada: boolean;
+}
+
+export interface Desafio {
+  nonce: string;
+  venceEn: string;
+  qrTexto: string;
+  qrImagenBase64: string;
+  pasajeros: PasajeroViaje[];
+}
+
+/** Conductor: registra la llave de trayecto del viaje con huella e integridad (HU-22 CA-1). */
+export const registrarLlaveTrayecto = (
+  viajeId: string,
+  cuerpo: { llavePublicaPem: string; tokenIntegridad: string },
+  opciones: OpcionesFirma,
+) =>
+  solicitarFirmado<{ llaveTrayectoId: string }>(
+    `/viajes/${encodeURIComponent(viajeId)}/llave-trayecto`,
+    'POST',
+    cuerpo,
+    opciones,
+  );
+
+/** Conductor: código nuevo de 30 s, firmado con la llave de trayecto, sin huella (RN-1, RN-6). */
+export const pedirDesafio = (
+  llaveTrayectoId: string,
+  viajeId: string,
+  posicion: PosicionEncuentro,
+) =>
+  solicitarFirmadoTrayecto<Desafio>(
+    llaveTrayectoId,
+    `/viajes/${encodeURIComponent(viajeId)}/desafios`,
+    'POST',
+    { tipo: 'abordaje', posicion },
+  );
+
+/** Conductor, sin firma: si su código sigue sin usar y sus pasajeros (sondeo de 3 s, RN-1). */
+export const consultarDesafio = (viajeId: string, nonce: string) =>
+  solicitar<{ vigente: boolean; pasajeros: PasajeroViaje[] }>(
+    `/viajes/${encodeURIComponent(viajeId)}/desafios/${encodeURIComponent(nonce)}`,
+    'GET',
+  );
+
+/** Pasajero: el código escaneado, su posición, integridad y su llave de trayecto, con huella (CA-2). */
+export const abordar = (
+  reservaId: string,
+  cuerpo: {
+    nonce: string;
+    posicion: PosicionEncuentro;
+    tokenIntegridad: string;
+    llavePublicaTrayectoPem: string;
+  },
+  opciones: OpcionesFirma,
+) =>
+  solicitarFirmado<{ estado: 'abordada'; yaVerificado: boolean }>(
+    `/reservas/${encodeURIComponent(reservaId)}/abordaje`,
+    'POST',
+    cuerpo,
     opciones,
   );

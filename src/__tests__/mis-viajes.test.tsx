@@ -112,6 +112,18 @@ describe('HU-19 CA-14 · Mis viajes', () => {
     expect(screen.queryByText('Prueba')).toBeNull();
   });
 
+  it('HU-22: con un viaje reservado, el conductor abre «Mostrar código»', async () => {
+    await abrir();
+    await fireEvent.press(
+      await screen.findByRole('button', {
+        name: 'Mostrar código de abordaje',
+      }),
+    );
+    expect(mockRouter.push).toHaveBeenCalledWith(
+      `/abordaje/mostrar/${rr.viajeId}`,
+    );
+  });
+
   it('un viaje sin pasajeros lo dice', async () => {
     await abrir({ [PASAJEROS]: { estado: 200, cuerpo: [] } });
     await fireEvent.press(
