@@ -216,6 +216,8 @@ TaskManager.defineTask<{ locations: Location.LocationObject[] }>(
   },
 );
 
+// El tercero lo pide el render en servidor de la versión web.
+const leerFoto = () => foto;
 const suscribir = (oyente: () => void) => {
   oyentes.add(oyente);
   return () => oyentes.delete(oyente);
@@ -223,7 +225,7 @@ const suscribir = (oyente: () => void) => {
 
 /** Estado de ese viaje o reserva para la pantalla; `ruta` es `undefined` si ya no se comparte. */
 export function useSeguimiento(s: Pick<Seguimiento, 'rol' | 'id'>) {
-  const f = useSyncExternalStore(suscribir, () => foto);
+  const f = useSyncExternalStore(suscribir, leerFoto, leerFoto);
   return { ruta: f.rutas[rutaDe(s)], enMarcha: f.enMarcha };
 }
 
