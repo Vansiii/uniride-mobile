@@ -7,7 +7,12 @@ import {
 import { AccessibilityInfo } from 'react-native';
 import MisViajesPantalla from '@/app/(pestanas)/viajes';
 import { Reserva, cerrarSesion } from '@/api/cliente';
-import { proximaReserva } from '@/componentes/ViajeActivo';
+import {
+  proximaReserva,
+  ViajeActivo,
+  viajeAnclado,
+} from '@/componentes/ViajeActivo';
+import { MiViaje } from '@/api/cliente';
 import { ProveedorSesion } from '@/contexto/sesion';
 import {
   reservaReal as rr,
@@ -236,5 +241,119 @@ describe('HU-19 · tarjeta del viaje activo', () => {
 
   it('sin reservas no hay tarjeta', () => {
     expect(proximaReserva([], AHORA)).toBeUndefined();
+  });
+});
+
+describe('HU-23 · viaje activo anclado (DESIGN_SYSTEM N7)', () => {
+  const AHORA = Date.parse('2099-03-10T12:00:00.000Z');
+  const MIS_VIAJES = rr.misViajes.cuerpo as MiViaje[];
+  const enMin = (min: number) => new Date(AHORA + min * 60_000).toISOString();
+  const reserva = (estado: Reserva['estado'], min: number): Reserva => ({
+    ...MIAS[0],
+    reservaId: `r${min}`,
+    estado,
+    viaje: { ...MIAS[0].viaje, fechaHoraSalida: enMin(min) },
+  });
+  const viaje = (estado: string, min: number): MiViaje => ({
+    ...MIS_VIAJES[0],
+    id: `v${min}`,
+    estado,
+    fechaHoraSalida: enMin(min),
+  });
+
+  it('el viaje en curso va primero, sin límite de hora: el del conductor y luego el de a bordo', () => {
+    const conduzco = viaje('en_curso', -300);
+    const aBordo = reserva('abordada', -300);
+    const pronto = reserva('confirmada', 10);
+    expect(viajeAnclado([pronto, aBordo], [conduzco], AHORA)).toEqual({
+      viaje: conduzco,
+    });
+    expect(viajeAnclado([pronto, aBordo], [], AHORA)).toEqual({
+      reserva: aBordo,
+    });
+    // A bordo sigue siendo la próxima reserva aunque haya salido hace más de una hora.
+    expect(proximaReserva([aBordo], AHORA)).toBe(aBordo);
+  });
+
+  it('desde 30 min antes de la salida hasta una hora después; el que sale primero', () => {
+    expect(
+      viajeAnclado([reserva('confirmada', 31)], [], AHORA),
+    ).toBeUndefined();
+    const reservada = reserva('confirmada', 30);
+    expect(viajeAnclado([reservada], [], AHORA)).toEqual({
+      reserva: reservada,
+    });
+    const ofrezco = viaje('reservado', 20);
+    expect(viajeAnclado([reservada], [ofrezco], AHORA)).toEqual({
+      viaje: ofrezco,
+    });
+    expect(
+      viajeAnclado(
+        [reserva('confirmada', -61)],
+        [viaje('reservado', -61)],
+        AHORA,
+      ),
+    ).toBeUndefined();
+    // Una reserva pendiente o un viaje sin reservas todavía no tienen acción.
+    expect(
+      viajeAnclado([reserva('pendiente', 5)], [viaje('publicado', 5)], AHORA),
+    ).toBeUndefined();
+  });
+
+  it('Mis viajes: el viaje en curso va arriba con «Ver viaje en curso» como acción principal, sin repetirse', async () => {
+    await abrir({
+      'GET /viajes/mis-viajes': {
+        estado: 200,
+        cuerpo: [{ ...MIS_VIAJES[0], estado: 'en_curso' }],
+      },
+    });
+    expect(await screen.findByText('Tu viaje en curso')).toBeTruthy();
+    expect(screen.queryByText('Viajes que ofrezco')).toBeNull();
+    const botones = screen
+      .getAllByRole('button')
+      .map((b) => b.props.accessibilityLabel);
+    expect(botones.indexOf('Ver viaje en curso')).toBeLessThan(
+      botones.indexOf('Mostrar código de abordaje'),
+    );
+    await fireEvent.press(
+      screen.getByRole('button', { name: 'Ver viaje en curso' }),
+    );
+    expect(mockRouter.push).toHaveBeenCalledWith(
+      `/viaje-activo/${rr.viajeId}?rol=conductor`,
+    );
+  });
+
+  it('Buscar: a bordo, la tarjeta arriba lleva al viaje en curso', async () => {
+    simularFetch({
+      ...BASE,
+      'GET /reservas/mias': {
+        estado: 200,
+        cuerpo: { reservas: [{ ...MIAS[0], estado: 'abordada' }] },
+      },
+      'GET /viajes/mis-viajes': SIN_VIAJES,
+    });
+    await render(
+      <ProveedorSesion>
+        <ViajeActivo />
+      </ProveedorSesion>,
+    );
+    expect(await screen.findByText('Tu viaje en curso')).toBeTruthy();
+    await fireEvent.press(
+      screen.getByRole('button', { name: 'Ver viaje en curso' }),
+    );
+    expect(mockRouter.push).toHaveBeenCalledWith(
+      `/viaje-activo/${rr.reservaId}?rol=pasajero`,
+    );
+  });
+
+  it('Buscar: sin viaje del momento sigue la próxima reserva, sin acción (HU-19)', async () => {
+    simularFetch(BASE);
+    await render(
+      <ProveedorSesion>
+        <ViajeActivo />
+      </ProveedorSesion>,
+    );
+    expect(await screen.findByText('Tu próximo viaje')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Escanear/ })).toBeNull();
   });
 });

@@ -5,127 +5,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   consultarMisReservas,
   consultarMisViajes,
-  consultarPasajerosDelViaje,
   MiViaje,
-  PasajeroViaje,
   Reserva,
 } from '@/api/cliente';
 import { Entra, Esqueleto } from '@/componentes/Animado';
 import { Boton } from '@/componentes/Boton';
-import { Aviso, EtiquetaEstado } from '@/componentes/Mensajes';
+import { Aviso } from '@/componentes/Mensajes';
+import { TarjetaMiViaje } from '@/componentes/TarjetaMiViaje';
 import { TarjetaReserva } from '@/componentes/TarjetaReserva';
-import {
-  asientosLibres,
-  precioUrc,
-  Trayecto,
-} from '@/componentes/TarjetaViaje';
+import { TarjetaAnclada, viajeAnclado } from '@/componentes/ViajeActivo';
 import { useSesion } from '@/contexto/sesion';
 import { useAlEnfocar } from '@/hooks/useAlEnfocar';
-import { formatearDia, formatearHoraLocal } from '@/formato';
 import { t } from '@/i18n';
-import {
-  colores,
-  espacio,
-  radio,
-  sombraTarjeta,
-  tipografia,
-} from '@/tema/tokens';
-
-/** Un viaje que ofrezco: sus asientos y, a pedido, el nombre de pila y el estado de cada pasajero (HU-19 CA-14, RN-9). */
-function ViajePublicado({ viaje }: { viaje: MiViaje }) {
-  const [pasajeros, setPasajeros] = useState<PasajeroViaje[] | null>(null);
-  const [abierto, setAbierto] = useState(false);
-  const [cargando, setCargando] = useState(false);
-  const [falla, setFalla] = useState(false);
-
-  const alternar = () => {
-    if (abierto) return setAbierto(false);
-    setAbierto(true);
-    setCargando(true);
-    setFalla(false);
-    consultarPasajerosDelViaje(viaje.id)
-      .then(setPasajeros)
-      .catch(() => setFalla(true))
-      .finally(() => setCargando(false));
-  };
-
-  return (
-    <View style={estilos.tarjeta}>
-      <View style={estilos.cabecera}>
-        <Text style={estilos.hora}>
-          {formatearDia(viaje.fechaHoraSalida)} ·{' '}
-          {formatearHoraLocal(viaje.fechaHoraSalida)}
-        </Text>
-        <EtiquetaEstado
-          dominio="viaje"
-          estado={viaje.estado}
-          texto={t(`viajes.estado.${viaje.estado}`)}
-        />
-      </View>
-      <Trayecto origen={viaje.origenNombre} destino={viaje.destinoNombre} />
-      <View style={estilos.cabecera}>
-        <Text style={estilos.secundario}>
-          {asientosLibres(viaje.cuposDisponibles)}
-        </Text>
-        <Text style={estilos.enfasis}>{precioUrc(viaje.precioPorAsiento)}</Text>
-      </View>
-      {/* HU-22: con reservas, el conductor muestra el código; la ventana de abordaje la decide el servidor (CA-11). */}
-      {(viaje.estado === 'reservado' || viaje.estado === 'en_curso') && (
-        <Boton
-          icono="qr_code_2"
-          etiqueta={t('reservas.mis_viajes.mostrar_codigo')}
-          alPresionar={() => router.push(`/abordaje/mostrar/${viaje.id}`)}
-        />
-      )}
-      {/* HU-23: con pasajeros a bordo, el seguimiento y la bajada. */}
-      {viaje.estado === 'en_curso' && (
-        <Boton
-          variante="secundario"
-          icono="near_me"
-          etiqueta={t('presencia.trayecto.ver_viaje')}
-          alPresionar={() =>
-            router.push(`/viaje-activo/${viaje.id}?rol=conductor`)
-          }
-        />
-      )}
-      <Boton
-        variante="secundario"
-        icono={abierto ? 'expand_less' : 'expand_more'}
-        etiqueta={t(
-          abierto
-            ? 'reservas.mis_viajes.ocultar_pasajeros'
-            : 'reservas.mis_viajes.ver_pasajeros',
-        )}
-        alPresionar={alternar}
-      />
-      {abierto && (
-        <View style={estilos.pasajeros}>
-          {cargando && <Esqueleto alto={44} redondeo={radio.m} />}
-          {falla && (
-            <Aviso tono="peligro">
-              {t('reservas.mis_viajes.pasajeros_error')}
-            </Aviso>
-          )}
-          {pasajeros?.length === 0 && !cargando && (
-            <Text style={estilos.secundario}>
-              {t('reservas.mis_viajes.sin_pasajeros')}
-            </Text>
-          )}
-          {pasajeros?.map((p) => (
-            <View key={p.reservaId} style={estilos.cabecera}>
-              <Text style={estilos.enfasis}>{p.nombre}</Text>
-              <EtiquetaEstado
-                dominio="reserva"
-                estado={p.estado}
-                texto={t(`reservas.estado.${p.estado}`)}
-              />
-            </View>
-          ))}
-        </View>
-      )}
-    </View>
-  );
-}
+import { colores, espacio, radio, tipografia } from '@/tema/tokens';
 
 /** «Mis viajes» (HU-19 CA-14): lo que reservé como pasajero y lo que ofrezco como conductor. */
 export default function MisViajesPantalla() {
@@ -164,6 +56,10 @@ function Contenido() {
   if (!usuario) return <Redirect href="/iniciar-sesion" />;
 
   const vacio = reservas?.length === 0 && viajes?.length === 0;
+  // DESIGN_SYSTEM N7: el viaje del momento va arriba con su acción y no se repite en su lista.
+  const anclado = viajeAnclado(reservas ?? [], viajes ?? []);
+  const misReservas = reservas?.filter((r) => r !== anclado?.reserva);
+  const misViajes = viajes?.filter((v) => v !== anclado?.viaje);
   return (
     <ScrollView
       style={estilos.raiz}
@@ -217,12 +113,14 @@ function Contenido() {
         </Entra>
       )}
 
-      {reservas && reservas.length > 0 && (
+      {anclado && <TarjetaAnclada anclado={anclado} />}
+
+      {misReservas && misReservas.length > 0 && (
         <View style={estilos.seccion}>
           <Text style={estilos.subtitulo} accessibilityRole="header">
             {t('reservas.mis_viajes.reservas_titulo')}
           </Text>
-          {reservas.map((r) => (
+          {misReservas.map((r) => (
             <TarjetaReserva
               key={r.reservaId}
               reserva={r}
@@ -232,13 +130,13 @@ function Contenido() {
         </View>
       )}
 
-      {viajes && viajes.length > 0 && (
+      {misViajes && misViajes.length > 0 && (
         <View style={estilos.seccion}>
           <Text style={estilos.subtitulo} accessibilityRole="header">
             {t('reservas.mis_viajes.publicados_titulo')}
           </Text>
-          {viajes.map((v) => (
-            <ViajePublicado key={v.id} viaje={v} />
+          {misViajes.map((v) => (
+            <TarjetaMiViaje key={v.id} viaje={v} />
           ))}
         </View>
       )}
@@ -253,24 +151,5 @@ const estilos = StyleSheet.create({
   subtitulo: { ...tipografia.titulo, color: colores.texto },
   seccion: { gap: espacio(3) },
   vacio: { gap: espacio(3), alignItems: 'stretch' },
-  tarjeta: {
-    gap: espacio(3),
-    padding: espacio(4),
-    borderRadius: radio.l,
-    borderWidth: 1,
-    borderColor: colores.borde,
-    backgroundColor: colores.superficie,
-    ...sombraTarjeta,
-  },
-  cabecera: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: espacio(2),
-  },
-  pasajeros: { gap: espacio(2) },
-  hora: { ...tipografia.subtitulo, color: colores.texto },
-  enfasis: { ...tipografia.cuerpoEnfasis, color: colores.texto },
   secundario: { ...tipografia.secundario, color: colores.textoSecundario },
 });

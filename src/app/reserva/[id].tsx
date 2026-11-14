@@ -15,6 +15,7 @@ import { ZonaAccion } from '@/componentes/Estructura';
 import { Ilustracion } from '@/componentes/Ilustracion';
 import { Aviso, EtiquetaEstado } from '@/componentes/Mensajes';
 import { Trayecto } from '@/componentes/TarjetaViaje';
+import { AccionDeReserva } from '@/componentes/ViajeActivo';
 import { useSesion } from '@/contexto/sesion';
 import { formatearDia, formatearHoraLocal, formatearMonto } from '@/formato';
 import { con, t } from '@/i18n';
@@ -239,26 +240,7 @@ export default function ReservaPantalla() {
             )}
             {/* HU-22: cada pasajero hace su abordaje (RN-7); la ventana la decide el servidor. */}
             {/* HU-23: a bordo, el seguimiento y la bajada. */}
-            {estado === 'abordada' && (
-              <Boton
-                anchoCompleto
-                icono="near_me"
-                etiqueta={t('presencia.trayecto.ver_viaje')}
-                alPresionar={() =>
-                  router.push(`/viaje-activo/${reserva.reservaId}?rol=pasajero`)
-                }
-              />
-            )}
-            {estado === 'confirmada' && (
-              <Boton
-                anchoCompleto
-                icono="qr_code_scanner"
-                etiqueta={t('presencia.abordaje.boton_escanear')}
-                alPresionar={() =>
-                  router.push(`/abordaje/escanear/${reserva.reservaId}`)
-                }
-              />
-            )}
+            {reserva && <AccionDeReserva reserva={reserva} anchoCompleto />}
             <Boton
               anchoCompleto
               variante={

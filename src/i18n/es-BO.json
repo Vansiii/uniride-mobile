@@ -619,6 +619,7 @@
       "pasajeros_error": "No pudimos cargar a tus pasajeros. Inténtalo de nuevo.",
       "error": "No pudimos cargar tus viajes. Revisa tu conexión e inténtalo de nuevo.",
       "activo_titulo": "Tu próximo viaje",
+      "activo_en_curso": "Tu viaje en curso",
       "reserva_accesible": "Reserva con {conductor}, de {origen} a {destino}, {dia} a las {hora}, {estado}, {monto} URC en garantía",
       "mostrar_codigo": "Mostrar código de abordaje"
     }
