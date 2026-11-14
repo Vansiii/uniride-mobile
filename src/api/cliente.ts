@@ -720,6 +720,13 @@ export interface ReservaDetalle extends Reserva {
   /** Transacción del bloqueo en garantía; `null` mientras está pendiente. */
   hashTx: string | null;
   exploradorUrl: string | null;
+  /** HU-24: el pago al conductor; `null` hasta que la reserva queda verificada. Lo ven el pasajero y el conductor. */
+  pago: {
+    estado: Movimiento['estado'];
+    monto: string;
+    hashTx: string | null;
+    exploradorUrl: string | null;
+  } | null;
 }
 
 export interface PasajeroViaje {

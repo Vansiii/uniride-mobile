@@ -192,6 +192,44 @@ describe('HU-19 · resultado de la reserva', () => {
     expect(veces(llamadas, CONSULTAR)).toBeGreaterThan(antes);
   });
 
+  it('HU-24 CA-1: verificada, el pago al conductor sale Pendiente y deja de estar en garantía; luego Pagado', async () => {
+    const { llamadas } = await abrir({
+      [CONSULTAR]: [rr.verificada, rr.verificada, rr.pagada],
+    });
+    expect(
+      await screen.findByText('Pago al conductor: 10,50 URC'),
+    ).toBeTruthy();
+    expect(screen.getByText('Pendiente')).toBeTruthy();
+    expect(
+      screen.getByText(/Se está registrando en la red de prueba/),
+    ).toBeTruthy();
+    expect(screen.queryByText('En garantía')).toBeNull();
+
+    await avanzar(5000);
+    expect(await screen.findByText('Pagado')).toBeTruthy();
+    expect(screen.queryByText(/Se está registrando/)).toBeNull();
+    const consultas = veces(llamadas, CONSULTAR);
+    // Confirmado: ya no se vuelve a preguntar.
+    await avanzar(20_000);
+    expect(veces(llamadas, CONSULTAR)).toBe(consultas);
+  });
+
+  it('HU-24: el pago confirmado abre su transacción solo si hay explorador', async () => {
+    const abrirUrl = jest.spyOn(Linking, 'openURL').mockResolvedValue();
+    const cuerpo = rr.pagada.cuerpo as { pago: object };
+    const url = `https://amoy.polygonscan.com/tx/${rr.hashLiberacion}`;
+    await abrir({
+      [CONSULTAR]: {
+        ...rr.pagada,
+        cuerpo: { ...cuerpo, pago: { ...cuerpo.pago, exploradorUrl: url } },
+      },
+    });
+    await fireEvent.press(
+      await screen.findByRole('link', { name: 'Ver en el explorador' }),
+    );
+    expect(abrirUrl).toHaveBeenCalledWith(url);
+  });
+
   it('sin sesión lleva a iniciar sesión', async () => {
     simularFetch({
       'POST /autenticacion/refrescar': {

@@ -389,6 +389,13 @@
       "error_pagina": "No pudimos cargar más movimientos.",
       "error": "No pudimos cargar tus movimientos. No se perdió nada; inténtalo de nuevo."
     },
+    "pago": {
+      "recibiras": "Recibirás {monto} URC",
+      "recibiste": "Recibiste {monto} URC",
+      "al_conductor": "Pago al conductor: {monto} URC",
+      "pendiente": "Se está registrando en la red de prueba; puede tardar unos minutos.",
+      "pagado": "Pagado"
+    },
     "recarga": {
       "boton": "Recargar",
       "titulo": "Recargar saldo",

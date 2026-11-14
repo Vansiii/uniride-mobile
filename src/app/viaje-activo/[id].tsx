@@ -4,8 +4,14 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { consultarReserva, consultarViaje } from '@/api/cliente';
+import {
+  consultarPasajerosDelViaje,
+  consultarReserva,
+  consultarViaje,
+  type PasajeroViaje,
+} from '@/api/cliente';
 import { Boton, BotonIcono } from '@/componentes/Boton';
+import { EstadoPago, PAGABLES } from '@/componentes/EstadoPago';
 import { ZonaAccion } from '@/componentes/Estructura';
 import { Aviso, EtiquetaEstado } from '@/componentes/Mensajes';
 import { useSesion } from '@/contexto/sesion';
@@ -35,6 +41,8 @@ export default function ViajeActivoPantalla() {
   const [estado, setEstado] = useState<string>();
   const [permisoFondo, setPermisoFondo] = useState(true);
   const [ubicacionActiva, setUbicacionActiva] = useState(true);
+  // HU-24: el conductor ve el pago de cada pasajero que bajó verificado.
+  const [pasajeros, setPasajeros] = useState<PasajeroViaje[]>([]);
 
   // Al volver de la bajada el estado cambió: se pregunta otra vez cada vez que la pantalla vuelve al frente.
   useAlEnfocar(
@@ -52,6 +60,10 @@ export default function ViajeActivoPantalla() {
         })
         // Sin destino igual se puede seguir y bajar: el título queda genérico.
         .catch(() => undefined);
+      if (rol === 'conductor')
+        consultarPasajerosDelViaje(id)
+          .then((lista) => vigente && setPasajeros(lista))
+          .catch(() => undefined);
       return () => {
         vigente = false;
       };
@@ -113,6 +125,17 @@ export default function ViajeActivoPantalla() {
             )}
           />
         )}
+        {rol === 'pasajero' && estado && PAGABLES.has(estado) && (
+          <EstadoPago reservaId={id} rol="pasajero" />
+        )}
+        {pasajeros
+          .filter((p) => PAGABLES.has(p.estado))
+          .map((p) => (
+            <View key={p.reservaId} style={estilos.pago}>
+              <Text style={estilos.nombre}>{p.nombre}</Text>
+              <EstadoPago reservaId={p.reservaId} rol="conductor" />
+            </View>
+          ))}
         {ruta ? (
           <Aviso tono="info">{t('presencia.trayecto.compartiendo')}</Aviso>
         ) : (
@@ -176,4 +199,6 @@ const estilos = StyleSheet.create({
   },
   titulo: { ...tipografia.titulo, color: colores.texto, flexShrink: 1 },
   contenido: { gap: espacio(4), padding: espacio(4) },
+  pago: { gap: espacio(2) },
+  nombre: { ...tipografia.cuerpoEnfasis, color: colores.texto },
 });
