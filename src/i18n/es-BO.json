@@ -657,7 +657,7 @@
       "senal_gps": "La señal de ubicación es débil. Sal a un lugar abierto y vuelve a intentarlo.",
       "activa_ubicacion": "Activa tu ubicación para verificar el abordaje.",
       "permiso_ubicacion": "UniRide necesita tu ubicación para verificar el abordaje. Dale permiso en los ajustes del teléfono.",
-      "permiso_camara": "UniRide necesita la cámara para leer el código. Dale permiso en los ajustes del teléfono.",
+      "permiso_camara": "UniRide necesita la cámara para leer el código del conductor.",
       "dar_permiso_camara": "Permitir cámara",
       "abrir_ajustes": "Abrir ajustes",
       "sin_conexion": "Sin conexión. El código sigue en la pantalla del conductor; vuelve a escanear cuando tengas señal.",

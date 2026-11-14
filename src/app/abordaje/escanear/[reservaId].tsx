@@ -14,7 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { abordar, consultarReserva, consultarViaje } from '@/api/cliente';
 import { Boton, BotonIcono } from '@/componentes/Boton';
-import { BotonRevincular } from '@/componentes/BotonRevincular';
+import { AvisoFallaAbordaje } from '@/componentes/AvisoFallaAbordaje';
 import { ZonaAccion } from '@/componentes/Estructura';
 import { Ilustracion } from '@/componentes/Ilustracion';
 import { Aviso } from '@/componentes/Mensajes';
@@ -233,30 +233,7 @@ export default function EscanearCodigoPantalla() {
           </View>
         )}
 
-        {paso.tipo === 'falla' && (
-          <>
-            <Aviso tono={paso.falla.tono}>{paso.falla.texto}</Aviso>
-            {paso.falla.revincular && (
-              <BotonRevincular motivo={paso.falla.revincular} />
-            )}
-            {paso.falla.vincular && (
-              <Boton
-                variante="secundario"
-                icono="smartphone"
-                etiqueta={t('billetera.pantalla.vincular')}
-                alPresionar={() => router.push('/dispositivo')}
-              />
-            )}
-            {paso.falla.ajustes && (
-              <Boton
-                variante="secundario"
-                icono="settings"
-                etiqueta={t('presencia.abordaje.abrir_ajustes')}
-                alPresionar={() => void Linking.openSettings()}
-              />
-            )}
-          </>
-        )}
+        {paso.tipo === 'falla' && <AvisoFallaAbordaje falla={paso.falla} />}
       </ScrollView>
 
       {(paso.tipo === 'verificado' || paso.tipo === 'falla') && (

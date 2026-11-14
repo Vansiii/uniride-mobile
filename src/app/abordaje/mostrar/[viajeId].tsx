@@ -3,7 +3,6 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Image,
-  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -19,10 +18,10 @@ import {
   registrarLlaveTrayecto,
 } from '@/api/cliente';
 import { Boton, BotonIcono } from '@/componentes/Boton';
-import { BotonRevincular } from '@/componentes/BotonRevincular';
+import { AvisoFallaAbordaje } from '@/componentes/AvisoFallaAbordaje';
 import { ConfirmacionBiometrica } from '@/componentes/ConfirmacionBiometrica';
 import { ZonaAccion } from '@/componentes/Estructura';
-import { Aviso, EtiquetaEstado } from '@/componentes/Mensajes';
+import { EtiquetaEstado } from '@/componentes/Mensajes';
 import { useSesion } from '@/contexto/sesion';
 import {
   crearLlaveTrayecto,
@@ -206,24 +205,7 @@ export default function MostrarCodigoPantalla() {
 
         {falla && (
           <>
-            <Aviso tono={falla.tono}>{falla.texto}</Aviso>
-            {falla.revincular && <BotonRevincular motivo={falla.revincular} />}
-            {falla.vincular && (
-              <Boton
-                variante="secundario"
-                icono="smartphone"
-                etiqueta={t('billetera.pantalla.vincular')}
-                alPresionar={() => router.push('/dispositivo')}
-              />
-            )}
-            {falla.ajustes && (
-              <Boton
-                variante="secundario"
-                icono="settings"
-                etiqueta={t('presencia.abordaje.abrir_ajustes')}
-                alPresionar={() => void Linking.openSettings()}
-              />
-            )}
+            <AvisoFallaAbordaje falla={falla} />
             {llave && (
               <Boton
                 variante="secundario"
