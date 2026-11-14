@@ -1,14 +1,15 @@
 import * as Location from 'expo-location';
 import { StatusBar } from 'expo-status-bar';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { consultarReserva, consultarViaje } from '@/api/cliente';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { ZonaAccion } from '@/componentes/Estructura';
-import { Aviso } from '@/componentes/Mensajes';
+import { Aviso, EtiquetaEstado } from '@/componentes/Mensajes';
 import { useSesion } from '@/contexto/sesion';
+import { useAlEnfocar } from '@/hooks/useAlEnfocar';
 import { con, t } from '@/i18n';
 import { colores, espacio, tipografia } from '@/tema/tokens';
 import {
@@ -31,23 +32,31 @@ export default function ViajeActivoPantalla() {
   const rol = rolParam === 'conductor' ? 'conductor' : 'pasajero';
   const { ruta, enMarcha } = useSeguimiento({ rol, id });
   const [destino, setDestino] = useState<string>();
+  const [estado, setEstado] = useState<string>();
   const [permisoFondo, setPermisoFondo] = useState(true);
   const [ubicacionActiva, setUbicacionActiva] = useState(true);
 
-  useEffect(() => {
-    let vigente = true;
-    void reanudarSeguimiento();
-    (rol === 'conductor'
-      ? consultarViaje(id).then((v) => v.destino.nombre)
-      : consultarReserva(id).then((r) => r.viaje.destinoNombre)
-    )
-      .then((nombre) => vigente && setDestino(nombre))
-      // Sin destino igual se puede seguir y bajar: el título queda genérico.
-      .catch(() => undefined);
-    return () => {
-      vigente = false;
-    };
-  }, [id, rol]);
+  // Al volver de la bajada el estado cambió: se pregunta otra vez cada vez que la pantalla vuelve al frente.
+  useAlEnfocar(
+    useCallback(() => {
+      let vigente = true;
+      void reanudarSeguimiento();
+      (rol === 'conductor'
+        ? consultarViaje(id).then((v) => [v.destino.nombre, v.estado])
+        : consultarReserva(id).then((r) => [r.viaje.destinoNombre, r.estado])
+      )
+        .then(([nombre, e]) => {
+          if (!vigente) return;
+          setDestino(nombre);
+          setEstado(e);
+        })
+        // Sin destino igual se puede seguir y bajar: el título queda genérico.
+        .catch(() => undefined);
+      return () => {
+        vigente = false;
+      };
+    }, [id, rol]),
+  );
 
   // Spec §4: ubicación apagada a mitad de viaje o sin permiso en segundo plano, aviso mientras dure.
   useEffect(() => {
@@ -92,6 +101,18 @@ export default function ViajeActivoPantalla() {
       </View>
 
       <ScrollView contentContainerStyle={estilos.contenido}>
+        {/* DESIGN_SYSTEM §10.4: el estado del viaje (conductor) o de la reserva (pasajero), según el servidor. */}
+        {estado && (
+          <EtiquetaEstado
+            dominio={rol === 'conductor' ? 'viaje' : 'reserva'}
+            estado={estado}
+            texto={t(
+              rol === 'conductor'
+                ? `viajes.estado.${estado}`
+                : `reservas.estado.${estado}`,
+            )}
+          />
+        )}
         {ruta ? (
           <Aviso tono="info">{t('presencia.trayecto.compartiendo')}</Aviso>
         ) : (

@@ -460,6 +460,8 @@ describe('HU-23 · «Viaje en curso»', () => {
     await iniciarSeguimiento({ ...PASAJERO, llaveTrayectoId: LLAVE_ID });
     await abrir('pasajero', RESERVA);
     expect(await screen.findByText('En viaje a UAGRM, Módulos')).toBeTruthy();
+    // DESIGN_SYSTEM §10.4: el estado que da el servidor.
+    expect(screen.getByText('A bordo')).toBeTruthy();
     expect(
       screen.getByText('Compartiendo tu ubicación cada 15 s'),
     ).toBeTruthy();
