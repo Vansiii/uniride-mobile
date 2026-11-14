@@ -49,6 +49,14 @@
           "microphonePermission": false
         }
       ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "UniRide usa la cámara para leer el código de abordaje del conductor.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
       "@maplibre/maplibre-react-native"
     ],
     "experiments": {
