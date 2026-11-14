@@ -469,9 +469,7 @@ describe('HU-23 · conductor', () => {
         <MostrarCodigoPantalla />
       </ProveedorSesion>,
     );
-    expect(
-      await screen.findByLabelText('Código QR de abordaje'),
-    ).toBeTruthy();
+    expect(await screen.findByLabelText('Código QR de abordaje')).toBeTruthy();
     expect(crearLlaveTrayecto).not.toHaveBeenCalled();
     expect(firmar).not.toHaveBeenCalled();
   });
