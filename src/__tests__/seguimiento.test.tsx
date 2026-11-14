@@ -534,6 +534,21 @@ describe('HU-23 · conductor', () => {
     expect(await screen.findByText('Recibiste 10,50 URC')).toBeTruthy();
     expect(screen.getByText('Ana')).toBeTruthy();
   });
+
+  it('con el viaje ya terminado lo dice y no ofrece reintentar (visto en el teléfono, HU-24 3b)', async () => {
+    await iniciarSeguimiento({ ...CONDUCTOR, llaveTrayectoId: 'llave-c' });
+    mockParametros.valor = { viajeId: VIAJE, tipo: 'bajada' };
+    simularFetch({ ...BASE_CONDUCTOR, [DESAFIO]: tr.noEnCurso });
+    await render(
+      <ProveedorSesion>
+        <MostrarCodigoPantalla />
+      </ProveedorSesion>,
+    );
+    expect(
+      await screen.findByText('Este viaje ya no está en curso.'),
+    ).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Reintentar' })).toBeNull();
+  });
 });
 
 describe('HU-23 · «Viaje en curso»', () => {

@@ -26,6 +26,8 @@ export type FallaAbordaje = FallaFirma & {
   ajustes?: boolean;
   /** El teléfono no está vinculado (o su firma ya no vale): la salida es «Mi teléfono». */
   vincular?: boolean;
+  /** El viaje ya terminó: reintentar no cambia nada. */
+  final?: boolean;
 };
 
 /** El nonce del QR `uniride://encuentro/<nonce>` (32 bytes en base64url); `null` si no es un código de UniRide. */
@@ -108,7 +110,11 @@ export function fallaDeAbordaje(
     case 'RESERVA_NO_ABORDADA':
       return { texto: texto(tipo, 'no_abordada'), tono: 'info' };
     case 'VIAJE_NO_EN_CURSO':
-      return { texto: texto(tipo, 'viaje_no_en_curso'), tono: 'info' };
+      return {
+        texto: texto(tipo, 'viaje_no_en_curso'),
+        tono: 'info',
+        final: true,
+      };
     default:
       return peligro('error');
   }

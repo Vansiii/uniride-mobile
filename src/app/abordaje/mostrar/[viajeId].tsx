@@ -234,7 +234,7 @@ export default function MostrarCodigoPantalla() {
         {falla && (
           <>
             <AvisoFallaAbordaje falla={falla} />
-            {llave && (
+            {llave && !falla.final && (
               <Boton
                 variante="secundario"
                 icono="refresh"
