@@ -208,6 +208,10 @@ describe('HU-19 · resultado de la reserva', () => {
     await avanzar(5000);
     expect(await screen.findByText('Pagado')).toBeTruthy();
     expect(screen.queryByText(/Se está registrando/)).toBeNull();
+    // La lectura del pago también actualiza el estado de la pantalla, sin otro sondeo.
+    expect(screen.getByText('Pagada')).toBeTruthy();
+    expect(screen.getByText('Tu reserva está pagada.')).toBeTruthy();
+    expect(screen.queryByText('Verificada')).toBeNull();
     const consultas = veces(llamadas, CONSULTAR);
     // Confirmado: ya no se vuelve a preguntar.
     await avanzar(20_000);

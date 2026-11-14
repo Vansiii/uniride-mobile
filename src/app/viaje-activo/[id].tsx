@@ -126,7 +126,11 @@ export default function ViajeActivoPantalla() {
           />
         )}
         {rol === 'pasajero' && estado && PAGABLES.has(estado) && (
-          <EstadoPago reservaId={id} rol="pasajero" />
+          <EstadoPago
+            reservaId={id}
+            rol="pasajero"
+            alLeer={(r) => setEstado(r.estado)}
+          />
         )}
         {pasajeros
           .filter((p) => PAGABLES.has(p.estado))

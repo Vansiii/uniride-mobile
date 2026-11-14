@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { consultarReserva, type ReservaDetalle } from '@/api/cliente';
 import { formatearMonto } from '@/formato';
@@ -16,16 +16,22 @@ export const PAGABLES = new Set<string>(['verificada', 'pagada']);
 /**
  * HU-24 CA-1: el pago de una reserva verificada, según el servidor. Conductor: «Recibirás» → «Recibiste»; pasajero:
  * pago al conductor *Pendiente* → *Pagado*. Con el enlace al explorador si la API lo trae. No muestra nada antes de la
- * verificación.
+ * verificación. `alLeer` recibe cada lectura: la pantalla que la contiene actualiza su estado sin otro sondeo.
  */
 export function EstadoPago({
   reservaId,
   rol,
+  alLeer,
 }: {
   reservaId: string;
   rol: 'conductor' | 'pasajero';
+  alLeer?: (reserva: ReservaDetalle) => void;
 }) {
   const [reserva, setReserva] = useState<ReservaDetalle>();
+  const avisar = useRef(alLeer);
+  useEffect(() => {
+    avisar.current = alLeer;
+  });
 
   // Booleano siempre: un `undefined → false` cambiaría la dependencia y repetiría la consulta al instante.
   const terminado =
@@ -38,7 +44,11 @@ export function EstadoPago({
     let vigente = true;
     const leer = () =>
       consultarReserva(reservaId)
-        .then((r) => vigente && setReserva(r))
+        .then((r) => {
+          if (!vigente) return;
+          setReserva(r);
+          avisar.current?.(r);
+        })
         // Sin conexión se vuelve a preguntar en el siguiente turno.
         .catch(() => undefined);
     void leer();

@@ -221,7 +221,7 @@ export default function ReservaPantalla() {
               )}
             </View>
             {PAGABLES.has(reserva.estado) && (
-              <EstadoPago reservaId={id} rol="pasajero" />
+              <EstadoPago reservaId={id} rol="pasajero" alLeer={setReserva} />
             )}
             {reserva.exploradorUrl && (
               <Boton
