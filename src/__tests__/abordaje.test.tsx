@@ -101,14 +101,14 @@ jest.mock('@/dispositivo/keystore', () => ({
 const VIAJE = rr.viajeId;
 const LLAVE = `POST /viajes/${VIAJE}/llave-trayecto`;
 const DESAFIO = `POST /viajes/${VIAJE}/desafios`;
-const PASAJEROS = `GET /viajes/${VIAJE}/pasajeros`;
+const ESTADO = `GET /viajes/${VIAJE}/desafios/${p.nonce}`;
 const BASE = {
   'POST /autenticacion/refrescar': r.sesionAprobada,
   'GET /yo': r.yoAprobada,
   'GET /dispositivos/mi-dispositivo': d.vinculado,
   [LLAVE]: p.llave,
   [DESAFIO]: p.desafio,
-  [PASAJEROS]: rr.pasajeros,
+  [ESTADO]: p.vigente,
 };
 const MOSTRAR = 'Mostrar código';
 const ubicacion = jest.mocked(Location);
@@ -239,7 +239,7 @@ describe('HU-22 · «Mostrar código» del conductor (CA-1)', () => {
     try {
       const { llamadas } = await abrirConductor({
         [DESAFIO]: [p.desafio, p.desafioAbordado],
-        [PASAJEROS]: p.pasajerosAbordados,
+        [ESTADO]: p.gastadoAbordado,
       });
       await fireEvent.press(boton(MOSTRAR));
       await screen.findByLabelText('Código QR de abordaje');
@@ -248,6 +248,28 @@ describe('HU-22 · «Mostrar código» del conductor (CA-1)', () => {
       });
       expect(veces(llamadas, DESAFIO)).toBe(2);
       expect(screen.getByText('Verificado ✓')).toBeTruthy();
+      expect(firmar).toHaveBeenCalledTimes(1);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('un escaneo rechazado también gasta el código: sale otro en el siguiente sondeo, sin otra huella (RN-1)', async () => {
+    jest.useFakeTimers({
+      doNotFake: ['nextTick', 'setImmediate', 'queueMicrotask'],
+    });
+    try {
+      const { llamadas } = await abrirConductor({
+        [DESAFIO]: [p.desafio, p.otroDesafio],
+        [ESTADO]: p.gastado,
+      });
+      await fireEvent.press(boton(MOSTRAR));
+      await screen.findByLabelText('Código QR de abordaje');
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(3_000);
+      });
+      expect(veces(llamadas, DESAFIO)).toBe(2);
+      expect(screen.queryByText('Verificado ✓')).toBeNull();
       expect(firmar).toHaveBeenCalledTimes(1);
     } finally {
       jest.useRealTimers();

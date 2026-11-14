@@ -1374,7 +1374,13 @@ export const presenciaReal = {
   desafio: desafio(NONCE_ENCUENTRO),
   otroDesafio: desafio('Z'.repeat(43)),
   desafioAbordado: desafio('Y'.repeat(43), 'abordada'),
-  pasajerosAbordados: ok(200, pasajeroDe('abordada')),
+  /** GET /viajes/{id}/desafios/{nonce} → 200 */
+  vigente: ok(200, { vigente: true, pasajeros: pasajeroDe('confirmada') }),
+  gastado: ok(200, { vigente: false, pasajeros: pasajeroDe('confirmada') }),
+  gastadoAbordado: ok(200, {
+    vigente: false,
+    pasajeros: pasajeroDe('abordada'),
+  }),
   /** POST /reservas/{id}/abordaje → 200 */
   abordada: ok(200, { estado: 'abordada', yaVerificado: false }),
   yaAbordada: ok(200, { estado: 'abordada', yaVerificado: true }),

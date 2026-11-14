@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  consultarPasajerosDelViaje,
+  consultarDesafio,
   type Desafio,
   ErrorApi,
   type PasajeroViaje,
@@ -128,16 +128,17 @@ export default function MostrarCodigoPantalla() {
     return () => clearTimeout(siguiente);
   }, [llave, desafio, pedidoEn, renovar]);
 
-  // ponytail: sondeo cada 3 s; solo ve los escaneos aceptados (un rechazo también gasta el código, y ese se
-  // renueva a los ≤ 25 s). Un aviso del servidor (push o socket) lo haría inmediato para los dos casos.
+  // ponytail: sondeo cada 3 s; un escaneo, aceptado o rechazado, gasta el código (RN-1) y sale otro en ≤ 3 s.
+  // Un aviso del servidor (push o socket) lo haría inmediato.
   useEffect(() => {
     if (!llave || !desafio) return;
     const sondeo = setInterval(() => {
-      consultarPasajerosDelViaje(viajeId)
-        .then((lista) => {
+      consultarDesafio(viajeId, desafio.nonce)
+        .then(({ vigente, pasajeros: lista }) => {
           if (!montada.current) return;
           setPasajeros(lista);
-          if (contarAbordados(lista) > abordados.current) void renovar(llave);
+          if (!vigente || contarAbordados(lista) > abordados.current)
+            void renovar(llave);
         })
         .catch(() => undefined);
     }, SONDEO_MS);

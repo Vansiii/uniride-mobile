@@ -841,6 +841,13 @@ export const pedirDesafio = (
     { tipo: 'abordaje', posicion },
   );
 
+/** Conductor, sin firma: si su código sigue sin usar y sus pasajeros (sondeo de 3 s, RN-1). */
+export const consultarDesafio = (viajeId: string, nonce: string) =>
+  solicitar<{ vigente: boolean; pasajeros: PasajeroViaje[] }>(
+    `/viajes/${encodeURIComponent(viajeId)}/desafios/${encodeURIComponent(nonce)}`,
+    'GET',
+  );
+
 /** Pasajero: el código escaneado, su posición, integridad y su llave de trayecto, con huella (CA-2). */
 export const abordar = (
   reservaId: string,
