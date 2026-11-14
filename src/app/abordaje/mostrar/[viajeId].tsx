@@ -39,6 +39,7 @@ import {
   fallaDeUbicacion,
   RENOVAR_MS,
   SONDEO_MS,
+  yaAbordo,
 } from '@/viajes/abordaje';
 
 /**
@@ -67,8 +68,7 @@ export default function MostrarCodigoPantalla() {
   );
 
   const contarAbordados = (lista: PasajeroViaje[]) =>
-    lista.filter((p) => p.estado !== 'confirmada' && p.estado !== 'pendiente')
-      .length;
+    lista.filter((p) => yaAbordo(p.estado)).length;
 
   /** Posición del momento → código nuevo. Sin ubicación, el aviso reemplaza el QR. */
   const renovar = useCallback(
@@ -271,8 +271,7 @@ export default function MostrarCodigoPantalla() {
               {t('presencia.abordaje.pasajeros')}
             </Text>
             {pasajeros.map((p) => {
-              const listo =
-                p.estado !== 'confirmada' && p.estado !== 'pendiente';
+              const listo = yaAbordo(p.estado);
               return (
                 <View key={p.reservaId} style={estilos.fila}>
                   <Text style={estilos.enfasis}>{p.nombre}</Text>

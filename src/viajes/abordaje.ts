@@ -9,6 +9,10 @@ export const RENOVAR_MS = 25_000;
 /** Cada cuánto el conductor mira si alguien escaneó: un escaneo gasta el código y hay que mostrar otro (RN-1). */
 export const SONDEO_MS = 3_000;
 
+/** Reservas que ya pasaron el abordaje; `verificacion_fallida` (HU-23) no cuenta. */
+const ABORDADAS = new Set(['abordada', 'verificada', 'pagada']);
+export const yaAbordo = (estado: string) => ABORDADAS.has(estado);
+
 export type FallaAbordaje = FallaFirma & {
   /** Android ya no muestra el diálogo de permiso: queda ir a los ajustes. */
   ajustes?: boolean;

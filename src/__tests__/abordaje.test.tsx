@@ -18,6 +18,7 @@ import {
   firmarTrayecto,
   pedirTokenIntegridad,
 } from '@/dispositivo/keystore';
+import { yaAbordo } from '@/viajes/abordaje';
 import {
   dispositivoReal as d,
   presenciaReal as p,
@@ -515,5 +516,14 @@ describe('HU-22 · «Escanear QR» del pasajero (CA-2)', () => {
     expect(firmar).not.toHaveBeenCalled();
     expect(veces(llamadas, ABORDAJE)).toBe(0);
     await waitFor(() => expect(boton('Volver a escanear')).toBeTruthy());
+  });
+});
+
+describe('HU-22 · estado de cada pasajero en «Mostrar código»', () => {
+  it('solo cuentan como verificados los que pasaron el abordaje, no una verificación fallida', () => {
+    expect(['abordada', 'verificada', 'pagada'].every(yaAbordo)).toBe(true);
+    expect(
+      ['pendiente', 'confirmada', 'verificacion_fallida'].some(yaAbordo),
+    ).toBe(false);
   });
 });
