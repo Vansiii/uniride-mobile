@@ -634,6 +634,8 @@ describe('HU-23 · «Viaje en curso»', () => {
     expect(screen.getByText('Ana')).toBeTruthy();
     // Quien sigue a bordo todavía no tiene pago.
     expect(screen.queryByText('Luis')).toBeNull();
+    // El viaje sigue en curso (Luis a bordo): el código de bajada sigue disponible.
+    expect(boton('Mostrar código de bajada')).toBeTruthy();
   });
 
   it('HU-24: el pasajero verificado ve su pago y el estado pasa a Pagada al confirmarse', async () => {
@@ -652,5 +654,9 @@ describe('HU-23 · «Viaje en curso»', () => {
     ).toBeTruthy();
     expect(await screen.findByText('Pagado')).toBeTruthy();
     expect(screen.getByText('Pagada')).toBeTruthy();
+    // Hecha la bajada no queda nada que escanear.
+    expect(
+      screen.queryByRole('button', { name: 'Escanear QR de bajada' }),
+    ).toBeNull();
   });
 });

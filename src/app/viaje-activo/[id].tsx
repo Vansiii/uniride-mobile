@@ -88,6 +88,13 @@ export default function ViajeActivoPantalla() {
   if (cargando) return null;
   if (!usuario) return <Redirect href="/iniciar-sesion" />;
 
+  // HU-24: hecha la bajada (reserva verificada o viaje verificado), ya no hay código que mostrar ni escanear.
+  const bajadaHecha =
+    estado !== undefined &&
+    (rol === 'pasajero'
+      ? PAGABLES.has(estado)
+      : estado === 'verificado' || estado === 'pagado');
+
   const permitirSiempre = async () => {
     const p = await Location.requestBackgroundPermissionsAsync().catch(
       () => null,
@@ -171,24 +178,26 @@ export default function ViajeActivoPantalla() {
         )}
       </ScrollView>
 
-      <ZonaAccion>
-        <Boton
-          anchoCompleto
-          icono={rol === 'conductor' ? 'qr_code_2' : 'qr_code_scanner'}
-          etiqueta={t(
-            rol === 'conductor'
-              ? 'presencia.trayecto.bajada_conductor'
-              : 'presencia.trayecto.bajada_pasajero',
-          )}
-          alPresionar={() =>
-            router.push(
+      {!bajadaHecha && (
+        <ZonaAccion>
+          <Boton
+            anchoCompleto
+            icono={rol === 'conductor' ? 'qr_code_2' : 'qr_code_scanner'}
+            etiqueta={t(
               rol === 'conductor'
-                ? `/abordaje/mostrar/${id}?tipo=bajada`
-                : `/abordaje/escanear/${id}?tipo=bajada`,
-            )
-          }
-        />
-      </ZonaAccion>
+                ? 'presencia.trayecto.bajada_conductor'
+                : 'presencia.trayecto.bajada_pasajero',
+            )}
+            alPresionar={() =>
+              router.push(
+                rol === 'conductor'
+                  ? `/abordaje/mostrar/${id}?tipo=bajada`
+                  : `/abordaje/escanear/${id}?tipo=bajada`,
+              )
+            }
+          />
+        </ZonaAccion>
+      )}
     </View>
   );
 }
