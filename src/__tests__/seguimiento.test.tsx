@@ -370,6 +370,18 @@ const leer = async (data: string) => {
 };
 
 describe('HU-23 · bajada del pasajero (CA-3, CA-4, CA-11)', () => {
+  it('HU-24 CA-1: «Viaje verificado» muestra el pago al conductor, Pendiente mientras se registra', async () => {
+    await abrirBajadaPasajero({
+      [`GET /reservas/${RESERVA}`]: [rr.abordada, rr.verificada],
+    });
+    await leer(QR);
+    expect(await screen.findByText('Viaje verificado')).toBeTruthy();
+    expect(
+      await screen.findByText('Pago al conductor: 10,50 URC'),
+    ).toBeTruthy();
+    expect(screen.getByText('Pendiente')).toBeTruthy();
+  });
+
   it('envía lo pendiente antes de la bajada, una huella, sin llave nueva; «Viaje verificado» y deja de seguir', async () => {
     simularFetch({});
     await iniciarSeguimiento({ ...PASAJERO, llaveTrayectoId: LLAVE_ID });
@@ -498,6 +510,30 @@ describe('HU-23 · conductor', () => {
     // El estado de cada pasajero, no «Verificado ✓» del abordaje.
     expect(screen.getByText('A bordo')).toBeTruthy();
   });
+
+  it('HU-24 CA-1: en la bajada, cada pasajero verificado muestra lo que recibe el conductor', async () => {
+    await iniciarSeguimiento({ ...CONDUCTOR, llaveTrayectoId: 'llave-c' });
+    mockParametros.valor = { viajeId: VIAJE, tipo: 'bajada' };
+    const desafio = p.desafioAbordado.cuerpo as object;
+    simularFetch({
+      ...BASE_CONDUCTOR,
+      [DESAFIO]: {
+        ...p.desafioAbordado,
+        cuerpo: {
+          ...desafio,
+          pasajeros: [{ reservaId: RESERVA, nombre: 'Ana', estado: 'pagada' }],
+        },
+      },
+      [`GET /reservas/${RESERVA}`]: rr.pagada,
+    });
+    await render(
+      <ProveedorSesion>
+        <MostrarCodigoPantalla />
+      </ProveedorSesion>,
+    );
+    expect(await screen.findByText('Recibiste 10,50 URC')).toBeTruthy();
+    expect(screen.getByText('Ana')).toBeTruthy();
+  });
 });
 
 describe('HU-23 · «Viaje en curso»', () => {
@@ -574,5 +610,47 @@ describe('HU-23 · «Viaje en curso»', () => {
     expect(mockRouter.push).toHaveBeenCalledWith(
       `/abordaje/mostrar/${VIAJE}?tipo=bajada`,
     );
+  });
+
+  it('HU-24 CA-1: el conductor ve «Recibirás» de cada pasajero que bajó verificado', async () => {
+    mockParametros.valor = { id: VIAJE, rol: 'conductor' };
+    simularFetch({
+      ...SESION,
+      [`GET /viajes/${VIAJE}/pasajeros`]: {
+        ...rr.pasajeros,
+        cuerpo: [
+          { reservaId: RESERVA, nombre: 'Ana', estado: 'verificada' },
+          { reservaId: 'otra', nombre: 'Luis', estado: 'abordada' },
+        ],
+      },
+      [`GET /reservas/${RESERVA}`]: rr.verificada,
+    });
+    await render(
+      <ProveedorSesion>
+        <ViajeActivoPantalla />
+      </ProveedorSesion>,
+    );
+    expect(await screen.findByText('Recibirás 10,50 URC')).toBeTruthy();
+    expect(screen.getByText('Ana')).toBeTruthy();
+    // Quien sigue a bordo todavía no tiene pago.
+    expect(screen.queryByText('Luis')).toBeNull();
+  });
+
+  it('HU-24: el pasajero verificado ve su pago y el estado pasa a Pagada al confirmarse', async () => {
+    mockParametros.valor = { id: RESERVA, rol: 'pasajero' };
+    simularFetch({
+      ...SESION,
+      [`GET /reservas/${RESERVA}`]: [rr.verificada, rr.pagada],
+    });
+    await render(
+      <ProveedorSesion>
+        <ViajeActivoPantalla />
+      </ProveedorSesion>,
+    );
+    expect(
+      await screen.findByText('Pago al conductor: 10,50 URC'),
+    ).toBeTruthy();
+    expect(await screen.findByText('Pagado')).toBeTruthy();
+    expect(screen.getByText('Pagada')).toBeTruthy();
   });
 });
