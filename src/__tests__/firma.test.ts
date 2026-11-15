@@ -1,7 +1,11 @@
 import { getItemAsync } from 'expo-secure-store';
-import { iniciarSesion, solicitarFirmado } from '@/api/cliente';
-import { cabecerasFirma, mensajeCanonico } from '@/dispositivo/firma';
-import { firmar } from '@/dispositivo/keystore';
+import { iniciarSesion, pedirDesafio, solicitarFirmado } from '@/api/cliente';
+import {
+  cabecerasFirma,
+  cabecerasFirmaTrayecto,
+  mensajeCanonico,
+} from '@/dispositivo/firma';
+import { firmar, firmarTrayecto } from '@/dispositivo/keystore';
 import { sha256Hex } from '@/dispositivo/sha256';
 import { dispositivoReal as d, simularFetch } from '@/pruebas/respuestasApi';
 
@@ -25,10 +29,14 @@ const deBase64 = (b64: string) =>
     .Buffer.from(b64, 'base64');
 
 const mockPar = nodo().generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
+// La llave de trayecto (D-22) es otra: lo firmado con una no vale con la otra.
+const mockParTrayecto = nodo().generateKeyPairSync('ec', {
+  namedCurve: 'prime256v1',
+});
 
 // Lo que haría el Keystore: ECDSA P-256 con SHA-256, firma en DER y Base64 (lo que acepta el servidor).
-jest.mock('@/dispositivo/keystore', () => ({
-  firmar: jest.fn(async (antes: string, despues: string) => {
+const mockFirmaCon =
+  (par: { privateKey: unknown }) => async (antes: string, despues: string) => {
     const marca = String(Date.now());
     return {
       marca,
@@ -37,11 +45,18 @@ jest.mock('@/dispositivo/keystore', () => ({
         .sign(
           'sha256',
           new TextEncoder().encode(antes + marca + despues),
-          mockPar.privateKey,
+          par.privateKey,
         )
         .toString('base64'),
     };
-  }),
+  };
+jest.mock('@/dispositivo/keystore', () => ({
+  firmar: jest.fn((antes: string, despues: string) =>
+    mockFirmaCon(mockPar)(antes, despues),
+  ),
+  firmarTrayecto: jest.fn((antes: string, despues: string) =>
+    mockFirmaCon(mockParTrayecto)(antes, despues),
+  ),
   nonceAleatorio: () =>
     jest.requireActual('node:crypto').randomBytes(16).toString('hex'),
 }));
@@ -51,8 +66,8 @@ jest.mock('expo-secure-store', () => ({
   deleteItemAsync: jest.fn(),
 }));
 
-const valida = (mensaje: string, firma: string) =>
-  nodo().verify('sha256', bytes(mensaje), mockPar.publicKey, deBase64(firma));
+const valida = (mensaje: string, firma: string, llave = mockPar.publicKey) =>
+  nodo().verify('sha256', bytes(mensaje), llave, deBase64(firma));
 const sha256Servidor = (texto: string) =>
   nodo().createHash('sha256').update(texto).digest('hex');
 
@@ -190,5 +205,93 @@ describe('Firma de peticiones sensibles', () => {
         h['X-Firma'],
       ),
     ).toBe(true);
+  });
+});
+
+describe('Firma con la llave de trayecto (HU-22, D-22)', () => {
+  const RUTA = '/api/v1/viajes/v1/desafios';
+
+  it('firma el mismo mensaje canónico con la llave de trayecto, sin huella, y la cabecera nombra la llave', async () => {
+    jest.mocked(firmar).mockClear();
+    const cuerpo = '{"tipo":"abordaje"}';
+    const c = await cabecerasFirmaTrayecto('llave-1', 'POST', RUTA, cuerpo);
+    expect(Object.keys(c).sort()).toEqual(
+      ['X-Firma', 'X-Llave-Trayecto-Id', 'X-Nonce', 'X-Timestamp'].sort(),
+    );
+    expect(c['X-Llave-Trayecto-Id']).toBe('llave-1');
+    const mensaje = mensajeCanonico(
+      'POST',
+      RUTA,
+      c['X-Timestamp'],
+      c['X-Nonce'],
+      cuerpo,
+    );
+    expect(valida(mensaje, c['X-Firma'], mockParTrayecto.publicKey)).toBe(true);
+    // A-08: no vale como firma del dispositivo, ni con otro cuerpo.
+    expect(valida(mensaje, c['X-Firma'])).toBe(false);
+    expect(
+      valida(
+        mensajeCanonico('POST', RUTA, c['X-Timestamp'], c['X-Nonce'], '{}'),
+        c['X-Firma'],
+        mockParTrayecto.publicKey,
+      ),
+    ).toBe(false);
+    expect(firmar).not.toHaveBeenCalled();
+  });
+
+  it('pedir un código sale firmado con la llave de trayecto y el cuerpo firmado', async () => {
+    jest.mocked(firmar).mockClear();
+    jest.mocked(firmarTrayecto).mockClear();
+    const { falso } = simularFetch({
+      'POST /viajes/v1/desafios': { estado: 201, cuerpo: { nonce: 'n' } },
+    });
+    const posicion = {
+      lat: -17.78,
+      lng: -63.18,
+      precisionM: 8,
+      tomadaEn: 1,
+      simulada: false,
+    };
+    await pedirDesafio('llave-1', 'v1', posicion);
+    const [url, init] = falso.mock.calls.at(-1) as [string, RequestInit];
+    const h = init.headers as Record<string, string>;
+    expect(new URL(url).pathname).toBe(RUTA);
+    expect(h['X-Llave-Trayecto-Id']).toBe('llave-1');
+    expect(h['X-Dispositivo-Id']).toBeUndefined();
+    expect(JSON.parse(String(init.body))).toEqual({
+      tipo: 'abordaje',
+      posicion,
+    });
+    expect(
+      valida(
+        mensajeCanonico(
+          'POST',
+          RUTA,
+          h['X-Timestamp'],
+          h['X-Nonce'],
+          String(init.body),
+        ),
+        h['X-Firma'],
+        mockParTrayecto.publicKey,
+      ),
+    ).toBe(true);
+    expect(firmarTrayecto).toHaveBeenCalledTimes(1);
+    expect(firmar).not.toHaveBeenCalled();
+  });
+
+  it('una petición sensible puede fijar su X-Nonce: el token de integridad se pide con él (RN-5)', async () => {
+    const { falso } = simularFetch({
+      'GET /dispositivos/mi-dispositivo': d.vinculado,
+      'POST /reservas/r1/abordaje': { estado: 200, cuerpo: {} },
+    });
+    const nonce = 'f'.repeat(32);
+    await solicitarFirmado(
+      '/reservas/r1/abordaje',
+      'POST',
+      { tokenIntegridad: `token:${nonce}` },
+      { nonce },
+    );
+    const [, init] = falso.mock.calls.at(-1) as [string, RequestInit];
+    expect((init.headers as Record<string, string>)['X-Nonce']).toBe(nonce);
   });
 });

@@ -32,6 +32,8 @@ interface ModuloLlave {
     textos: { titulo: string; subtitulo: string; cancelar: string },
   ): Promise<FirmaConMarca>;
   nonceAleatorio(): string;
+  crearLlaveTrayecto(): Promise<string>;
+  firmarTrayecto(antes: string, despues: string): Promise<FirmaConMarca>;
 }
 
 /**
@@ -135,6 +137,30 @@ export async function firmar(
       subtitulo: dialogo?.subtitulo ?? t('dispositivo.autenticacion.subtitulo'),
       cancelar: t('dispositivo.autenticacion.cancelar'),
     });
+  } catch (error) {
+    throw traducirFalla(error);
+  }
+}
+
+/**
+ * Llave de trayecto (HU-22 RN-9, D-22): par nuevo en hardware, sin biometría, que reemplaza al del viaje anterior.
+ * Devuelve la pública en PEM; el servidor solo la acepta dentro de una petición confirmada con huella.
+ */
+export async function crearLlaveTrayecto(): Promise<string> {
+  try {
+    return await modulo().crearLlaveTrayecto();
+  } catch (error) {
+    throw traducirFalla(error);
+  }
+}
+
+/** Firma `antes + marca + despues` con la llave de trayecto, sin diálogo: renovar el código no pide huella (RN-6). */
+export async function firmarTrayecto(
+  antes: string,
+  despues: string,
+): Promise<FirmaConMarca> {
+  try {
+    return await modulo().firmarTrayecto(antes, despues);
   } catch (error) {
     throw traducirFalla(error);
   }

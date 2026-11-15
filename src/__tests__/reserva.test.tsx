@@ -167,6 +167,15 @@ describe('HU-19 · resultado de la reserva', () => {
     expect(mockRouter.replace).toHaveBeenNthCalledWith(2, '/viajes');
   });
 
+  it('HU-22: confirmada, ofrece escanear el código del conductor', async () => {
+    await abrir({ [CONSULTAR]: rr.confirmada });
+    await screen.findByText('Reserva confirmada');
+    await fireEvent.press(boton('Escanear código del conductor'));
+    expect(mockRouter.push).toHaveBeenCalledWith(
+      `/abordaje/escanear/${rr.reservaId}`,
+    );
+  });
+
   it('una reserva que no es tuya o no existe se dice sin códigos, con reintentar', async () => {
     await abrir({ [CONSULTAR]: rr.noEncontrada });
     expect(
