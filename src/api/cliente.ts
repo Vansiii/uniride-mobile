@@ -1,6 +1,6 @@
 import * as AlmacenSeguro from 'expo-secure-store';
 import { cabecerasFirma, cabecerasFirmaTrayecto } from '@/dispositivo/firma';
-import type { DialogoFirma } from '@/dispositivo/keystore';
+import type { DialogoFirma, RolTrayecto } from '@/dispositivo/keystore';
 
 const BASE = process.env.EXPO_PUBLIC_API_URL ?? 'http://10.0.2.2:3000/api/v1';
 const CLAVE_REFRESCO = 'uniride.refresco';
@@ -443,6 +443,7 @@ async function enviarFirmado<T>(
 
 /** Petición firmada con la llave de trayecto (D-22): sin huella, para renovar el código del abordaje. */
 async function solicitarFirmadoTrayecto<T>(
+  rol: RolTrayecto,
   llaveTrayectoId: string,
   ruta: string,
   metodo: string,
@@ -450,6 +451,7 @@ async function solicitarFirmadoTrayecto<T>(
 ): Promise<T> {
   const url = new URL(`${BASE}${ruta}`);
   const firma = await cabecerasFirmaTrayecto(
+    rol,
     llaveTrayectoId,
     metodo,
     url.pathname + url.search,
@@ -833,12 +835,59 @@ export const pedirDesafio = (
   llaveTrayectoId: string,
   viajeId: string,
   posicion: PosicionEncuentro,
+  tipo: TipoEncuentro = 'abordaje',
 ) =>
   solicitarFirmadoTrayecto<Desafio>(
+    'conductor',
     llaveTrayectoId,
     `/viajes/${encodeURIComponent(viajeId)}/desafios`,
     'POST',
-    { tipo: 'abordaje', posicion },
+    { tipo, posicion },
+  );
+
+/** HU-23: el encuentro del abordaje se repite al bajar (RN-7). */
+export type TipoEncuentro = 'abordaje' | 'bajada';
+
+/** HU-23: posiciones del viaje, firmadas con la llave de trayecto del rol y sin huella (CA-1). */
+export const enviarPosiciones = (
+  rol: RolTrayecto,
+  llaveTrayectoId: string,
+  ruta: string,
+  puntos: PosicionEncuentro[],
+) =>
+  solicitarFirmadoTrayecto<{ aceptados: number; ignorados: number }>(
+    rol,
+    llaveTrayectoId,
+    ruta,
+    'POST',
+    { puntos },
+  );
+
+export type MotivoTrayecto =
+  | 'ubicacion_simulada'
+  | 'salto_imposible'
+  | 'datos_insuficientes'
+  | 'trayectos_separados';
+
+/** Pasajero: el código de bajada, como el abordaje pero sin llave nueva; el servidor evalúa los trayectos (CA-3, CA-4). */
+export const bajar = (
+  reservaId: string,
+  cuerpo: {
+    nonce: string;
+    posicion: PosicionEncuentro;
+    tokenIntegridad: string;
+  },
+  opciones: OpcionesFirma,
+) =>
+  solicitarFirmado<{
+    estado: 'verificada' | 'verificacion_fallida';
+    motivo: MotivoTrayecto | null;
+    yaVerificado: boolean;
+  }>(
+    `/reservas/${encodeURIComponent(reservaId)}/bajada`,
+    'POST',
+    cuerpo,
+    opciones,
   );
 
 /** Conductor, sin firma: si su código sigue sin usar y sus pasajeros (sondeo de 3 s, RN-1). */
@@ -859,7 +908,12 @@ export const abordar = (
   },
   opciones: OpcionesFirma,
 ) =>
-  solicitarFirmado<{ estado: 'abordada'; yaVerificado: boolean }>(
+  solicitarFirmado<{
+    estado: 'abordada';
+    yaVerificado: boolean;
+    /** HU-23: con ella firma sus posiciones; falta si la reserva ya había pasado el abordaje. */
+    llaveTrayectoId?: string;
+  }>(
     `/reservas/${encodeURIComponent(reservaId)}/abordaje`,
     'POST',
     cuerpo,

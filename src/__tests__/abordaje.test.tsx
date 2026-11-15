@@ -19,6 +19,7 @@ import {
   pedirTokenIntegridad,
 } from '@/dispositivo/keystore';
 import { yaAbordo } from '@/viajes/abordaje';
+import { reiniciarParaPruebas } from '@/viajes/seguimiento';
 import {
   dispositivoReal as d,
   presenciaReal as p,
@@ -138,6 +139,8 @@ beforeEach(async () => {
     .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
     .mockResolvedValue(true);
   jest.clearAllMocks();
+  // El seguimiento vive en el módulo: sin esto, la llave de una prueba sigue en la siguiente.
+  reiniciarParaPruebas();
   await cerrarSesion().catch(() => undefined);
   jest.mocked(firmar).mockResolvedValue({ firma: 'firma-huella', marca: '1' });
   jest
@@ -431,8 +434,11 @@ describe('HU-22 · «Escanear QR» del pasajero (CA-2)', () => {
     expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledWith(
       'Abordaje verificado',
     );
-    await fireEvent.press(boton('Ver mis viajes'));
-    expect(mockRouter.replace).toHaveBeenCalledWith('/viajes');
+    expect(crearLlaveTrayecto).toHaveBeenCalledWith('pasajero');
+    await fireEvent.press(boton('Ver viaje en curso'));
+    expect(mockRouter.replace).toHaveBeenCalledWith(
+      `/viaje-activo/${RESERVA}?rol=pasajero`,
+    );
   });
 
   it('sin teléfono vinculado pide vincularlo y lleva a «Mi teléfono»', async () => {

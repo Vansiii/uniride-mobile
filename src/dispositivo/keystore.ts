@@ -23,6 +23,9 @@ export interface FirmaConMarca {
   marca: string;
 }
 
+/** HU-23: cada rol tiene su llave de trayecto; conducir un viaje e ir de pasajero en otro no se pisan. */
+export type RolTrayecto = 'conductor' | 'pasajero';
+
 interface ModuloLlave {
   crearLlave(): Promise<string>;
   confirmarLlave(): Promise<void>;
@@ -32,8 +35,12 @@ interface ModuloLlave {
     textos: { titulo: string; subtitulo: string; cancelar: string },
   ): Promise<FirmaConMarca>;
   nonceAleatorio(): string;
-  crearLlaveTrayecto(): Promise<string>;
-  firmarTrayecto(antes: string, despues: string): Promise<FirmaConMarca>;
+  crearLlaveTrayecto(rol: RolTrayecto): Promise<string>;
+  firmarTrayecto(
+    rol: RolTrayecto,
+    antes: string,
+    despues: string,
+  ): Promise<FirmaConMarca>;
 }
 
 /**
@@ -146,9 +153,9 @@ export async function firmar(
  * Llave de trayecto (HU-22 RN-9, D-22): par nuevo en hardware, sin biometría, que reemplaza al del viaje anterior.
  * Devuelve la pública en PEM; el servidor solo la acepta dentro de una petición confirmada con huella.
  */
-export async function crearLlaveTrayecto(): Promise<string> {
+export async function crearLlaveTrayecto(rol: RolTrayecto): Promise<string> {
   try {
-    return await modulo().crearLlaveTrayecto();
+    return await modulo().crearLlaveTrayecto(rol);
   } catch (error) {
     throw traducirFalla(error);
   }
@@ -156,11 +163,12 @@ export async function crearLlaveTrayecto(): Promise<string> {
 
 /** Firma `antes + marca + despues` con la llave de trayecto, sin diálogo: renovar el código no pide huella (RN-6). */
 export async function firmarTrayecto(
+  rol: RolTrayecto,
   antes: string,
   despues: string,
 ): Promise<FirmaConMarca> {
   try {
-    return await modulo().firmarTrayecto(antes, despues);
+    return await modulo().firmarTrayecto(rol, antes, despues);
   } catch (error) {
     throw traducirFalla(error);
   }

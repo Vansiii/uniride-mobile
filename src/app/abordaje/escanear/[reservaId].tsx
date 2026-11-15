@@ -12,7 +12,14 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { abordar, consultarReserva, consultarViaje } from '@/api/cliente';
+import {
+  abordar,
+  bajar,
+  consultarReserva,
+  consultarViaje,
+  type MotivoTrayecto,
+  type TipoEncuentro,
+} from '@/api/cliente';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { AvisoFallaAbordaje } from '@/componentes/AvisoFallaAbordaje';
 import { ZonaAccion } from '@/componentes/Estructura';
@@ -33,12 +40,20 @@ import {
   fallaDeAbordaje,
   fallaDeUbicacion,
   nonceDelQr,
+  texto,
 } from '@/viajes/abordaje';
+import {
+  detenerSeguimiento,
+  enviarCola,
+  iniciarSeguimiento,
+} from '@/viajes/seguimiento';
 
 type Paso =
   | { tipo: 'escanear' }
   | { tipo: 'verificando' }
   | { tipo: 'verificado'; yaVerificado: boolean }
+  /** HU-23 CA-11: la bajada se aceptó pero el trayecto no se verificó. */
+  | { tipo: 'no_verificado'; motivo: MotivoTrayecto | null }
   | { tipo: 'falla'; falla: FallaAbordaje };
 
 /**
@@ -49,7 +64,12 @@ type Paso =
 export default function EscanearCodigoPantalla() {
   const { cargando, usuario } = useSesion();
   const { top } = useSafeAreaInsets();
-  const { reservaId } = useLocalSearchParams<{ reservaId: string }>();
+  const { reservaId, tipo: tipoParam } = useLocalSearchParams<{
+    reservaId: string;
+    tipo?: string;
+  }>();
+  const encuentro: TipoEncuentro =
+    tipoParam === 'bajada' ? 'bajada' : 'abordaje';
   const [permiso, pedirPermiso] = useCameraPermissions();
   const accion = useAccionSensible('abordar');
   const [paso, setPaso] = useState<Paso>({ tipo: 'escanear' });
@@ -89,20 +109,60 @@ export default function EscanearCodigoPantalla() {
     ).catch(() => undefined);
     AccessibilityInfo.announceForAccessibility(
       exito
-        ? t('presencia.abordaje.verificado')
+        ? texto(encuentro, 'verificado')
         : siguiente.tipo === 'falla'
           ? siguiente.falla.texto
-          : '',
+          : siguiente.tipo === 'no_verificado'
+            ? textoMotivo(siguiente.motivo)
+            : '',
     );
+  };
+
+  /** HU-23: la cola sale antes de la bajada (lo que llega después no se evalúa); el servidor decide el resultado. */
+  const verificarBajada = async (nonce: string) => {
+    setPaso({ tipo: 'verificando' });
+    try {
+      const [lectura] = await Promise.all([
+        posicionParaEncuentro(),
+        enviarCola(),
+      ]);
+      if (lectura.tipo !== 'ok') {
+        const falla = fallaDeUbicacion(lectura, 'bajada');
+        if (falla) terminar({ tipo: 'falla', falla });
+        return;
+      }
+      const nonceFirma = nonceAleatorio();
+      const tokenIntegridad = await pedirTokenIntegridad(nonceFirma);
+      const r = await accion.ejecutar((opciones) =>
+        bajar(
+          reservaId,
+          { nonce, posicion: lectura.posicion, tokenIntegridad },
+          { ...opciones, nonce: nonceFirma },
+        ),
+      );
+      if (!r) return;
+      void detenerSeguimiento({ rol: 'pasajero', id: reservaId });
+      terminar(
+        r.estado === 'verificada'
+          ? { tipo: 'verificado', yaVerificado: r.yaVerificado }
+          : { tipo: 'no_verificado', motivo: r.motivo },
+      );
+    } catch (error) {
+      terminar({
+        tipo: 'falla',
+        falla: fallaDeAbordaje(error, 'abordar', 'bajada'),
+      });
+    }
   };
 
   /** Una huella por escaneo (RN-6): posición y llave de trayecto se preparan a la vez para no gastar los 30 s. */
   const verificar = async (nonce: string) => {
+    if (encuentro === 'bajada') return verificarBajada(nonce);
     setPaso({ tipo: 'verificando' });
     try {
       const [lectura, llavePublicaTrayectoPem] = await Promise.all([
         posicionParaEncuentro(),
-        crearLlaveTrayecto(),
+        crearLlaveTrayecto('pasajero'),
       ]);
       if (lectura.tipo !== 'ok') {
         const falla = fallaDeUbicacion(lectura);
@@ -123,7 +183,15 @@ export default function EscanearCodigoPantalla() {
           { ...opciones, nonce: nonceFirma },
         ),
       );
-      if (r) terminar({ tipo: 'verificado', yaVerificado: r.yaVerificado });
+      if (!r) return;
+      // HU-23 CA-1: a bordo, empieza a compartir la posición con la llave recién registrada.
+      if (r.llaveTrayectoId)
+        void iniciarSeguimiento({
+          rol: 'pasajero',
+          id: reservaId,
+          llaveTrayectoId: r.llaveTrayectoId,
+        });
+      terminar({ tipo: 'verificado', yaVerificado: r.yaVerificado });
     } catch (error) {
       terminar({ tipo: 'falla', falla: fallaDeAbordaje(error, 'abordar') });
     }
@@ -132,7 +200,7 @@ export default function EscanearCodigoPantalla() {
   const alLeer = ({ data }: { data: string }) => {
     if (leyendo.current) return;
     const nonce = nonceDelQr(data);
-    if (!nonce) return setAviso(t('presencia.abordaje.qr_ajeno'));
+    if (!nonce) return setAviso(texto(encuentro, 'qr_ajeno'));
     leyendo.current = true;
     setAviso(undefined);
     void verificar(nonce);
@@ -155,7 +223,7 @@ export default function EscanearCodigoPantalla() {
           alPresionar={() => router.back()}
         />
         <Text style={estilos.titulo} accessibilityRole="header">
-          {t('presencia.abordaje.titulo_pasajero')}
+          {texto(encuentro, 'titulo_pasajero')}
         </Text>
       </View>
 
@@ -221,22 +289,31 @@ export default function EscanearCodigoPantalla() {
           <View style={estilos.resultado}>
             <Ilustracion icono="verified" color={colores.exito} />
             <Text style={estilos.tituloResultado} accessibilityRole="header">
-              {t('presencia.abordaje.verificado')}
+              {texto(encuentro, 'verificado')}
             </Text>
             <Text style={estilos.secundario}>
-              {t(
-                paso.yaVerificado
-                  ? 'presencia.abordaje.ya_verificado'
-                  : 'presencia.abordaje.verificado_texto',
+              {texto(
+                encuentro,
+                paso.yaVerificado ? 'ya_verificado' : 'verificado_texto',
               )}
             </Text>
+          </View>
+        )}
+
+        {paso.tipo === 'no_verificado' && (
+          <View style={estilos.resultado}>
+            <Ilustracion icono="error" color={colores.peligro} />
+            <Text style={estilos.tituloResultado} accessibilityRole="header">
+              {t('presencia.bajada.no_verificado')}
+            </Text>
+            <Text style={estilos.secundario}>{textoMotivo(paso.motivo)}</Text>
           </View>
         )}
 
         {paso.tipo === 'falla' && <AvisoFallaAbordaje falla={paso.falla} />}
       </ScrollView>
 
-      {(paso.tipo === 'verificado' || paso.tipo === 'falla') && (
+      {paso.tipo !== 'escanear' && paso.tipo !== 'verificando' && (
         <ZonaAccion>
           {paso.tipo === 'falla' ? (
             <Boton
@@ -244,6 +321,15 @@ export default function EscanearCodigoPantalla() {
               icono="qr_code_scanner"
               etiqueta={t('presencia.abordaje.volver_a_escanear')}
               alPresionar={escanearOtraVez}
+            />
+          ) : encuentro === 'abordaje' ? (
+            <Boton
+              anchoCompleto
+              icono="near_me"
+              etiqueta={t('presencia.trayecto.ver_viaje')}
+              alPresionar={() =>
+                router.replace(`/viaje-activo/${reservaId}?rol=pasajero`)
+              }
             />
           ) : (
             <Boton
@@ -257,6 +343,14 @@ export default function EscanearCodigoPantalla() {
     </View>
   );
 }
+
+/** CA-10 tiene su propio texto; los demás motivos (CA-5 a CA-7) se explican igual, sin decir cómo se detectó. */
+const textoMotivo = (motivo: MotivoTrayecto | null) =>
+  t(
+    motivo === 'datos_insuficientes'
+      ? 'presencia.trayecto.datos_insuficientes'
+      : 'presencia.trayecto.verificacion_fallida',
+  );
 
 const estilos = StyleSheet.create({
   raiz: { flex: 1, backgroundColor: colores.superficie },

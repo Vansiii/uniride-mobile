@@ -3,6 +3,7 @@ import {
   firmar,
   firmarTrayecto,
   nonceAleatorio,
+  type RolTrayecto,
 } from './keystore';
 import { sha256Hex } from './sha256';
 
@@ -62,6 +63,7 @@ export async function cabecerasFirma(
 
 /** Encabezados firmados con la llave de trayecto (D-22): sin diálogo, para el código que se renueva solo (RN-6). */
 export async function cabecerasFirmaTrayecto(
+  rol: RolTrayecto,
   llaveTrayectoId: string,
   metodo: string,
   ruta: string,
@@ -69,6 +71,7 @@ export async function cabecerasFirmaTrayecto(
 ): Promise<Record<string, string>> {
   const nonce = nonceAleatorio();
   const { firma, marca } = await firmarTrayecto(
+    rol,
     ...partesDelMensaje(metodo, ruta, nonce, cuerpo),
   );
   return {

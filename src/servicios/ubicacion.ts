@@ -83,18 +83,20 @@ export async function posicionParaEncuentro(): Promise<PosicionParaEncuentro> {
         maxAge: ENCUENTRO_VIGENCIA_MS,
         requiredAccuracy: ENCUENTRO_PRECISION_M,
       })) ?? (await posicionConTope(Location.Accuracy.High));
-    return {
-      tipo: 'ok',
-      posicion: {
-        lat: lectura.coords.latitude,
-        lng: lectura.coords.longitude,
-        // Sin precisión informada no hay cómo saber si sirve: el servidor la rechaza (CA-12).
-        precisionM: lectura.coords.accuracy ?? 100_000,
-        tomadaEn: Math.round(lectura.timestamp),
-        simulada: lectura.mocked === true,
-      },
-    };
+    return { tipo: 'ok', posicion: aPosicion(lectura) };
   } catch {
     return { tipo: 'fallo' };
   }
 }
+
+/** La lectura del GPS tal cual la pide el servidor, en el encuentro (HU-22) y en el trayecto (HU-23). */
+export const aPosicion = (
+  lectura: Location.LocationObject,
+): PosicionEncuentro => ({
+  lat: lectura.coords.latitude,
+  lng: lectura.coords.longitude,
+  // Sin precisión informada no hay cómo saber si sirve: el servidor la rechaza (HU-22 CA-12).
+  precisionM: lectura.coords.accuracy ?? 100_000,
+  tomadaEn: Math.round(lectura.timestamp),
+  simulada: lectura.mocked === true,
+});

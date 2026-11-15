@@ -120,8 +120,9 @@ export default function Inicio() {
             <Text style={estilos.eslogan}>{t('viajes.buscar.subtitulo')}</Text>
           </Entra>
         </BandaMarca>
-        <FormularioBusqueda key={usuario.id} />
+        {/* DESIGN_SYSTEM N7 y §5: el viaje activo va arriba, antes del formulario. */}
         <ViajeActivo key={`activo-${usuario.id}`} />
+        <FormularioBusqueda key={usuario.id} />
         <Entra indice={3} style={estilos.atajos}>
           <Atajo
             icono="receipt_long"

@@ -31,7 +31,12 @@ import java.security.spec.ECGenParameterSpec
 private const val PROVEEDOR = "AndroidKeyStore"
 private const val ALIAS = "uniride.llave.dispositivo"
 private const val ALIAS_ALTERNO = "$ALIAS.2"
-private const val ALIAS_TRAYECTO = "uniride.llave.trayecto"
+// HU-23: una por rol; quien conduce un viaje y va de pasajero en otro firma con dos llaves distintas.
+private val ROLES_TRAYECTO = setOf("conductor", "pasajero")
+private fun aliasTrayecto(rol: String): String {
+  if (rol !in ROLES_TRAYECTO) throw CodedException("ROL_INVALIDO", "Rol de trayecto desconocido", null)
+  return "uniride.llave.trayecto.$rol"
+}
 private const val PREFERENCIAS = "uniride.llave"
 private const val CLAVE_ACTIVA = "alias_activo"
 
@@ -67,9 +72,9 @@ class LlaveDispositivoModule : Module() {
       firmar(antes, despues, textos, promesa)
     }.runOnQueue(Queues.MAIN)
 
-    AsyncFunction("crearLlaveTrayecto") { crearLlaveTrayecto() }
+    AsyncFunction("crearLlaveTrayecto") { rol: String -> crearLlaveTrayecto(rol) }
 
-    AsyncFunction("firmarTrayecto") { antes: String, despues: String -> firmarTrayecto(antes, despues) }
+    AsyncFunction("firmarTrayecto") { rol: String, antes: String, despues: String -> firmarTrayecto(rol, antes, despues) }
 
     // Hermes no trae `crypto.getRandomValues`.
     Function("nonceAleatorio") {
@@ -95,11 +100,12 @@ class LlaveDispositivoModule : Module() {
   /**
    * Llave de trayecto (HU-22 RN-9, D-22): otra P-256 no exportable en hardware, **sin** biometría, para firmar los
    * códigos que se renuevan cada 25 s. Su uso lo autoriza el servidor: la registra dentro de una petición con huella
-   * y solo vale para ese viaje. Se reemplaza en cada viaje: crear una nueva borra la anterior.
+   * y solo vale para ese viaje. Se reemplaza en cada viaje: crear una nueva borra la anterior del mismo rol.
    */
-  private fun crearLlaveTrayecto(): String {
-    almacen().deleteEntry(ALIAS_TRAYECTO)
-    return crearEnHardware(ALIAS_TRAYECTO, conBiometria = false)
+  private fun crearLlaveTrayecto(rol: String): String {
+    val alias = aliasTrayecto(rol)
+    almacen().deleteEntry(alias)
+    return crearEnHardware(alias, conBiometria = false)
   }
 
   /** Par nuevo en `alias` y su llave pública en PEM (SPKI); falla si el Keystore no lo dejó en hardware. */
@@ -122,8 +128,8 @@ class LlaveDispositivoModule : Module() {
   }
 
   /** Firma `antes + hora + despues` con la llave de trayecto, sin diálogo (D-22). */
-  private fun firmarTrayecto(antes: String, despues: String): Map<String, String> {
-    val llave = almacen().getKey(ALIAS_TRAYECTO, null) as? PrivateKey
+  private fun firmarTrayecto(rol: String, antes: String, despues: String): Map<String, String> {
+    val llave = almacen().getKey(aliasTrayecto(rol), null) as? PrivateKey
       ?: throw CodedException("SIN_LLAVE", "Este teléfono no tiene llave de trayecto", null)
     val marca = System.currentTimeMillis().toString()
     val firma = try {
