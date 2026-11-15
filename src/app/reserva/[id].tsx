@@ -10,6 +10,7 @@ import {
   ReservaDetalle,
 } from '@/api/cliente';
 import { Esqueleto } from '@/componentes/Animado';
+import { EstadoPago, PAGABLES } from '@/componentes/EstadoPago';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { ZonaAccion } from '@/componentes/Estructura';
 import { Ilustracion } from '@/componentes/Ilustracion';
@@ -207,15 +208,21 @@ export default function ReservaPantalla() {
                 </Text>
                 <Text style={estilos.enfasis}>{reserva.viaje.conductor}</Text>
               </View>
-              <View style={estilos.fila}>
-                <Text style={estilos.secundario}>
-                  {t('reservas.resultado.en_garantia')}
-                </Text>
-                <Text style={estilos.enfasis}>
-                  {monto} {t('billetera.pantalla.unidad')}
-                </Text>
-              </View>
+              {/* HU-24: verificada, el pasaje deja la garantía y va al conductor: lo dice EstadoPago. */}
+              {!PAGABLES.has(reserva.estado) && (
+                <View style={estilos.fila}>
+                  <Text style={estilos.secundario}>
+                    {t('reservas.resultado.en_garantia')}
+                  </Text>
+                  <Text style={estilos.enfasis}>
+                    {monto} {t('billetera.pantalla.unidad')}
+                  </Text>
+                </View>
+              )}
             </View>
+            {PAGABLES.has(reserva.estado) && (
+              <EstadoPago reservaId={id} rol="pasajero" alLeer={setReserva} />
+            )}
             {reserva.exploradorUrl && (
               <Boton
                 variante="texto"

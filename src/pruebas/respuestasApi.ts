@@ -1251,6 +1251,8 @@ const RESERVA_ID = '0a48bcec-9aa1-4dbf-a192-be3d560e148a';
 const VIAJE_RESERVADO = '3f6b1c2e-9d4a-4e7b-8a10-2c5d7e9f1b34';
 const HASH_BLOQUEO =
   '0x7b53e2bc15b2bed8801d58623c0ca41b75d81c07caa8a1316f9eb9b71eb809d8';
+const HASH_LIBERACION =
+  '0x3f1c9a07d2e84b6c5a90e1f7b3d26c8e4a15f9b0c7d3e2a6f8b1c4d9e0a7f2b5';
 const viajeDeReserva = {
   id: VIAJE_RESERVADO,
   origenNombre: 'Av. Busch',
@@ -1262,12 +1264,21 @@ const reservaDetalle = (
   estado: string,
   viaje: string,
   hashTx: string | null,
+  pago: object | null = null,
 ) => ({
   reservaId: RESERVA_ID,
   estado,
   monto: '10.50',
   creadoEn: '2099-03-10T09:00:00.000Z',
   viaje: { ...viajeDeReserva, estado: viaje },
+  hashTx,
+  exploradorUrl: null,
+  pago,
+});
+// HU-24: forma de `pago` en GET /reservas/{id} (backend `reservas.service.ts`, 14/11/2026); Hardhat sin explorador.
+const pagoReserva = (estado: string, hashTx: string | null) => ({
+  estado,
+  monto: '10.50',
   hashTx,
   exploradorUrl: null,
 });
@@ -1317,6 +1328,32 @@ export const reservaReal = {
   confirmada: ok(200, reservaDetalle('confirmada', 'reservado', HASH_BLOQUEO)),
   abordada: ok(200, reservaDetalle('abordada', 'en_curso', HASH_BLOQUEO)),
   fallida: ok(200, reservaDetalle('fallida', 'publicado', null)),
+  /** HU-24: bajada verificada, la liberación todavía en la cola. */
+  verificada: ok(
+    200,
+    reservaDetalle(
+      'verificada',
+      'en_curso',
+      HASH_BLOQUEO,
+      pagoReserva('pendiente', null),
+    ),
+  ),
+  /** HU-23: la bajada no pasó la evaluación del trayecto; el pasaje sigue en garantía. */
+  noVerificada: ok(
+    200,
+    reservaDetalle('verificacion_fallida', 'en_curso', HASH_BLOQUEO),
+  ),
+  /** HU-24: liberación confirmada en la red. */
+  pagada: ok(
+    200,
+    reservaDetalle(
+      'pagada',
+      'pagado',
+      HASH_BLOQUEO,
+      pagoReserva('confirmado', HASH_LIBERACION),
+    ),
+  ),
+  hashLiberacion: HASH_LIBERACION,
   /** GET /reservas/mias → 200 */
   mias: ok(200, {
     reservas: [

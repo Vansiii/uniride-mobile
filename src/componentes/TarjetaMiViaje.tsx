@@ -8,6 +8,7 @@ import {
 } from '@/api/cliente';
 import { Esqueleto } from '@/componentes/Animado';
 import { Boton } from '@/componentes/Boton';
+import { EstadoPago, PAGABLES } from '@/componentes/EstadoPago';
 import { Aviso, EtiquetaEstado } from '@/componentes/Mensajes';
 import {
   asientosLibres,
@@ -109,13 +110,19 @@ export function TarjetaMiViaje({ viaje }: { viaje: MiViaje }) {
             </Text>
           )}
           {pasajeros?.map((p) => (
-            <View key={p.reservaId} style={estilos.cabecera}>
-              <Text style={estilos.enfasis}>{p.nombre}</Text>
-              <EtiquetaEstado
-                dominio="reserva"
-                estado={p.estado}
-                texto={t(`reservas.estado.${p.estado}`)}
-              />
+            <View key={p.reservaId} style={estilos.pasajeros}>
+              <View style={estilos.cabecera}>
+                <Text style={estilos.enfasis}>{p.nombre}</Text>
+                <EtiquetaEstado
+                  dominio="reserva"
+                  estado={p.estado}
+                  texto={t(`reservas.estado.${p.estado}`)}
+                />
+              </View>
+              {/* HU-24: «Recibirás» → «Recibiste» de cada pasajero que bajó verificado. */}
+              {PAGABLES.has(p.estado) && (
+                <EstadoPago reservaId={p.reservaId} rol="conductor" />
+              )}
             </View>
           ))}
         </View>

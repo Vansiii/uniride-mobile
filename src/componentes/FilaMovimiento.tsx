@@ -54,20 +54,7 @@ export function FilaMovimiento({
             ? `${hora} · ${t('billetera.historial.confirmandose')}`
             : hora}
         </Text>
-        {m.exploradorUrl && (
-          <Pressable
-            accessibilityRole="link"
-            accessibilityLabel={t('billetera.historial.explorador')}
-            hitSlop={8}
-            onPress={() => abrirHttps(m.exploradorUrl!)}
-            style={estilos.enlace}
-          >
-            <Text style={estilos.textoEnlace}>
-              {t('billetera.historial.explorador')}
-            </Text>
-            <Icono nombre="open_in_new" color={colores.primario} tamano={16} />
-          </Pressable>
-        )}
+        {m.exploradorUrl && <EnlaceExplorador url={m.exploradorUrl} />}
       </View>
       <View style={estilos.monto}>
         <Text style={estilos.cifra}>
@@ -85,6 +72,24 @@ export function FilaMovimiento({
         )}
       </View>
     </View>
+  );
+}
+
+/** «Ver en el explorador»: abre la transacción solo si es https. */
+export function EnlaceExplorador({ url }: { url: string }) {
+  return (
+    <Pressable
+      accessibilityRole="link"
+      accessibilityLabel={t('billetera.historial.explorador')}
+      hitSlop={8}
+      onPress={() => abrirHttps(url)}
+      style={estilos.enlace}
+    >
+      <Text style={estilos.textoEnlace}>
+        {t('billetera.historial.explorador')}
+      </Text>
+      <Icono nombre="open_in_new" color={colores.primario} tamano={16} />
+    </Pressable>
   );
 }
 

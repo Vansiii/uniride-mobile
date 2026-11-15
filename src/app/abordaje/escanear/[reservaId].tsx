@@ -22,6 +22,7 @@ import {
 } from '@/api/cliente';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { AvisoFallaAbordaje } from '@/componentes/AvisoFallaAbordaje';
+import { EstadoPago } from '@/componentes/EstadoPago';
 import { ZonaAccion } from '@/componentes/Estructura';
 import { Ilustracion } from '@/componentes/Ilustracion';
 import { Aviso } from '@/componentes/Mensajes';
@@ -297,6 +298,10 @@ export default function EscanearCodigoPantalla() {
                 paso.yaVerificado ? 'ya_verificado' : 'verificado_texto',
               )}
             </Text>
+            {/* HU-24: verificada la bajada, el pago al conductor se libera solo. */}
+            {encuentro === 'bajada' && (
+              <EstadoPago reservaId={reservaId} rol="pasajero" />
+            )}
           </View>
         )}
 

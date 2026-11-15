@@ -15,6 +15,7 @@ import {
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { AvisoFallaAbordaje } from '@/componentes/AvisoFallaAbordaje';
 import { ConfirmacionBiometrica } from '@/componentes/ConfirmacionBiometrica';
+import { EstadoPago, PAGABLES } from '@/componentes/EstadoPago';
 import { ZonaAccion } from '@/componentes/Estructura';
 import { EtiquetaEstado } from '@/componentes/Mensajes';
 import { useSesion } from '@/contexto/sesion';
@@ -233,7 +234,7 @@ export default function MostrarCodigoPantalla() {
         {falla && (
           <>
             <AvisoFallaAbordaje falla={falla} />
-            {llave && (
+            {llave && !falla.final && (
               <Boton
                 variante="secundario"
                 icono="refresh"
@@ -290,24 +291,30 @@ export default function MostrarCodigoPantalla() {
             {pasajeros.map((p) => {
               const listo = yaAbordo(p.estado);
               return (
-                <View key={p.reservaId} style={estilos.fila}>
-                  <Text style={estilos.enfasis}>{p.nombre}</Text>
-                  {tipo === 'bajada' ? (
-                    <EtiquetaEstado
-                      dominio="reserva"
-                      estado={p.estado}
-                      texto={t(`reservas.estado.${p.estado}`)}
-                    />
-                  ) : (
-                    <EtiquetaEstado
-                      dominio="reserva"
-                      estado={listo ? 'verificada' : 'pendiente'}
-                      texto={t(
-                        listo
-                          ? 'presencia.abordaje.pasajero_verificado'
-                          : 'presencia.abordaje.pasajero_esperando',
-                      )}
-                    />
+                <View key={p.reservaId} style={estilos.pasajero}>
+                  <View style={estilos.fila}>
+                    <Text style={estilos.enfasis}>{p.nombre}</Text>
+                    {tipo === 'bajada' ? (
+                      <EtiquetaEstado
+                        dominio="reserva"
+                        estado={p.estado}
+                        texto={t(`reservas.estado.${p.estado}`)}
+                      />
+                    ) : (
+                      <EtiquetaEstado
+                        dominio="reserva"
+                        estado={listo ? 'verificada' : 'pendiente'}
+                        texto={t(
+                          listo
+                            ? 'presencia.abordaje.pasajero_verificado'
+                            : 'presencia.abordaje.pasajero_esperando',
+                        )}
+                      />
+                    )}
+                  </View>
+                  {/* HU-24: «Recibirás» → «Recibiste» por cada pasajero que bajó verificado. */}
+                  {tipo === 'bajada' && PAGABLES.has(p.estado) && (
+                    <EstadoPago reservaId={p.reservaId} rol="conductor" />
                   )}
                 </View>
               );
@@ -371,6 +378,7 @@ const estilos = StyleSheet.create({
   },
   barraLlena: { height: 6, backgroundColor: colores.primario },
   lista: { gap: espacio(2) },
+  pasajero: { gap: espacio(2) },
   fila: {
     flexDirection: 'row',
     flexWrap: 'wrap',
