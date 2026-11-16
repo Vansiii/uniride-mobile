@@ -11,7 +11,9 @@ export type AccionSensible =
   | 'crear_billetera'
   | 'reservar'
   | 'mostrar_codigo'
-  | 'abordar';
+  | 'abordar'
+  | 'cancelar_reserva'
+  | 'cancelar_viaje';
 
 /** `firmando`: el diálogo del sistema está abierto. `enviando`: ya firmó y espera al servidor (CA-9). */
 export type EstadoAccion = 'reposo' | 'firmando' | 'enviando';
