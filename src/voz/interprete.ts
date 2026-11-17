@@ -114,7 +114,8 @@ export function interpretar(
     if (matchN) {
       const token = matchN[1];
       const n =
-        ORDINALES[token] ?? (/^\d+$/.test(token) ? parseInt(token, 10) : undefined);
+        ORDINALES[token] ??
+        (/^\d+$/.test(token) ? parseInt(token, 10) : undefined);
       if (n !== undefined && n >= 1) {
         return { tipo: 'cancelar', n };
       }
@@ -181,7 +182,8 @@ export function interpretar(
   if (matchElegir) {
     const token = matchElegir[1];
     const n =
-      ORDINALES[token] ?? (/^\d+$/.test(token) ? parseInt(token, 10) : undefined);
+      ORDINALES[token] ??
+      (/^\d+$/.test(token) ? parseInt(token, 10) : undefined);
     if (n !== undefined && n >= 1) {
       return { tipo: 'elegir', n };
     }

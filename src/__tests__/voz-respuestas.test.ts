@@ -53,7 +53,9 @@ describe('HU-28 · generador de respuestas por voz (pure functions)', () => {
         distanciaM: 300,
         enPuntoDeEncuentro: false,
       });
-      expect(res).toBe('Tu conductor está a 300 metros del punto de encuentro.');
+      expect(res).toBe(
+        'Tu conductor está a 300 metros del punto de encuentro.',
+      );
     });
 
     it('CA-3: conductor a 1,5 km', () => {
@@ -212,4 +214,3 @@ describe('HU-28 · generador de respuestas por voz (pure functions)', () => {
     });
   });
 });
-

@@ -146,6 +146,12 @@ export default function Perfil() {
             estado={etiqueta(listos?.identidad, t('perfil.estado.verificada'))}
             alPresionar={() => router.push('/identidad')}
           />
+          <View style={estilos.separador} />
+          <FilaAjuste
+            icono="help_outline"
+            titulo={t('perfil.ayuda.titulo')}
+            alPresionar={() => router.push('/ayuda')}
+          />
         </View>
         <View style={estilos.grupo}>
           <FilaAjuste

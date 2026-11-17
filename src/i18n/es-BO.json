@@ -154,6 +154,9 @@
       "vinculado": "Vinculado",
       "verificada": "Verificada",
       "pendiente": "Pendiente"
+    },
+    "ayuda": {
+      "titulo": "Comandos de voz y ayuda"
     }
   },
   "inicio": {
@@ -786,6 +789,27 @@
       "saldo_insuficiente": "Te faltan {falta} URC para reservar este viaje. Recarga tu saldo.",
       "numero_invalido": "Hay {total} viajes. ¿Cuál quieres?",
       "sin_resultados": "Primero busca un viaje."
+    },
+    "saldo": {
+      "disponible": "Tienes {disponible} URC disponibles y {enGarantia} en garantía.",
+      "sin_billetera": "Aún no tienes billetera."
+    },
+    "conductor": {
+      "en_punto": "Tu conductor ya está en el punto de encuentro.",
+      "distancia": "Tu conductor está a {distancia} del punto de encuentro.",
+      "sin_ubicacion": "Aún no tenemos la ubicación de tu conductor. Tu viaje sale a las {hora} desde {origen}."
+    },
+    "viaje": {
+      "sin_viajes": "No tienes viajes próximos.",
+      "proximo": "Tu próximo viaje sale {dia} a las {hora} a {destino}."
+    },
+    "cancelar": {
+      "vista_previa": "Si cancelas ahora te devolvemos {monto} URC. Confirma con tu huella.",
+      "nada": "No tienes viajes que se puedan cancelar.",
+      "numero_invalido": "Tienes {total} viajes cancelables. ¿Cuál cancelo?"
+    },
+    "ayuda": {
+      "texto": "Puedes pedirme: buscar un viaje, reservar, tu saldo, dónde está tu conductor, cómo va tu viaje o cancelar tu viaje."
     }
   }
 }

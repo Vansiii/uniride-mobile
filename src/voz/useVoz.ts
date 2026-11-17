@@ -7,6 +7,14 @@ import {
 } from 'expo-speech-recognition';
 import { con, t } from '@/i18n';
 import { obtenerUbicacion } from '@/servicios/ubicacion';
+import {
+  cancelablesActivos,
+  ejecutarAccionAyuda,
+  ejecutarAccionCancelar,
+  ejecutarAccionConductor,
+  ejecutarAccionEstadoViaje,
+  ejecutarAccionSaldo,
+} from './acciones';
 import { type Intencion, interpretar } from './interprete';
 import { resultadosEnPantalla } from './resultados';
 
@@ -157,6 +165,92 @@ export function useVoz(opciones: UseVozOpciones = {}) {
             params: { id: elegido.id, porVoz: '1' },
           });
         }
+      } else if (intencion.tipo === 'saldo') {
+        if (opciones.onComando) {
+          opciones.onComando(intencion);
+        } else {
+          setFallosSeguidos(0);
+          setEstado('respuesta');
+          void ejecutarAccionSaldo(hablar).then((m) => {
+            setMensaje(m);
+          });
+        }
+      } else if (intencion.tipo === 'conductor') {
+        if (opciones.onComando) {
+          opciones.onComando(intencion);
+        } else {
+          setFallosSeguidos(0);
+          setEstado('respuesta');
+          void ejecutarAccionConductor(hablar).then((m) => {
+            setMensaje(m);
+          });
+        }
+      } else if (intencion.tipo === 'estado_viaje') {
+        if (opciones.onComando) {
+          opciones.onComando(intencion);
+        } else {
+          setFallosSeguidos(0);
+          setEstado('respuesta');
+          void ejecutarAccionEstadoViaje(hablar).then((m) => {
+            setMensaje(m);
+          });
+        }
+      } else if (intencion.tipo === 'ayuda') {
+        if (opciones.onComando) {
+          opciones.onComando(intencion);
+        } else {
+          setFallosSeguidos(0);
+          setEstado('respuesta');
+          void ejecutarAccionAyuda(hablar).then((m) => {
+            setMensaje(m);
+          });
+        }
+      } else if (intencion.tipo === 'cancelar') {
+        if (opciones.onComando) {
+          opciones.onComando(intencion);
+        } else {
+          setFallosSeguidos(0);
+          setEstado('respuesta');
+          void ejecutarAccionCancelar(intencion.n, hablar).then((res) => {
+            setMensaje(res.mensaje);
+          });
+        }
+      } else if (intencion.tipo === 'elegir') {
+        if (opciones.onComando) {
+          opciones.onComando(intencion);
+        } else {
+          const cancelables = cancelablesActivos.obtener();
+          if (cancelables.length > 0) {
+            setFallosSeguidos(0);
+            setEstado('respuesta');
+            void ejecutarAccionCancelar(intencion.n, hablar).then((res) => {
+              setMensaje(res.mensaje);
+            });
+          } else {
+            const lista = resultadosEnPantalla.obtener();
+            if (
+              lista &&
+              lista.length > 0 &&
+              intencion.n >= 1 &&
+              intencion.n <= lista.length
+            ) {
+              setFallosSeguidos(0);
+              const elegido = lista[intencion.n - 1];
+              cerrar();
+              router.push({
+                pathname: '/viajes/[id]',
+                params: { id: elegido.id, porVoz: '1' },
+              });
+            } else {
+              const nuevosFallos = fallosSeguidos + 1;
+              setFallosSeguidos(nuevosFallos);
+              setEstado('no_entendi');
+              const msg = t('voz.comun.no_entendi');
+              setMensaje(msg);
+              hablar(msg);
+            }
+          }
+        }
       } else if (intencion.tipo === 'falta') {
         const nuevosFallos = fallosSeguidos + 1;
         setFallosSeguidos(nuevosFallos);
@@ -202,7 +296,8 @@ export function useVoz(opciones: UseVozOpciones = {}) {
     try {
       // CA-13: Comprueba si el reconocimiento está disponible
       if (
-        typeof ExpoSpeechRecognitionModule?.isRecognitionAvailable === 'function' &&
+        typeof ExpoSpeechRecognitionModule?.isRecognitionAvailable ===
+          'function' &&
         !ExpoSpeechRecognitionModule.isRecognitionAvailable()
       ) {
         setEstado('no_disponible');
@@ -212,7 +307,8 @@ export function useVoz(opciones: UseVozOpciones = {}) {
 
       // CA-11: Permiso de micrófono
       if (
-        typeof ExpoSpeechRecognitionModule?.requestPermissionsAsync === 'function'
+        typeof ExpoSpeechRecognitionModule?.requestPermissionsAsync ===
+        'function'
       ) {
         const resPermiso =
           await ExpoSpeechRecognitionModule.requestPermissionsAsync();

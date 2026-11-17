@@ -828,6 +828,20 @@ export const consultarMisReservas = () =>
     (r) => r.reservas,
   );
 
+/** HU-28: Distancia del conductor al punto de encuentro para el pasajero de una reserva confirmada. */
+export interface DistanciaConductor {
+  disponible: boolean;
+  distanciaM: number | null;
+  enPuntoDeEncuentro: boolean;
+  haceSegundos: number | null;
+}
+
+export const consultarDistanciaConductor = (reservaId: string) =>
+  solicitar<DistanciaConductor>(
+    `/reservas/${encodeURIComponent(reservaId)}/conductor`,
+    'GET',
+  );
+
 export const consultarMisViajes = () =>
   solicitar<MiViaje[]>('/viajes/mis-viajes', 'GET');
 

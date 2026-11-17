@@ -406,7 +406,8 @@ export default function CancelarPantalla() {
                   <Trayecto
                     origen={
                       viaje.origen?.nombre ??
-                      (viaje as unknown as { origenNombre: string }).origenNombre
+                      (viaje as unknown as { origenNombre: string })
+                        .origenNombre
                     }
                     destino={
                       viaje.destino?.nombre ??

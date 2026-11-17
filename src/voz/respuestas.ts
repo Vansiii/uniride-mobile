@@ -41,7 +41,10 @@ export function respuestaConductor(params: {
     return `Aún no tenemos la ubicación de tu conductor. Tu viaje sale a las ${hora} desde ${origen}.`;
   }
 
-  if (params.enPuntoDeEncuentro || (params.distanciaM !== null && params.distanciaM <= 50)) {
+  if (
+    params.enPuntoDeEncuentro ||
+    (params.distanciaM !== null && params.distanciaM <= 50)
+  ) {
     return 'Tu conductor ya está en el punto de encuentro.';
   }
 
@@ -100,11 +103,13 @@ export function respuestaEstadoConductor(params: {
 }
 
 /** CA-7: respuesta cuando no hay viaje del momento pero sí próximo o ninguno. */
-export function respuestaProximoViaje(proximo: {
-  dia: string;
-  hora: string;
-  destino: string;
-} | null): string {
+export function respuestaProximoViaje(
+  proximo: {
+    dia: string;
+    hora: string;
+    destino: string;
+  } | null,
+): string {
   if (!proximo) {
     return 'No tienes viajes próximos.';
   }
@@ -112,7 +117,9 @@ export function respuestaProximoViaje(proximo: {
 }
 
 /** CA-8: confirmación de cancelación de HU-20. */
-export function respuestaCancelarVistaPrevia(montoDevuelto: number | string): string {
+export function respuestaCancelarVistaPrevia(
+  montoDevuelto: number | string,
+): string {
   return `Si cancelas ahora te devolvemos ${formatoMontoUrc(montoDevuelto)} URC. Confirma con tu huella.`;
 }
 
@@ -154,4 +161,3 @@ export function respuestaCancelarNumeroInvalido(total: number): string {
 export function respuestaAyuda(): string {
   return 'Puedes pedirme: buscar un viaje, reservar, tu saldo, dónde está tu conductor, cómo va tu viaje o cancelar tu viaje.';
 }
-
