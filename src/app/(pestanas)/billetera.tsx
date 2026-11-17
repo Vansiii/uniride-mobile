@@ -16,11 +16,13 @@ import {
 } from '@/api/cliente';
 import { Esqueleto, Toque } from '@/componentes/Animado';
 import { Boton, BotonIcono } from '@/componentes/Boton';
+import { BotonVoz } from '@/componentes/BotonVoz';
 import { BandaMarca } from '@/componentes/Estructura';
 import { Icono } from '@/componentes/Icono';
 import { Ilustracion } from '@/componentes/Ilustracion';
 import { BotonRevincular } from '@/componentes/BotonRevincular';
 import { Aviso } from '@/componentes/Mensajes';
+import { PanelVoz } from '@/componentes/PanelVoz';
 import { TarjetaSaldo } from '@/componentes/TarjetaSaldo';
 import { useSesion } from '@/contexto/sesion';
 import { ErrorKeystore } from '@/dispositivo/keystore';
@@ -29,6 +31,7 @@ import { fallaDeFirma, useAccionSensible } from '@/hooks/useAccionSensible';
 import { abrirHttps } from '@/enlaces';
 import { formatearMonto } from '@/formato';
 import { t } from '@/i18n';
+import { useVoz } from '@/voz/useVoz';
 import {
   colores,
   espacio,
@@ -131,6 +134,7 @@ function Contenido() {
   const [copia, setCopia] = useState<'ok' | 'fallo' | null>(null);
   // Falla al actualizar el saldo: se avisa sin perder lo que ya se ve ni gastar otra huella.
   const [errorRefresco, setErrorRefresco] = useState<string | null>(null);
+  const voz = useVoz();
   // Recargas por acreditarse (HU-13 RN-6). Sin firma; si falla la lectura, se conserva lo último visto.
   const [pendientes, setPendientes] = useState<Movimiento[]>([]);
   const leerPendientes = useCallback(() => {
@@ -308,14 +312,20 @@ function Contenido() {
             <Text style={estilos.titulo} accessibilityRole="header">
               {t('billetera.pantalla.titulo')}
             </Text>
-            {vista.tipo !== 'sin_billetera' && (
-              <BotonIcono
-                icono="refresh"
+            <View style={estilos.filaIconos}>
+              <BotonVoz
                 color={colores.sobreMarca}
-                etiqueta={t('billetera.pantalla.actualizar')}
-                alPresionar={actualizar}
+                alPresionar={voz.iniciarEscucha}
               />
-            )}
+              {vista.tipo !== 'sin_billetera' && (
+                <BotonIcono
+                  icono="refresh"
+                  color={colores.sobreMarca}
+                  etiqueta={t('billetera.pantalla.actualizar')}
+                  alPresionar={actualizar}
+                />
+              )}
+            </View>
           </View>
           {lista && <TarjetaSaldo saldo={lista.saldo} />}
         </BandaMarca>
@@ -508,6 +518,16 @@ function Contenido() {
           </View>
         )}
       </ScrollView>
+      <PanelVoz
+        visible={voz.estado !== 'inactivo'}
+        estado={voz.estado}
+        transcripcion={voz.transcripcion}
+        mensaje={voz.mensaje}
+        fallosSeguidos={voz.fallosSeguidos}
+        alCerrar={voz.cerrar}
+        alReintentar={voz.reintentar}
+        alUsarTeclado={voz.cerrar}
+      />
     </View>
   );
 }
@@ -575,6 +595,10 @@ const estilos = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  filaIconos: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   titulo: { ...tipografia.pantalla, color: colores.sobreMarca },
   esqueletos: { gap: espacio(3), padding: espacio(4) },

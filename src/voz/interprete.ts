@@ -63,7 +63,10 @@ function normalizarTexto(texto: string): string {
 /**
  * RN-2, RN-4, RN-6, RN-7: Interpreta un comando de voz en español para UniRide.
  */
-export function interpretar(texto: string, ahora: Date = new Date()): Intencion {
+export function interpretar(
+  texto: string,
+  ahora: Date = new Date(),
+): Intencion {
   if (!texto || !texto.trim()) {
     return { tipo: 'desconocido' };
   }
@@ -203,16 +206,9 @@ export function interpretar(texto: string, ahora: Date = new Date()): Intencion 
     .trim();
 
   const tieneDestino = textoDestino.length > 0;
-  const tieneHora = horaNum !== undefined;
 
-  if (tieneDestino && tieneHora) {
-    const fechaResuelta = resolverHora(
-      horaNum,
-      minutosNum,
-      franja,
-      dia,
-      ahora,
-    );
+  if (tieneDestino && horaNum !== undefined) {
+    const fechaResuelta = resolverHora(horaNum, minutosNum, franja, dia, ahora);
     const esHoy = fechaResuelta.getDate() === ahora.getDate();
     const diaTexto = esHoy ? 'hoy' : 'mañana';
     const hh = String(fechaResuelta.getHours()).padStart(2, '0');
@@ -231,7 +227,7 @@ export function interpretar(texto: string, ahora: Date = new Date()): Intencion 
     };
   }
 
-  if (tieneDestino && !tieneHora) {
+  if (tieneDestino && horaNum === undefined) {
     const destinoOriginal = recuperarDestinoOriginal(texto, textoDestino);
     return {
       tipo: 'falta',
@@ -240,14 +236,8 @@ export function interpretar(texto: string, ahora: Date = new Date()): Intencion 
     };
   }
 
-  if (!tieneDestino && tieneHora) {
-    const fechaResuelta = resolverHora(
-      horaNum,
-      minutosNum,
-      franja,
-      dia,
-      ahora,
-    );
+  if (!tieneDestino && horaNum !== undefined) {
+    const fechaResuelta = resolverHora(horaNum, minutosNum, franja, dia, ahora);
     return {
       tipo: 'falta',
       dato: 'destino',
@@ -258,7 +248,10 @@ export function interpretar(texto: string, ahora: Date = new Date()): Intencion 
   return { tipo: 'desconocido' };
 }
 
-function recuperarDestinoOriginal(textoOriginal: string, destinoNormal: string): string {
+function recuperarDestinoOriginal(
+  textoOriginal: string,
+  destinoNormal: string,
+): string {
   // Intenta encontrar la porción en el texto original
   const palabras = destinoNormal.split(/\s+/).filter(Boolean);
   if (!palabras.length) return destinoNormal;
@@ -267,6 +260,10 @@ function recuperarDestinoOriginal(textoOriginal: string, destinoNormal: string):
   if (match) return match[0].trim();
   // Si no hace match exacto (por tildes), devuelve con mayúscula inicial en cada palabra
   return palabras
-    .map((p) => p.toUpperCase() === 'UAGRM' ? 'UAGRM' : p.charAt(0).toUpperCase() + p.slice(1))
+    .map((p) =>
+      p.toUpperCase() === 'UAGRM'
+        ? 'UAGRM'
+        : p.charAt(0).toUpperCase() + p.slice(1),
+    )
     .join(' ');
 }

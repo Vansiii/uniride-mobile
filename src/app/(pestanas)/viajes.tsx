@@ -10,13 +10,16 @@ import {
 } from '@/api/cliente';
 import { Entra, Esqueleto } from '@/componentes/Animado';
 import { Boton } from '@/componentes/Boton';
+import { BotonVoz } from '@/componentes/BotonVoz';
 import { Aviso } from '@/componentes/Mensajes';
+import { PanelVoz } from '@/componentes/PanelVoz';
 import { TarjetaMiViaje } from '@/componentes/TarjetaMiViaje';
 import { TarjetaReserva } from '@/componentes/TarjetaReserva';
 import { TarjetaAnclada, viajeAnclado } from '@/componentes/ViajeActivo';
 import { useSesion } from '@/contexto/sesion';
 import { useAlEnfocar } from '@/hooks/useAlEnfocar';
 import { t } from '@/i18n';
+import { useVoz } from '@/voz/useVoz';
 import { colores, espacio, radio, tipografia } from '@/tema/tokens';
 
 /** «Mis viajes» (HU-19 CA-14): lo que reservé como pasajero y lo que ofrezco como conductor. */
@@ -32,6 +35,7 @@ function Contenido() {
   const [reservas, setReservas] = useState<Reserva[]>();
   const [viajes, setViajes] = useState<MiViaje[]>();
   const [falla, setFalla] = useState(false);
+  const voz = useVoz();
 
   const cargar = useCallback(
     () =>
@@ -68,9 +72,12 @@ function Contenido() {
         { paddingTop: top + espacio(4) },
       ]}
     >
-      <Text style={estilos.titulo} accessibilityRole="header">
-        {t('reservas.mis_viajes.titulo')}
-      </Text>
+      <View style={estilos.filaEncabezado}>
+        <Text style={estilos.titulo} accessibilityRole="header">
+          {t('reservas.mis_viajes.titulo')}
+        </Text>
+        <BotonVoz alPresionar={voz.iniciarEscucha} />
+      </View>
 
       {falla && (
         <>
@@ -140,6 +147,16 @@ function Contenido() {
           ))}
         </View>
       )}
+      <PanelVoz
+        visible={voz.estado !== 'inactivo'}
+        estado={voz.estado}
+        transcripcion={voz.transcripcion}
+        mensaje={voz.mensaje}
+        fallosSeguidos={voz.fallosSeguidos}
+        alCerrar={voz.cerrar}
+        alReintentar={voz.reintentar}
+        alUsarTeclado={voz.cerrar}
+      />
     </ScrollView>
   );
 }
@@ -147,6 +164,11 @@ function Contenido() {
 const estilos = StyleSheet.create({
   raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   contenido: { gap: espacio(4), padding: espacio(4), paddingBottom: 120 },
+  filaEncabezado: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   titulo: { ...tipografia.pantalla, color: colores.texto },
   subtitulo: { ...tipografia.titulo, color: colores.texto },
   seccion: { gap: espacio(3) },

@@ -47,3 +47,23 @@ jest.mock('expo-haptics', () => ({
   notificationAsync: () => Promise.resolve(),
   NotificationFeedbackType: { Success: 'success', Error: 'error' },
 }));
+
+// Síntesis de voz (expo-speech): en Jest registramos llamadas.
+jest.mock('expo-speech', () => ({
+  speak: jest.fn(),
+  stop: jest.fn().mockResolvedValue(undefined),
+  isSpeakingAsync: jest.fn().mockResolvedValue(false),
+}));
+
+// Reconocimiento de voz (expo-speech-recognition): simulación mínima para tests.
+jest.mock('expo-speech-recognition', () => ({
+  ExpoSpeechRecognitionModule: {
+    isRecognitionAvailable: jest.fn(() => true),
+    requestPermissionsAsync: jest.fn().mockResolvedValue({ granted: true }),
+    getPermissionsAsync: jest.fn().mockResolvedValue({ granted: true }),
+    start: jest.fn(),
+    stop: jest.fn(),
+    abort: jest.fn(),
+  },
+  useSpeechRecognitionEvent: jest.fn(),
+}));

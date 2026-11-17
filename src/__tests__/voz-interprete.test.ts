@@ -32,7 +32,10 @@ describe('HU-27 RN-2, CA-8, CA-9 · interprete de voz (pure function)', () => {
     });
 
     it('acepta "mañana a las 7"', () => {
-      const res = interpretar('quiero un viaje a la UAGRM mañana a las 7', ahora);
+      const res = interpretar(
+        'quiero un viaje a la UAGRM mañana a las 7',
+        ahora,
+      );
       expect(res.tipo).toBe('buscar');
       if (res.tipo === 'buscar') {
         expect(res.hora.getDate()).toBe(17);
@@ -41,7 +44,10 @@ describe('HU-27 RN-2, CA-8, CA-9 · interprete de voz (pure function)', () => {
     });
 
     it('acepta horas compuestas: "7 y media" (7:30)', () => {
-      const res = interpretar('busca un viaje a la UAGRM a las 7 y media', ahora);
+      const res = interpretar(
+        'busca un viaje a la UAGRM a las 7 y media',
+        ahora,
+      );
       expect(res.tipo).toBe('buscar');
       if (res.tipo === 'buscar') {
         expect(res.hora.getHours()).toBe(7);

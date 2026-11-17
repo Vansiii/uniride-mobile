@@ -218,12 +218,12 @@ describe('HU-18 · formulario de búsqueda', () => {
     expect(JSON.stringify(llamada?.[1]?.headers ?? {})).not.toMatch(/firma/i);
   });
 
-  it('la voz está en su lugar pero desactivada hasta HU-27', async () => {
+  it('la voz está activa en Inicio (HU-27)', async () => {
     await abrir(<Inicio />);
     const voz = await screen.findByRole('button', {
-      name: 'Hablar con UniRide, disponible pronto',
+      name: 'Hablar con UniRide',
     });
-    expect(voz.props.accessibilityState.disabled).toBe(true);
+    expect(voz.props.accessibilityState?.disabled).toBeFalsy();
     expect(screen.getByText('¿A dónde vas hoy?')).toBeTruthy();
   });
 

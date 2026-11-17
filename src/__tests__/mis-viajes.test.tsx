@@ -6,13 +6,12 @@ import {
 } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import MisViajesPantalla from '@/app/(pestanas)/viajes';
-import { Reserva, cerrarSesion } from '@/api/cliente';
+import { MiViaje, Reserva, cerrarSesion } from '@/api/cliente';
 import {
   proximaReserva,
   ViajeActivo,
   viajeAnclado,
 } from '@/componentes/ViajeActivo';
-import { MiViaje } from '@/api/cliente';
 import { ProveedorSesion } from '@/contexto/sesion';
 import {
   reservaReal as rr,
