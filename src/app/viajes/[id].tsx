@@ -15,11 +15,15 @@ import {
 import { Entra, Esqueleto } from '@/componentes/Animado';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { BotonRevincular } from '@/componentes/BotonRevincular';
+import { BotonVoz } from '@/componentes/BotonVoz';
 import { ConfirmacionBiometrica } from '@/componentes/ConfirmacionBiometrica';
 import { ZonaAccion } from '@/componentes/Estructura';
 import { Icono } from '@/componentes/Icono';
 import { MapaRuta } from '@/componentes/MapaRuta';
 import { Aviso, EtiquetaEstado } from '@/componentes/Mensajes';
+import { PanelVoz } from '@/componentes/PanelVoz';
+import * as Speech from 'expo-speech';
+import { useVoz } from '@/voz/useVoz';
 import {
   Avatar,
   InsigniasConductor,
@@ -105,17 +109,23 @@ function fallaDeReserva(error: unknown): FallaReserva {
 export default function DetalleViajePantalla() {
   const { cargando, usuario } = useSesion();
   const { top } = useSafeAreaInsets();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, porVoz } = useLocalSearchParams<{
+    id: string;
+    porVoz?: string;
+  }>();
   const [viaje, setViaje] = useState<DetalleViaje | null>(null);
   // Por un enlace o tras la búsqueda se puede llegar a uno cancelado, en curso o que ya salió.
   const [disponible, setDisponible] = useState(true);
   const [falla, setFalla] = useState<string>();
   // HU-19: saldo para mostrar el faltante, falla de la reserva y la clave que hace idempotente el reintento (CA-4).
   const [saldo, setSaldo] = useState<Saldo | null>(null);
+  const [saldoCargado, setSaldoCargado] = useState(false);
   const [faltanteServidor, setFaltanteServidor] = useState<string>();
   const [fallaReserva, setFallaReserva] = useState<FallaReserva | null>(null);
   const clave = useRef<string | undefined>(undefined);
   const accion = useAccionSensible('reservar');
+  const voz = useVoz();
+  const vozEjecutadaRef = useRef(false);
   // Distancia e insignias vienen solo en la búsqueda; si se llegó por otro camino, no se muestran.
   const encontrado = viajesEncontrados.get(id);
 
@@ -146,20 +156,27 @@ export default function DetalleViajePantalla() {
     [id],
   );
 
+  // Al volver de recargar el saldo se relee: la misma confirmación sigue ahí (CA-2). Sin sesión no se pide nada.
+  const leerSaldo = useCallback(
+    () =>
+      consultarSaldo()
+        .then((s) => {
+          setSaldo(s);
+          setSaldoCargado(true);
+        })
+        .catch(() => {
+          setSaldo(null);
+          setSaldoCargado(true);
+        }),
+    [],
+  );
+
   // Al entrar por un enlace la sesión todavía se está restaurando: sin token la API respondería 401.
   const conSesion = !cargando && Boolean(usuario);
   useEffect(() => {
     if (conSesion) void leer();
   }, [conSesion, leer]);
 
-  // Al volver de recargar el saldo se relee: la misma confirmación sigue ahí (CA-2). Sin sesión no se pide nada.
-  const leerSaldo = useCallback(
-    () =>
-      consultarSaldo()
-        .then(setSaldo)
-        .catch(() => setSaldo(null)),
-    [],
-  );
   useAlEnfocar(
     useCallback(() => {
       // Lo que dijo el servidor vale hasta que la persona vuelve (de recargar, por ejemplo): entonces se vuelve a mirar.
@@ -167,9 +184,6 @@ export default function DetalleViajePantalla() {
       if (conSesion) void leerSaldo();
     }, [conSesion, leerSaldo]),
   );
-
-  if (cargando) return null;
-  if (!usuario) return <Redirect href="/iniciar-sesion" />;
 
   /** Con saldo conocido el faltante sale de aquí; el servidor decide siempre (RN-4: cuenta los bloqueos pendientes). */
   const faltante = viaje
@@ -183,7 +197,7 @@ export default function DetalleViajePantalla() {
         : 0
     : 0;
 
-  const reservar = async () => {
+  const reservar = useCallback(async () => {
     if (!viaje || accion.ocupado()) return;
     setFallaReserva(null);
     try {
@@ -196,10 +210,27 @@ export default function DetalleViajePantalla() {
       if (creada) router.replace(`/reserva/${creada.reservaId}`);
     } catch (error) {
       if (error instanceof ErrorApi && error.codigo === 'SALDO_INSUFICIENTE') {
-        setFaltanteServidor(String(error.datos.faltante ?? '0'));
+        const faltaMonto = String(error.datos.faltante ?? '0');
+        setFaltanteServidor(faltaMonto);
+        if (porVoz === '1') {
+          const texto = con('voz.reservar.saldo_insuficiente', {
+            falta: montoDe(centavos(faltaMonto)),
+          });
+          try {
+            Speech.stop();
+            Speech.speak(texto, { language: 'es-BO' });
+          } catch {}
+        }
         return;
       }
-      setFallaReserva(fallaDeReserva(error));
+      const f = fallaDeReserva(error);
+      setFallaReserva(f);
+      if (porVoz === '1') {
+        try {
+          Speech.stop();
+          Speech.speak(f.texto, { language: 'es-BO' });
+        } catch {}
+      }
       // Otra persona se llevó el asiento o el viaje cambió: se muestra como quedó.
       if (
         error instanceof ErrorApi &&
@@ -207,7 +238,37 @@ export default function DetalleViajePantalla() {
       )
         void leer();
     }
-  };
+  }, [accion, leer, porVoz, viaje]);
+
+  useEffect(() => {
+    if (porVoz === '1' && viaje && saldoCargado && !vozEjecutadaRef.current) {
+      vozEjecutadaRef.current = true;
+      if (faltante > 0) {
+        const texto = con('voz.reservar.saldo_insuficiente', {
+          falta: montoDe(faltante),
+        });
+        try {
+          Speech.stop();
+          Speech.speak(texto, { language: 'es-BO' });
+        } catch {}
+      } else {
+        const texto = con('voz.reservar.confirmar_huella', {
+          hora: formatearHoraLocal(viaje.fechaHoraSalida),
+          destino: viaje.destino.nombre,
+          precio: viaje.precioPorAsiento.toFixed(2),
+        });
+        try {
+          Speech.stop();
+          Speech.speak(texto, { language: 'es-BO' });
+        } catch {}
+        const timer = setTimeout(() => void reservar(), 0);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [porVoz, viaje, saldoCargado, faltante, reservar]);
+
+  if (cargando) return null;
+  if (!usuario) return <Redirect href="/iniciar-sesion" />;
 
   return (
     <View style={estilos.raiz}>
@@ -224,6 +285,10 @@ export default function DetalleViajePantalla() {
         <Text style={estilos.titulo} accessibilityRole="header">
           {t('viajes.buscar.titulo_detalle')}
         </Text>
+        <View style={estilos.espaciador} />
+        <View style={estilos.botonVolver}>
+          <BotonVoz alPresionar={voz.iniciarEscucha} />
+        </View>
       </View>
 
       {!viaje && (
@@ -429,12 +494,23 @@ export default function DetalleViajePantalla() {
           </ZonaAccion>
         </>
       )}
+      <PanelVoz
+        visible={voz.estado !== 'inactivo'}
+        estado={voz.estado}
+        transcripcion={voz.transcripcion}
+        mensaje={voz.mensaje}
+        fallosSeguidos={voz.fallosSeguidos}
+        alCerrar={voz.cerrar}
+        alReintentar={voz.reintentar}
+        alUsarTeclado={voz.cerrar}
+      />
     </View>
   );
 }
 
 const estilos = StyleSheet.create({
   raiz: { flex: 1, backgroundColor: colores.fondoSutil },
+  espaciador: { flex: 1 },
   // Flota sobre el mapa de portada.
   encabezado: {
     position: 'absolute',

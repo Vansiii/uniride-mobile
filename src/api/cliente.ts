@@ -785,9 +785,15 @@ export async function buscarViajes(consulta: {
   origenLat: string;
   origenLng: string;
   horaSalida: string;
+  destino?: string;
 }): Promise<ViajeEncontrado[]> {
+  const params = new URLSearchParams();
+  params.set('origenLat', consulta.origenLat);
+  params.set('origenLng', consulta.origenLng);
+  params.set('horaSalida', consulta.horaSalida);
+  if (consulta.destino) params.set('destino', consulta.destino);
   const viajes = await solicitar<ViajeEncontrado[]>(
-    `/viajes/buscar?${new URLSearchParams(consulta)}`,
+    `/viajes/buscar?${params.toString()}`,
     'GET',
   );
   viajesEncontrados.clear();
