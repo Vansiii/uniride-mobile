@@ -132,4 +132,94 @@ describe('HU-27 RN-2, CA-8, CA-9 · interprete de voz (pure function)', () => {
       expect(res.tipo).toBe('desconocido');
     });
   });
+
+  describe('HU-28 RN-1 · Intenciones de consulta, cancelación y ayuda', () => {
+    it.each([
+      ['¿cuál es mi saldo?'],
+      ['cual es mi saldo'],
+      ['¿cuánto saldo tengo?'],
+      ['cuanto saldo tengo'],
+      ['mi saldo'],
+      ['saldo'],
+    ])('reconoce saldo: "%s"', (texto) => {
+      expect(interpretar(texto, ahora)).toEqual({ tipo: 'saldo' });
+    });
+
+    it.each([
+      ['¿dónde está mi conductor?'],
+      ['donde esta mi conductor'],
+      ['¿dónde viene mi conductor?'],
+      ['donde viene mi conductor'],
+      ['donde esta el conductor'],
+      ['donde viene el conductor'],
+    ])('reconoce conductor: "%s"', (texto) => {
+      expect(interpretar(texto, ahora)).toEqual({ tipo: 'conductor' });
+    });
+
+    it.each([
+      ['¿cómo va mi viaje?'],
+      ['como va mi viaje'],
+      ['estado de mi viaje'],
+      ['estado del viaje'],
+      ['como va el viaje'],
+    ])('reconoce estado del viaje: "%s"', (texto) => {
+      expect(interpretar(texto, ahora)).toEqual({ tipo: 'estado_viaje' });
+    });
+
+    it.each([
+      ['cancela mi viaje'],
+      ['cancelar mi viaje'],
+      ['cancelar mi reserva'],
+      ['cancela la reserva'],
+      ['cancela el viaje'],
+      ['cancelar viaje'],
+    ])('reconoce cancelar general: "%s"', (texto) => {
+      expect(interpretar(texto, ahora)).toEqual({ tipo: 'cancelar' });
+    });
+
+    it.each([
+      ['cancela el primero', 1],
+      ['cancelar el segundo', 2],
+      ['cancela el 2', 2],
+      ['cancela el tercero', 3],
+      ['cancela el 1', 1],
+    ])('reconoce cancelar con ordinal: "%s" -> n=%d', (texto, n) => {
+      expect(interpretar(texto, ahora)).toEqual({ tipo: 'cancelar', n });
+    });
+
+    it.each([
+      ['ayúdame'],
+      ['ayudame'],
+      ['ayuda'],
+      ['¿qué puedo decir?'],
+      ['que puedo decir'],
+    ])('reconoce ayuda: "%s"', (texto) => {
+      expect(interpretar(texto, ahora)).toEqual({ tipo: 'ayuda' });
+    });
+
+    it.each([
+      ['el primero', 1],
+      ['el 1', 1],
+      ['primero', 1],
+      ['el segundo', 2],
+      ['el 2', 2],
+      ['segundo', 2],
+      ['el tercero', 3],
+      ['el 3', 3],
+    ])('reconoce elección en lista: "%s" -> n=%d', (texto, n) => {
+      expect(interpretar(texto, ahora)).toEqual({ tipo: 'elegir', n });
+    });
+
+    describe('Prioridad fija: cancelar > conductor > estado_viaje', () => {
+      it('cancela mi viaje prioritario sobre estado de mi viaje o buscar', () => {
+        expect(interpretar('cancela mi viaje', ahora).tipo).toBe('cancelar');
+      });
+
+      it('donde esta mi conductor en mi viaje prioritario sobre estado de viaje', () => {
+        expect(
+          interpretar('donde esta mi conductor en mi viaje', ahora).tipo,
+        ).toBe('conductor');
+      });
+    });
+  });
 });
