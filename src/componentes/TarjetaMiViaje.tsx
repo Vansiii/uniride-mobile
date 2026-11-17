@@ -86,6 +86,17 @@ export function TarjetaMiViaje({ viaje }: { viaje: MiViaje }) {
           alPresionar={() => router.push(`/abordaje/mostrar/${viaje.id}`)}
         />
       )}
+      {/* HU-20: cancelar viaje mientras esté publicado o reservado */}
+      {(viaje.estado === 'publicado' || viaje.estado === 'reservado') && (
+        <Boton
+          variante="secundario"
+          icono="cancel"
+          etiqueta={t('viajes.cancelar.boton')}
+          alPresionar={() =>
+            router.push(`/cancelar?viajeId=${viaje.id}` as never)
+          }
+        />
+      )}
       <Boton
         variante="secundario"
         icono={abierto ? 'expand_less' : 'expand_more'}

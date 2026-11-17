@@ -83,6 +83,8 @@ const estados: Record<string, [Tono | 'neutro', NombreIcono]> = {
   'reserva.pagada': ['exito', 'payments'],
   'reserva.fallida': ['peligro', 'error'],
   'reserva.verificacion_fallida': ['peligro', 'error'],
+  'reserva.cancelada': ['peligro', 'cancel'],
+  'reserva.expirada': ['neutro', 'timer_off'],
   'viaje.publicado': ['info', 'campaign'],
   // Estados del viaje que se ven en «Mis viajes» (D-23).
   'viaje.reservado': ['exito', 'check_circle'],

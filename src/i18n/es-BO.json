@@ -29,7 +29,9 @@
         "crear_billetera": "la creación de tu billetera",
         "reservar": "la reserva de tu asiento",
         "mostrar_codigo": "la apertura del código de abordaje",
-        "abordar": "tu abordaje"
+        "abordar": "tu abordaje",
+        "cancelar_reserva": "la cancelación de tu reserva",
+        "cancelar_viaje": "la cancelación de tu viaje"
       },
       "dialogo": {
         "recarga": {
@@ -55,6 +57,14 @@
         "abordar": {
           "titulo": "Confirma tu abordaje",
           "subtitulo": "Verificamos que estás junto al conductor"
+        },
+        "cancelar_reserva": {
+          "titulo": "Confirma la cancelación de tu reserva",
+          "subtitulo": "Usa tu huella o rostro para continuar."
+        },
+        "cancelar_viaje": {
+          "titulo": "Confirma la cancelación de tu viaje",
+          "subtitulo": "Usa tu huella o rostro para continuar."
         }
       }
     }
@@ -378,7 +388,8 @@
         "recarga": "Recarga",
         "bloqueo_reserva": "Reserva en garantía",
         "liberacion_viaje": "Pago de viaje recibido",
-        "reembolso_reserva": "Reembolso"
+        "reembolso_reserva": "Reembolso",
+        "compensacion_cancelacion": "Compensación por cancelación"
       },
       "estado": {
         "pendiente": "Pendiente",
@@ -580,6 +591,17 @@
       "pagado": "Pagado",
       "cancelado": "Cancelado",
       "expirado": "Expirado"
+    },
+    "cancelar": {
+      "boton": "Cancelar viaje",
+      "titulo": "Cancelar viaje",
+      "intro": "Al cancelar tu viaje se devolverá el 100 % del pasaje a todos tus pasajeros.",
+      "resumen_pasajeros": "Se devuelve el 100 % a {total} pasajeros",
+      "sin_pasajeros": "Este viaje no tiene pasajeros confirmados.",
+      "boton_confirmar": "Cancelar viaje",
+      "exito_titulo": "Viaje cancelado",
+      "exito_texto": "Tu viaje fue cancelado. Cada pasajero recibirá un correo con el aviso de reembolso.",
+      "no_cancelable": "Este viaje ya no se puede cancelar."
     }
   },
   "reservas": {
@@ -590,7 +612,9 @@
       "verificada": "Verificada",
       "pagada": "Pagada",
       "fallida": "No se completó",
-      "verificacion_fallida": "Verificación fallida"
+      "verificacion_fallida": "Verificación fallida",
+      "cancelada": "Cancelada",
+      "expirada": "Expirada"
     },
     "resultado": {
       "titulo": "Tu reserva",
@@ -601,6 +625,10 @@
       "confirmada_texto": "Tu pasaje de {monto} URC quedó en garantía. Se le paga al conductor solo cuando el viaje se verifique.",
       "fallida_titulo": "No se completó tu reserva",
       "fallida_texto": "No se descontó nada de tu saldo y el asiento quedó libre. Puedes intentarlo otra vez.",
+      "cancelada_titulo": "Reserva cancelada",
+      "cancelada_texto": "Tu reserva fue cancelada. Te devolvimos {monto} URC.",
+      "expirada_titulo": "Reserva expirada",
+      "expirada_texto": "No se abordó a tiempo el viaje. Te devolvimos {monto} URC.",
       "otro_estado_texto": "Tu reserva está {estado}.",
       "en_garantia": "En garantía",
       "transaccion": "Ver la transacción",
@@ -609,7 +637,23 @@
       "intentar_otra_vez": "Intentar otra vez",
       "ver_mis_viajes": "Ver mis viajes",
       "no_encontrada": "No encontramos esta reserva.",
-      "actualizar": "Actualizar"
+      "actualizar": "Actualizar",
+      "reembolso_en_camino": "Reembolso en camino",
+      "reembolso_confirmado": "Reembolso acreditado"
+    },
+    "cancelar": {
+      "titulo": "Cancelar reserva",
+      "intro": "Revisa los detalles antes de confirmar tu cancelación.",
+      "politica_titulo": "Política de cancelación",
+      "politica_texto": "Si cancelas con más de 30 minutos de anticipación recibes el 100 %; con menos, el 50 %.",
+      "devolucion_pasajero": "Te devolvemos {monto} URC",
+      "compensacion_conductor": "El conductor recibe {monto} URC",
+      "boton_confirmar": "Cancelar reserva",
+      "politica_cambio": "Cambió el tiempo para la salida. La política actualizada ahora devuelve el 50 %.",
+      "exito_titulo": "Reserva cancelada",
+      "exito_texto": "Cancelaste tu reserva con éxito. El reembolso se está procesando en tu billetera.",
+      "volver_inicio": "Volver a Mis viajes",
+      "no_cancelable": "Esta reserva ya no se puede cancelar."
     },
     "mis_viajes": {
       "pestana": "Mis viajes",
