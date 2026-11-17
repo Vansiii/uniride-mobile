@@ -202,7 +202,8 @@ export function useVoz(opciones: UseVozOpciones = {}) {
     try {
       // CA-13: Comprueba si el reconocimiento está disponible
       if (
-        typeof ExpoSpeechRecognitionModule?.isRecognitionAvailable === 'function' &&
+        typeof ExpoSpeechRecognitionModule?.isRecognitionAvailable ===
+          'function' &&
         !ExpoSpeechRecognitionModule.isRecognitionAvailable()
       ) {
         setEstado('no_disponible');
@@ -212,7 +213,8 @@ export function useVoz(opciones: UseVozOpciones = {}) {
 
       // CA-11: Permiso de micrófono
       if (
-        typeof ExpoSpeechRecognitionModule?.requestPermissionsAsync === 'function'
+        typeof ExpoSpeechRecognitionModule?.requestPermissionsAsync ===
+        'function'
       ) {
         const resPermiso =
           await ExpoSpeechRecognitionModule.requestPermissionsAsync();
