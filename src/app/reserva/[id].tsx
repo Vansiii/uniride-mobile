@@ -4,7 +4,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
+  consultarDistanciaConductor,
   consultarReserva,
+  type DistanciaConductor,
   ErrorApi,
   EstadoReserva,
   ReservaDetalle,
@@ -22,6 +24,7 @@ import { AccionDeReserva } from '@/componentes/ViajeActivo';
 import { useSesion } from '@/contexto/sesion';
 import { formatearDia, formatearHoraLocal, formatearMonto } from '@/formato';
 import { con, t } from '@/i18n';
+import { formatoDistanciaMetros } from '@/voz/respuestas';
 import { useVoz } from '@/voz/useVoz';
 import {
   colores,
@@ -67,6 +70,8 @@ export default function ReservaPantalla() {
   const { top } = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [reserva, setReserva] = useState<ReservaDetalle | null>(null);
+  const [distanciaConductor, setDistanciaConductor] =
+    useState<DistanciaConductor | null>(null);
   const [falla, setFalla] = useState<string>();
   const [demorada, setDemorada] = useState(false);
   const voz = useVoz();
@@ -77,6 +82,13 @@ export default function ReservaPantalla() {
         .then((r) => {
           setReserva(r);
           setFalla(undefined);
+          if (r.estado === 'confirmada') {
+            consultarDistanciaConductor(id)
+              .then(setDistanciaConductor)
+              .catch(() => setDistanciaConductor(null));
+          } else {
+            setDistanciaConductor(null);
+          }
         })
         .catch((error: unknown) => {
           // Sin conexión no se pierde nada: se vuelve a preguntar. Un rechazo (404, 403) no se arregla solo.
@@ -221,6 +233,20 @@ export default function ReservaPantalla() {
                 </Text>
                 <Text style={estilos.enfasis}>{reserva.viaje.conductor}</Text>
               </View>
+              {reserva.estado === 'confirmada' && distanciaConductor && (
+                <View style={estilos.fila}>
+                  <Text style={estilos.secundario}>
+                    Ubicación del conductor
+                  </Text>
+                  <Text style={estilos.enfasis}>
+                    {distanciaConductor.disponible
+                      ? distanciaConductor.enPuntoDeEncuentro
+                        ? 'En el punto de encuentro'
+                        : `A ${formatoDistanciaMetros(distanciaConductor.distanciaM ?? 0)}`
+                      : 'Sin ubicación reciente'}
+                  </Text>
+                </View>
+              )}
               {/* HU-24: verificada, el pasaje deja la garantía y va al conductor: lo dice EstadoPago. */}
               {!PAGABLES.has(reserva.estado) && (
                 <View style={estilos.fila}>
