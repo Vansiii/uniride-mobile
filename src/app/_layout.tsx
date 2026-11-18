@@ -1,14 +1,16 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ProveedorSesion } from '@/contexto/sesion';
-import { colores } from '@/tema/tokens';
+import { ProveedorTema, useTema } from '@/tema/ProveedorTema';
 // HU-23: la tarea de ubicación se define al arrancar; Android la llama también con la app cerrada.
 import '@/viajes/seguimiento';
 
-export default function Diseno() {
+/** HU-31: el fondo y la barra de estado siguen el tema elegido, al instante. */
+function Pila() {
+  const { colores, esquema } = useTema();
   return (
-    <ProveedorSesion>
-      <StatusBar style="dark" />
+    <>
+      <StatusBar style={esquema === 'oscuro' ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
           headerShown: false,
@@ -16,6 +18,16 @@ export default function Diseno() {
           contentStyle: { backgroundColor: colores.fondo },
         }}
       />
-    </ProveedorSesion>
+    </>
+  );
+}
+
+export default function Diseno() {
+  return (
+    <ProveedorTema>
+      <ProveedorSesion>
+        <Pila />
+      </ProveedorSesion>
+    </ProveedorTema>
   );
 }

@@ -23,7 +23,8 @@ import {
   type Punto,
 } from '@/componentes/MapaCompleto';
 import { t } from '@/i18n';
-import { colores, radio } from '@/tema/tokens';
+import { radio } from '@/tema/tokens';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
 
 const ALTO = 112;
 const ZOOM_MAXIMO = 16;
@@ -56,6 +57,7 @@ export function arco(a: Punto, b: Punto, pasos = 32): [number, number][] {
 
 /** Punto de origen con un anillo que late: marca «de aquí sales» y da vida al mapa. */
 function PuntoOrigen() {
+  const estilos = useEstilos();
   const onda = useSharedValue(0);
   useEffect(() => {
     onda.set(
@@ -78,6 +80,8 @@ function PuntoOrigen() {
 }
 
 function Puntos({ origen, destino }: { origen: Punto; destino: Punto }) {
+  const colores = useColores();
+  const estilos = useEstilos();
   const linea = {
     type: 'Feature' as const,
     properties: {},
@@ -131,6 +135,7 @@ export function MapaRuta({
   alto?: number;
   redondeo?: number;
 }) {
+  const estilos = useEstilos();
   const [completo, setCompleto] = useState(false);
   const recuadro = limites(origen, destino);
 
@@ -200,7 +205,7 @@ export function MapaRuta({
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   mapa: {
     height: ALTO,
     overflow: 'hidden',
@@ -230,4 +235,4 @@ const estilos = StyleSheet.create({
   },
   pinDestino: { width: 30, height: 42 },
   puntoDestino: { backgroundColor: colores.exito },
-});
+}));

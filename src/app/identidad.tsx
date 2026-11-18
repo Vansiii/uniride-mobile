@@ -1,4 +1,3 @@
-import { StatusBar } from 'expo-status-bar';
 import { Image } from 'expo-image';
 import * as SelectorImagen from 'expo-image-picker';
 import { Redirect, router } from 'expo-router';
@@ -7,7 +6,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -30,7 +28,9 @@ import { formatearHora, t } from '@/i18n';
 import { ejecutarLiveness, ErrorLiveness } from '@/identidad/liveness';
 import { Entra, Esqueleto } from '@/componentes/Animado';
 import { Ilustracion } from '@/componentes/Ilustracion';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import { espacio, radio, tipografia } from '@/tema/tokens';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
+import { BarraEstado } from '@/componentes/BarraEstado';
 
 type Paso = 1 | 2 | 3;
 // Misma forma que valida el servidor; allí se decide, aquí solo se avisa antes de enviar.
@@ -92,6 +92,8 @@ function fallaDe(error: unknown): Falla {
 
 /** Verificación de identidad (HU-08): consentimiento y número → foto del carnet → prueba de vida. */
 export default function IdentidadPantalla() {
+  const colores = useColores();
+  const estilos = useEstilos();
   const { cargando, usuario } = useSesion();
   const { top } = useSafeAreaInsets();
   const [consultando, setConsultando] = useState(true);
@@ -239,7 +241,7 @@ export default function IdentidadPantalla() {
       style={estilos.raiz}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <StatusBar style="dark" />
+      <BarraEstado />
       <View style={[estilos.encabezado, { paddingTop: top }]}>
         <BotonIcono
           icono="arrow_back"
@@ -432,7 +434,7 @@ export default function IdentidadPantalla() {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   encabezado: {
     minHeight: 56,
@@ -474,4 +476,4 @@ const estilos = StyleSheet.create({
     backgroundColor: colores.fondoSutil,
   },
   error: { ...tipografia.secundario, color: colores.peligro },
-});
+}));

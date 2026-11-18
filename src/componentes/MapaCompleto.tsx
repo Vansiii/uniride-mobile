@@ -6,7 +6,6 @@ import {
   type MapRef,
   NativeUserLocation,
 } from '@maplibre/maplibre-react-native';
-import { StatusBar } from 'expo-status-bar';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import {
   Keyboard,
@@ -32,13 +31,9 @@ import {
   nombreDePunto,
 } from '@/servicios/geocoding';
 import { obtenerUbicacion, tienePermisoUbicacion } from '@/servicios/ubicacion';
-import {
-  colores,
-  espacio,
-  radio,
-  sombraElevada,
-  tipografia,
-} from '@/tema/tokens';
+import { espacio, radio, sombraElevada, tipografia } from '@/tema/tokens';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
+import { BarraEstado } from '@/componentes/BarraEstado';
 
 const PLEGAR_ATRIBUCION_MS = 5000;
 const ZOOM_MINIMO = 3;
@@ -55,6 +50,8 @@ export type Punto = { lat: number; lng: number };
  * como permiten sus pautas de atribución para mapas en apps.
  */
 export function AtribucionMapa({ tipo = 'calles' }: { tipo?: TipoMapa }) {
+  const colores = useColores();
+  const estilos = useEstilos();
   const [abierta, setAbierta] = useState(true);
 
   useEffect(() => {
@@ -107,6 +104,8 @@ export function MapaCompleto({
   elegir?: { punto: Punto; alElegir: (punto: Punto) => void };
   children?: ReactNode;
 }) {
+  const colores = useColores();
+  const estilos = useEstilos();
   const { top, bottom } = useSafeAreaInsets();
   const mapa = useRef<MapRef>(null);
   const camara = useRef<CameraRef>(null);
@@ -196,7 +195,7 @@ export function MapaCompleto({
   return (
     <Modal animationType="slide" onRequestClose={alCerrar}>
       <View style={estilos.raiz}>
-        <StatusBar style="dark" />
+        <BarraEstado />
         {/* La vista nativa trae su propia descripción: ocultarla exige un contenedor. Los botones dan las mismas acciones. */}
         <View
           style={StyleSheet.absoluteFill}
@@ -409,7 +408,7 @@ export function MapaCompleto({
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   arriba: {
     position: 'absolute',
@@ -524,4 +523,4 @@ const estilos = StyleSheet.create({
     color: colores.texto,
     backgroundColor: colores.superficie,
   },
-});
+}));

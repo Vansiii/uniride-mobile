@@ -1,7 +1,6 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   cancelarReserva,
@@ -26,15 +25,13 @@ import { useSesion } from '@/contexto/sesion';
 import { ErrorKeystore } from '@/dispositivo/keystore';
 import { formatearDia, formatearHoraLocal, formatearMonto } from '@/formato';
 import { con, t } from '@/i18n';
-import {
-  colores,
-  espacio,
-  radio,
-  sombraTarjeta,
-  tipografia,
-} from '@/tema/tokens';
+import { espacio, radio, sombraTarjeta, tipografia } from '@/tema/tokens';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
+import { BarraEstado } from '@/componentes/BarraEstado';
 
 export default function CancelarPantalla() {
+  const colores = useColores();
+  const estilos = useEstilos();
   const { cargando: cargandoSesion, usuario } = useSesion();
   const { top } = useSafeAreaInsets();
   const { reservaId, viajeId } = useLocalSearchParams<{
@@ -218,7 +215,7 @@ export default function CancelarPantalla() {
   if (resultadoReserva) {
     return (
       <View style={estilos.raiz}>
-        <StatusBar style="dark" />
+        <BarraEstado />
         <View style={[estilos.barra, { paddingTop: top }]}>
           <BotonIcono
             icono="close"
@@ -270,7 +267,7 @@ export default function CancelarPantalla() {
   if (resultadoViaje) {
     return (
       <View style={estilos.raiz}>
-        <StatusBar style="dark" />
+        <BarraEstado />
         <View style={[estilos.barra, { paddingTop: top }]}>
           <BotonIcono
             icono="close"
@@ -305,7 +302,7 @@ export default function CancelarPantalla() {
 
   return (
     <View style={estilos.raiz}>
-      <StatusBar style="dark" />
+      <BarraEstado />
       <View style={[estilos.barra, { paddingTop: top }]}>
         <BotonIcono
           icono="arrow_back"
@@ -470,7 +467,7 @@ export default function CancelarPantalla() {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   barra: {
     minHeight: 56,
@@ -543,4 +540,4 @@ const estilos = StyleSheet.create({
   subtitulo: { ...tipografia.subtitulo, color: colores.texto },
   enfasis: { ...tipografia.cuerpoEnfasis, color: colores.texto },
   secundario: { ...tipografia.secundario, color: colores.textoSecundario },
-});
+}));

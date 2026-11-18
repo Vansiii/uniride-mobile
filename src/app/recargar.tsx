@@ -1,13 +1,11 @@
 import * as Haptics from 'expo-haptics';
 import { Redirect, router } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -35,7 +33,6 @@ import { fallaDeFirma, useAccionSensible } from '@/hooks/useAccionSensible';
 import { formatearMonto, textoBloqueoPreventivo } from '@/formato';
 import { con, t } from '@/i18n';
 import {
-  colores,
   espacio,
   radio,
   tipografia,
@@ -43,6 +40,8 @@ import {
   sombraElevada,
   sombraTarjeta,
 } from '@/tema/tokens';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
+import { BarraEstado } from '@/componentes/BarraEstado';
 
 const MONTOS_RAPIDOS = [20, 50, 100, 200];
 const MINIMO = 10;
@@ -121,6 +120,7 @@ const relojDe = (segundos: number) =>
 
 /** Tarjeta de marca con lo que se paga y lo que se recibe: entra con un resorte. */
 function Resumen({ monto }: { monto: number }) {
+  const estilos = useEstilos();
   const animado = formatearMonto(monto.toFixed(2));
   return (
     <Entra style={estilos.resumen}>
@@ -150,6 +150,8 @@ export default function RecargarPantalla() {
 }
 
 function Contenido() {
+  const colores = useColores();
+  const estilos = useEstilos();
   const { cargando, usuario } = useSesion();
   const { top } = useSafeAreaInsets();
   const [paso, setPaso] = useState<Paso>({ tipo: 'monto' });
@@ -322,7 +324,7 @@ function Contenido() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       {/* La pestaña Billetera deja la barra de estado clara (zona de marca): aquí el fondo es blanco. */}
-      <StatusBar style="dark" />
+      <BarraEstado />
       <View style={[estilos.barra, { paddingTop: top }]}>
         <BotonIcono
           icono="close"
@@ -567,7 +569,7 @@ function Contenido() {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   filaEnCamino: { alignSelf: 'stretch' },
   barra: {
@@ -697,4 +699,4 @@ const estilos = StyleSheet.create({
     color: colores.textoSecundario,
     textAlign: 'center',
   },
-});
+}));

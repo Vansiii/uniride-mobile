@@ -1,19 +1,14 @@
 import { router } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BotonIcono } from '@/componentes/Boton';
 import { BotonVoz } from '@/componentes/BotonVoz';
 import { PanelVoz } from '@/componentes/PanelVoz';
 import { t } from '@/i18n';
-import {
-  colores,
-  espacio,
-  radio,
-  sombraTarjeta,
-  tipografia,
-} from '@/tema/tokens';
+import { espacio, radio, sombraTarjeta, tipografia } from '@/tema/tokens';
 import { useVoz } from '@/voz/useVoz';
+import { crearEstilos } from '@/tema/useEstilos';
+import { BarraEstado } from '@/componentes/BarraEstado';
 
 interface ComandoAyuda {
   icono: string;
@@ -68,12 +63,13 @@ const COMANDOS: ComandoAyuda[] = [
 ];
 
 export default function AyudaPantalla() {
+  const estilos = useEstilos();
   const { top } = useSafeAreaInsets();
   const voz = useVoz();
 
   return (
     <View style={estilos.raiz}>
-      <StatusBar style="dark" />
+      <BarraEstado />
       <View style={[estilos.cabecera, { paddingTop: top + espacio(2) }]}>
         <BotonIcono
           icono="arrow_back"
@@ -127,7 +123,7 @@ export default function AyudaPantalla() {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   cabecera: {
     flexDirection: 'row',
@@ -204,4 +200,4 @@ const estilos = StyleSheet.create({
     ...tipografia.secundario,
     color: colores.textoPlaceholder,
   },
-});
+}));

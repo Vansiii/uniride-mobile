@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import type { ViajeEncontrado } from '@/api/cliente';
 import {
   formatearDistancia,
@@ -6,15 +6,10 @@ import {
   formatearMonto,
 } from '@/formato';
 import { con, t } from '@/i18n';
-import {
-  colores,
-  espacio,
-  radio,
-  tipografia,
-  sombraTarjeta,
-} from '@/tema/tokens';
+import { espacio, radio, tipografia, sombraTarjeta } from '@/tema/tokens';
 import { Toque } from './Animado';
 import { EtiquetaEstado } from './Mensajes';
+import { crearEstilos } from '@/tema/useEstilos';
 
 export const precioUrc = (precio: number) =>
   `${formatearMonto(precio.toFixed(2))} ${t('billetera.pantalla.unidad')}`;
@@ -34,6 +29,7 @@ export function Trayecto({
   origen: string;
   destino: string;
 }) {
+  const estilos = useEstilos();
   return (
     <View style={estilos.trayecto}>
       <View style={estilos.riel} accessibilityElementsHidden>
@@ -58,6 +54,7 @@ export function InsigniasConductor({
     'verificado' | 'esNuevo' | 'calificacionPromedio' | 'calificaciones'
   >;
 }) {
+  const estilos = useEstilos();
   return (
     <View style={estilos.insignias}>
       {conductor.verificado && (
@@ -89,6 +86,7 @@ export function InsigniasConductor({
 }
 
 export function Avatar({ nombre }: { nombre: string }) {
+  const estilos = useEstilos();
   return (
     <View style={estilos.avatar}>
       <Text style={estilos.inicial}>{nombre.charAt(0).toUpperCase()}</Text>
@@ -104,6 +102,7 @@ export function TarjetaViaje({
   viaje: ViajeEncontrado;
   alPresionar: () => void;
 }) {
+  const estilos = useEstilos();
   const hora = formatearHoraLocal(viaje.fechaHoraSalida);
   const precio = precioUrc(viaje.precioPorAsiento);
   const distancia = formatearDistancia(viaje.distanciaKm);
@@ -173,7 +172,7 @@ export function TarjetaViaje({
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   tarjeta: {
     gap: espacio(4),
     padding: espacio(4),
@@ -253,4 +252,4 @@ const estilos = StyleSheet.create({
     backgroundColor: colores.primarioSuave,
   },
   inicial: { ...tipografia.cuerpoEnfasis, color: colores.primarioTexto },
-});
+}));

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Modal, StyleSheet, View } from 'react-native';
+import { Modal, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { Icono } from '@/componentes/Icono';
@@ -12,7 +12,8 @@ import {
 import { Aviso } from '@/componentes/Mensajes';
 import { t } from '@/i18n';
 import { obtenerUbicacion } from '@/servicios/ubicacion';
-import { colores, espacio, radio } from '@/tema/tokens';
+import { espacio, radio } from '@/tema/tokens';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
 
 const ZOOM_INICIAL = 16;
 const ZOOM_MINIMO = 11;
@@ -34,6 +35,8 @@ export function SelectorMapa({
   alCancelar: () => void;
   alElegir: (punto: Punto) => void;
 }) {
+  const colores = useColores();
+  const estilos = useEstilos();
   const [centro, setCentro] = useState(inicial);
   const [zoom, setZoom] = useState(ZOOM_INICIAL);
   const [{ ancho, alto }, setTamano] = useState({ ancho: 0, alto: 0 });
@@ -137,7 +140,7 @@ export function SelectorMapa({
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { flex: 1, backgroundColor: colores.fondo },
   mapa: { flex: 1, overflow: 'hidden', backgroundColor: colores.fondoSutil },
   // La punta del pin marca el centro del mapa.
@@ -165,4 +168,4 @@ const estilos = StyleSheet.create({
     elevation: 3,
   },
   pie: { gap: espacio(3), padding: espacio(4) },
-});
+}));

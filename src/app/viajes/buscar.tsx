@@ -1,7 +1,6 @@
-import { StatusBar } from 'expo-status-bar';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Speech from 'expo-speech';
 import { buscarViajes, ErrorApi, ViajeEncontrado } from '@/api/cliente';
@@ -16,10 +15,12 @@ import { TarjetaViaje } from '@/componentes/TarjetaViaje';
 import { useSesion } from '@/contexto/sesion';
 import { formatearDia, formatearHoraLocal } from '@/formato';
 import { con, t } from '@/i18n';
-import { colores, espacio, tipografia } from '@/tema/tokens';
+import { espacio, tipografia } from '@/tema/tokens';
 import { ventanaDe } from '@/viajes/salida';
 import { resultadosEnPantalla } from '@/voz/resultados';
 import { useVoz } from '@/voz/useVoz';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
+import { BarraEstado } from '@/componentes/BarraEstado';
 
 type Vista =
   | { tipo: 'cargando' }
@@ -29,6 +30,8 @@ type Vista =
 
 /** Resultados de la búsqueda (HU-18): por hora de salida, a 1 km y ± 30 min. Sin firma: no pide huella (RN-6). */
 export default function ResultadosPantalla() {
+  const colores = useColores();
+  const estilos = useEstilos();
   const { cargando, usuario } = useSesion();
   const { top } = useSafeAreaInsets();
   const { origenLat, origenLng, horaSalida, destino, porVoz } =
@@ -144,7 +147,7 @@ export default function ResultadosPantalla() {
 
   return (
     <View style={[estilos.raiz, { paddingTop: top }]}>
-      <StatusBar style="dark" />
+      <BarraEstado />
       <View style={estilos.encabezado}>
         <BotonIcono
           icono="arrow_back"
@@ -259,7 +262,7 @@ export default function ResultadosPantalla() {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   encabezado: {
     minHeight: 56,
@@ -292,4 +295,4 @@ const estilos = StyleSheet.create({
     color: colores.textoSecundario,
     textAlign: 'center',
   },
-});
+}));

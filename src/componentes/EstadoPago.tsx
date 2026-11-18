@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { consultarReserva, type ReservaDetalle } from '@/api/cliente';
 import { formatearMonto } from '@/formato';
 import { con, t } from '@/i18n';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import { espacio, radio, tipografia } from '@/tema/tokens';
 import { EnlaceExplorador } from './FilaMovimiento';
 import { EtiquetaEstado } from './Mensajes';
+import { crearEstilos } from '@/tema/useEstilos';
 
 // ponytail: sondeo fijo mientras el pago no se confirma (el worker del backend corre cada 5 s); un aviso del servidor lo haría inmediato.
 export const CONSULTA_PAGO_MS = 5000;
@@ -27,6 +28,7 @@ export function EstadoPago({
   rol: 'conductor' | 'pasajero';
   alLeer?: (reserva: ReservaDetalle) => void;
 }) {
+  const estilos = useEstilos();
   const [reserva, setReserva] = useState<ReservaDetalle>();
   const avisar = useRef(alLeer);
   useEffect(() => {
@@ -100,7 +102,7 @@ export function EstadoPago({
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   tarjeta: {
     alignSelf: 'stretch',
     gap: espacio(2),
@@ -119,4 +121,4 @@ const estilos = StyleSheet.create({
   },
   titulo: { ...tipografia.cuerpoEnfasis, color: colores.texto, flexShrink: 1 },
   secundario: { ...tipografia.secundario, color: colores.textoSecundario },
-});
+}));

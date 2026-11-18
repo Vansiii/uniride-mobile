@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import {
   consultarMisReservas,
   consultarMisViajes,
@@ -12,8 +12,9 @@ import { Boton } from '@/componentes/Boton';
 import { TarjetaMiViaje } from '@/componentes/TarjetaMiViaje';
 import { useAlEnfocar } from '@/hooks/useAlEnfocar';
 import { t } from '@/i18n';
-import { colores, espacio, tipografia } from '@/tema/tokens';
+import { espacio, tipografia } from '@/tema/tokens';
 import { TarjetaReserva } from './TarjetaReserva';
+import { crearEstilos } from '@/tema/useEstilos';
 
 const MIN = 60_000;
 
@@ -108,6 +109,7 @@ export function AccionDeReserva({
 
 /** El viaje anclado con su título y su acción; lo usan Buscar y Mis viajes. */
 export function TarjetaAnclada({ anclado }: { anclado: Anclado }) {
+  const estilos = useEstilos();
   const enCurso =
     anclado.viaje?.estado === 'en_curso' ||
     anclado.reserva?.estado === 'abordada';
@@ -142,6 +144,7 @@ export function TarjetaAnclada({ anclado }: { anclado: Anclado }) {
  * puede leer, no ocupa lugar: es un atajo y Mis viajes dice por qué.
  */
 export function ViajeActivo() {
+  const estilos = useEstilos();
   const [anclado, setAnclado] = useState<Anclado>();
   const [proxima, setProxima] = useState<Reserva>();
   useAlEnfocar(
@@ -181,7 +184,7 @@ export function ViajeActivo() {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   contenedor: { gap: espacio(2) },
   margen: {
     marginTop: espacio(4),
@@ -190,4 +193,4 @@ const estilos = StyleSheet.create({
     marginBottom: espacio(10),
   },
   titulo: { ...tipografia.titulo, color: colores.texto },
-});
+}));

@@ -1,8 +1,7 @@
 import * as Location from 'expo-location';
-import { StatusBar } from 'expo-status-bar';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   consultarPasajerosDelViaje,
@@ -17,18 +16,21 @@ import { Aviso, EtiquetaEstado } from '@/componentes/Mensajes';
 import { useSesion } from '@/contexto/sesion';
 import { useAlEnfocar } from '@/hooks/useAlEnfocar';
 import { con, t } from '@/i18n';
-import { colores, espacio, tipografia } from '@/tema/tokens';
+import { espacio, tipografia } from '@/tema/tokens';
 import {
   INTERVALO_MS,
   reanudarSeguimiento,
   useSeguimiento,
 } from '@/viajes/seguimiento';
+import { crearEstilos } from '@/tema/useEstilos';
+import { BarraEstado } from '@/componentes/BarraEstado';
 
 /**
  * «Viaje en curso» (HU-23 CA-1, CA-2, CA-12): si se comparte la ubicación, lo que falta para que siga con la pantalla
  * apagada y la bajada de cada rol (conductor: su código; pasajero: el escáner). `id` es el viaje o la reserva.
  */
 export default function ViajeActivoPantalla() {
+  const estilos = useEstilos();
   const { cargando, usuario } = useSesion();
   const { top } = useSafeAreaInsets();
   const { id, rol: rolParam } = useLocalSearchParams<{
@@ -105,7 +107,7 @@ export default function ViajeActivoPantalla() {
 
   return (
     <View style={estilos.raiz}>
-      <StatusBar style="dark" />
+      <BarraEstado />
       <View style={[estilos.barra, { paddingTop: top + espacio(2) }]}>
         <BotonIcono
           icono="close"
@@ -202,7 +204,7 @@ export default function ViajeActivoPantalla() {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { flex: 1, backgroundColor: colores.superficie },
   barra: {
     flexDirection: 'row',
@@ -214,4 +216,4 @@ const estilos = StyleSheet.create({
   contenido: { gap: espacio(4), padding: espacio(4) },
   pago: { gap: espacio(2) },
   nombre: { ...tipografia.cuerpoEnfasis, color: colores.texto },
-});
+}));

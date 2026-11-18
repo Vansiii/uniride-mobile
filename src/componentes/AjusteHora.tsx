@@ -1,9 +1,10 @@
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { t } from '@/i18n';
 import { espacio } from '@/tema/tokens';
 import { formatearHoraLocal } from '@/formato';
 import { leerSalida } from '@/viajes/salida';
 import { Boton } from './Boton';
+import { crearEstilos } from '@/tema/useEstilos';
 
 const PASO_MS = 15 * 60_000;
 
@@ -20,6 +21,7 @@ export function AjusteHora({
   hora: string;
   alCambiar: (hora: string) => void;
 }) {
+  const estilos = useEstilos();
   const mover = (delta: number) => {
     const base = leerSalida(fecha, hora)?.getTime() ?? Date.now();
     alCambiar(formatearHoraLocal(new Date(base + delta).toISOString()));
@@ -42,6 +44,6 @@ export function AjusteHora({
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   fila: { flexDirection: 'row', gap: espacio(2) },
-});
+}));

@@ -1,9 +1,10 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { Toque } from './Animado';
 import { formatearDia } from '@/formato';
 import { t } from '@/i18n';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import { espacio, radio, tipografia } from '@/tema/tokens';
 import { ANTICIPACION_MAXIMA_DIAS } from '@/viajes/salida';
+import { crearEstilos } from '@/tema/useEstilos';
 
 const etiquetaFecha = (fecha: Date, indice: number) =>
   indice === 0
@@ -23,6 +24,7 @@ export function SelectorFecha({
   /** Las fechas se deslizan en vez de ocupar varias filas. */
   enUnaLinea?: boolean;
 }) {
+  const estilos = useEstilos();
   const ahora = new Date();
   const fechas = Array.from(
     { length: ANTICIPACION_MAXIMA_DIAS + 1 },
@@ -68,7 +70,7 @@ export function SelectorFecha({
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   grupo: { gap: espacio(2) },
   etiqueta: { ...tipografia.etiqueta, color: colores.texto },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: espacio(2) },
@@ -88,4 +90,4 @@ const estilos = StyleSheet.create({
   },
   textoChip: { ...tipografia.etiqueta, color: colores.texto },
   textoElegido: { color: colores.sobrePrimario },
-});
+}));

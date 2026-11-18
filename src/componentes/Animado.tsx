@@ -17,7 +17,8 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { colores, radio, resorte } from '@/tema/tokens';
+import { radio, resorte } from '@/tema/tokens';
+import { useColores } from '@/tema/useEstilos';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -91,6 +92,7 @@ export function Esqueleto({
   redondeo?: number;
   style?: StyleProp<ViewStyle>;
 }) {
+  const colores = useColores();
   const opacidad = useSharedValue(0.55);
   useEffect(() => {
     opacidad.set(

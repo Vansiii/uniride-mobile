@@ -1,7 +1,6 @@
-import { StatusBar } from 'expo-status-bar';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   consultarSaldo,
@@ -43,13 +42,9 @@ import {
 } from '@/formato';
 import { con, t } from '@/i18n';
 import { nuevaClaveReserva } from '@/viajes/clave';
-import {
-  colores,
-  espacio,
-  radio,
-  tipografia,
-  sombraTarjeta,
-} from '@/tema/tokens';
+import { espacio, radio, tipografia, sombraTarjeta } from '@/tema/tokens';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
+import { BarraEstado } from '@/componentes/BarraEstado';
 
 type FallaReserva = {
   texto: string;
@@ -116,6 +111,8 @@ function fallaDeReserva(error: unknown): FallaReserva {
 
 /** Detalle del viaje (HU-18): solo nombre de pila y datos públicos del vehículo (RN-4). Reservar y pagar es HU-19. */
 export default function DetalleViajePantalla() {
+  const colores = useColores();
+  const estilos = useEstilos();
   const { cargando, usuario } = useSesion();
   const { top } = useSafeAreaInsets();
   const { id, porVoz } = useLocalSearchParams<{
@@ -281,7 +278,7 @@ export default function DetalleViajePantalla() {
 
   return (
     <View style={estilos.raiz}>
-      <StatusBar style="dark" />
+      <BarraEstado />
       <View style={[estilos.encabezado, { paddingTop: top + espacio(2) }]}>
         <View style={estilos.botonVolver}>
           <BotonIcono
@@ -517,7 +514,7 @@ export default function DetalleViajePantalla() {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   espaciador: { flex: 1 },
   // Flota sobre el mapa de portada.
@@ -611,4 +608,4 @@ const estilos = StyleSheet.create({
   subtitulo: { ...tipografia.subtitulo, color: colores.texto },
   enfasis: { ...tipografia.cuerpoEnfasis, color: colores.texto },
   secundario: { ...tipografia.secundario, color: colores.textoSecundario },
-});
+}));

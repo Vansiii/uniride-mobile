@@ -6,7 +6,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import {
-  StyleSheet,
   Text,
   TextInput,
   type TextInputInstance,
@@ -14,9 +13,10 @@ import {
   View,
 } from 'react-native';
 import { t } from '@/i18n';
-import { colores, espacio, radio, tamano, tipografia } from '@/tema/tokens';
+import { espacio, radio, tamano, tipografia } from '@/tema/tokens';
 import { BotonIcono } from './Boton';
 import { Icono } from './Icono';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
 
 interface Props extends TextInputProps {
   /** La etiqueta siempre es visible; nunca se reemplaza por el placeholder. */
@@ -38,6 +38,8 @@ export function Campo({
   refEntrada,
   ...resto
 }: Props) {
+  const colores = useColores();
+  const estilos = useEstilos();
   const [foco, setFoco] = useState(false);
   const [ver, setVer] = useState(false);
   // 0 = reposo, 1 = foco: el borde y el fondo cambian con una transición, no de golpe.
@@ -110,7 +112,7 @@ export function Campo({
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   campo: { gap: espacio(2) },
   etiqueta: { ...tipografia.etiqueta, color: colores.texto },
   // Campo relleno: sin contorno en reposo; el borde de 2 aparece con el foco sin mover el texto.
@@ -135,4 +137,4 @@ const estilos = StyleSheet.create({
   fila: { flexDirection: 'row', gap: espacio(1), alignItems: 'flex-start' },
   ayuda: { ...tipografia.secundario, color: colores.textoSecundario, flex: 1 },
   error: { ...tipografia.secundario, color: colores.peligro, flex: 1 },
-});
+}));

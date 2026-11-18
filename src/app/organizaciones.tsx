@@ -1,7 +1,6 @@
-import { StatusBar } from 'expo-status-bar';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ErrorApi, Membresia } from '@/api/cliente';
 import { useSesion } from '@/contexto/sesion';
@@ -12,13 +11,14 @@ import { Icono } from '@/componentes/Icono';
 import { Aviso, EtiquetaEstado } from '@/componentes/Mensajes';
 import { t } from '@/i18n';
 import {
-  colores,
   espacio,
   radio,
   sombraTarjeta,
   tamano,
   tipografia,
 } from '@/tema/tokens';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
+import { BarraEstado } from '@/componentes/BarraEstado';
 
 interface Mensaje {
   tono: 'exito' | 'aviso' | 'peligro';
@@ -53,6 +53,8 @@ function mensajeDeAgregada(
 
 /** Mis organizaciones (HU-07 CA-3 a CA-5): estado de cada membresía, la activa marcada y cambio sin cerrar sesión. */
 export default function Organizaciones() {
+  const colores = useColores();
+  const estilos = useEstilos();
   const { cargando, usuario, cambiarOrganizacion } = useSesion();
   const { top } = useSafeAreaInsets();
   const params = useLocalSearchParams<{
@@ -108,7 +110,7 @@ export default function Organizaciones() {
 
   return (
     <View style={estilos.raiz}>
-      <StatusBar style="dark" />
+      <BarraEstado />
       <View style={[estilos.encabezado, { paddingTop: top }]}>
         <BotonIcono
           icono="arrow_back"
@@ -202,7 +204,7 @@ export default function Organizaciones() {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   encabezado: {
     minHeight: 56,
@@ -257,4 +259,4 @@ const estilos = StyleSheet.create({
   nombre: { ...tipografia.cuerpoEnfasis, color: colores.texto },
   nombreInactivo: { color: colores.textoSecundario },
   detalle: { ...tipografia.secundario, color: colores.textoSecundario },
-});
+}));

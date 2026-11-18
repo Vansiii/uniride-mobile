@@ -5,7 +5,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -17,13 +16,8 @@ import { Campo } from '@/componentes/Campo';
 import { BandaMarca, ZonaAccion } from '@/componentes/Estructura';
 import { Aviso } from '@/componentes/Mensajes';
 import { t } from '@/i18n';
-import {
-  colores,
-  espacio,
-  radio,
-  sombraElevada,
-  tipografia,
-} from '@/tema/tokens';
+import { espacio, radio, sombraElevada, tipografia } from '@/tema/tokens';
+import { crearEstilos } from '@/tema/useEstilos';
 
 interface Falla {
   texto: string;
@@ -58,6 +52,7 @@ function fallaDe(error: unknown): Falla {
 }
 
 export default function IniciarSesion() {
+  const estilos = useEstilos();
   const { usuario, iniciar } = useSesion();
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
@@ -195,7 +190,7 @@ export default function IniciarSesion() {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   desplazable: { flexGrow: 1, paddingBottom: espacio(4) },
   logo: { width: 150, height: 36, marginBottom: espacio(4) },
@@ -223,4 +218,4 @@ const estilos = StyleSheet.create({
   enlace: { alignSelf: 'flex-start' },
   titulo: { ...tipografia.pantalla, color: colores.texto },
   subtitulo: { ...tipografia.secundario, color: colores.textoSecundario },
-});
+}));

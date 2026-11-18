@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import {
   consultarPasajerosDelViaje,
   MiViaje,
@@ -17,19 +17,15 @@ import {
 } from '@/componentes/TarjetaViaje';
 import { formatearDia, formatearHoraLocal } from '@/formato';
 import { t } from '@/i18n';
-import {
-  colores,
-  espacio,
-  radio,
-  sombraTarjeta,
-  tipografia,
-} from '@/tema/tokens';
+import { espacio, radio, sombraTarjeta, tipografia } from '@/tema/tokens';
+import { crearEstilos } from '@/tema/useEstilos';
 
 /**
  * Un viaje que ofrezco (HU-19 CA-14, RN-9): sus asientos, la acción del momento y, a pedido, el nombre de pila y el
  * estado de cada pasajero. En «Mis viajes» y, si es el viaje activo, arriba en Buscar (DESIGN_SYSTEM N7).
  */
 export function TarjetaMiViaje({ viaje }: { viaje: MiViaje }) {
+  const estilos = useEstilos();
   const [pasajeros, setPasajeros] = useState<PasajeroViaje[] | null>(null);
   const [abierto, setAbierto] = useState(false);
   const [cargando, setCargando] = useState(false);
@@ -142,7 +138,7 @@ export function TarjetaMiViaje({ viaje }: { viaje: MiViaje }) {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   tarjeta: {
     gap: espacio(3),
     padding: espacio(4),
@@ -163,4 +159,4 @@ const estilos = StyleSheet.create({
   hora: { ...tipografia.subtitulo, color: colores.texto },
   enfasis: { ...tipografia.cuerpoEnfasis, color: colores.texto },
   secundario: { ...tipografia.secundario, color: colores.textoSecundario },
-});
+}));

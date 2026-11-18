@@ -1,12 +1,11 @@
 import type { BottomTabBarProps } from 'expo-router/build/layouts/Tabs';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
 import {
-  colores,
   espacio,
   radio,
   resorte,
@@ -14,6 +13,7 @@ import {
   tipografia,
 } from '@/tema/tokens';
 import { Toque } from './Animado';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
 
 const ALTO = 68;
 const MARGEN = 5;
@@ -29,6 +29,8 @@ export function BarraPestanas({
   navigateToTab,
   insets,
 }: BottomTabBarProps) {
+  const colores = useColores();
+  const estilos = useEstilos();
   const { bottom } = insets;
   const [ancho, setAncho] = useState(0);
   const total = state.routes.length;
@@ -88,7 +90,7 @@ export function BarraPestanas({
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   zona: {
     paddingHorizontal: espacio(4),
     paddingTop: espacio(2),
@@ -117,4 +119,4 @@ const estilos = StyleSheet.create({
     gap: 2,
   },
   etiqueta: { ...tipografia.pequeno },
-});
+}));

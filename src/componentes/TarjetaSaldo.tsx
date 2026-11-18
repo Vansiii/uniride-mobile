@@ -1,13 +1,16 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import type { Saldo } from '@/api/cliente';
 import { formatearMonto } from '@/formato';
 import { t } from '@/i18n';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import { espacio, radio, tipografia } from '@/tema/tokens';
 import { useConteo } from './Animado';
 import { Icono } from './Icono';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
 
 /** Saldo de HU-14 dentro de la banda de marca (8.8): disponible, en garantía y total. Montos en es-BO sobre el texto de la API. */
 export function TarjetaSaldo({ saldo }: { saldo: Saldo }) {
+  const colores = useColores();
+  const estilos = useEstilos();
   const disponible = formatearMonto(saldo.saldoDisponible);
   const animado = formatearMonto(
     useConteo(Number(saldo.saldoDisponible)).toFixed(2),
@@ -43,7 +46,7 @@ export function TarjetaSaldo({ saldo }: { saldo: Saldo }) {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   // Tarjeta de vidrio sobre la banda: la cifra es lo primero que se ve.
   saldo: {
     gap: espacio(1),
@@ -66,4 +69,4 @@ const estilos = StyleSheet.create({
   fila: { flexDirection: 'row', alignItems: 'center', gap: espacio(1) },
   secundario: { ...tipografia.secundario, color: colores.sobreMarcaSecundario },
   nota: { ...tipografia.pequeno, color: colores.sobreMarcaSecundario },
-});
+}));

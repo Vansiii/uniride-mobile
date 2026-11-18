@@ -1,11 +1,9 @@
-import { StatusBar } from 'expo-status-bar';
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -17,7 +15,9 @@ import { Campo } from '@/componentes/Campo';
 import { ZonaAccion } from '@/componentes/Estructura';
 import { Aviso } from '@/componentes/Mensajes';
 import { formatearHora, t } from '@/i18n';
-import { colores, espacio, tipografia } from '@/tema/tokens';
+import { espacio, tipografia } from '@/tema/tokens';
+import { crearEstilos } from '@/tema/useEstilos';
+import { BarraEstado } from '@/componentes/BarraEstado';
 
 interface Falla {
   /** Error del campo correo; si no, va en el aviso sobre el formulario. */
@@ -66,6 +66,7 @@ function fallaDe(error: unknown): Falla {
 
 /** Modal para sumar otra organización (HU-07 CA-1): el correo lleva a la pantalla Código de HU-05. */
 export default function AgregarOrganizacion() {
+  const estilos = useEstilos();
   const { cargando, usuario } = useSesion();
   const { top } = useSafeAreaInsets();
   const [correo, setCorreo] = useState('');
@@ -110,7 +111,7 @@ export default function AgregarOrganizacion() {
       style={estilos.raiz}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <StatusBar style="dark" />
+      <BarraEstado />
       <View style={[estilos.encabezado, { paddingTop: top }]}>
         <BotonIcono
           icono="close"
@@ -171,7 +172,7 @@ export default function AgregarOrganizacion() {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   encabezado: {
     minHeight: 56,
@@ -195,4 +196,4 @@ const estilos = StyleSheet.create({
     paddingVertical: espacio(4),
   },
   texto: { ...tipografia.cuerpo, color: colores.textoSecundario },
-});
+}));

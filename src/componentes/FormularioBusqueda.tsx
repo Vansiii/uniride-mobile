@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Linking, StyleSheet, Text, View } from 'react-native';
+import { Linking, Text, View } from 'react-native';
 import { consultarSaldo, Saldo } from '@/api/cliente';
 import { Entra, Esqueleto, Toque, useConteo } from '@/componentes/Animado';
 import { Boton } from '@/componentes/Boton';
@@ -15,7 +15,6 @@ import { con, t } from '@/i18n';
 import { Lugar } from '@/servicios/geocoding';
 import { obtenerUbicacion } from '@/servicios/ubicacion';
 import {
-  colores,
   degradadoSaldo,
   espacio,
   radio,
@@ -30,11 +29,14 @@ import {
   ventanaDe,
   ventanaPasada,
 } from '@/viajes/salida';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
 
 type AvisoUbicacion = 'sin_permiso' | 'ir_a_ajustes' | 'fallo';
 
 /** Saldo en grande: la cifra sube hasta su valor y la tarjeta se hunde al tocarla. */
 function TarjetaSaldoMini({ saldo }: { saldo: Saldo }) {
+  const colores = useColores();
+  const estilos = useEstilos();
   const valor = useConteo(Number(saldo.saldoDisponible));
   const unidad = t('billetera.pantalla.unidad');
   return (
@@ -70,6 +72,7 @@ const lugarDe = (nombre: string, lat: number, lng: number): Lugar => ({
 
 /** Origen y hora ya con valores por defecto (DESIGN_SYSTEM §10.2). No hay destino: la búsqueda no filtra por él (spec §5). */
 export function FormularioBusqueda() {
+  const estilos = useEstilos();
   const [origen, setOrigen] = useState<Lugar | null>(null);
   const [{ fecha, hora }, setSalida] = useState(() =>
     salidaPorOmision(Date.now()),
@@ -242,7 +245,7 @@ export function FormularioBusqueda() {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   // Tarjeta que se superpone 24 a la banda (elevación 0,5, 4.6).
   tarjeta: {
     marginTop: -espacio(6),
@@ -287,4 +290,4 @@ const estilos = StyleSheet.create({
   textosSaldo: { flex: 1, gap: 2 },
   secundario: { ...tipografia.secundario, color: colores.textoSecundario },
   enfasis: { ...tipografia.cuerpoEnfasis, color: colores.texto },
-});
+}));

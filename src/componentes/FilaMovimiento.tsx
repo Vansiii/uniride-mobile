@@ -1,12 +1,13 @@
 import type { ComponentProps } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import type { Movimiento, TipoMovimiento } from '@/api/cliente';
 import { abrirHttps } from '@/enlaces';
 import { formatearHoraLocal, formatearMonto } from '@/formato';
 import { t } from '@/i18n';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import { espacio, radio, tipografia } from '@/tema/tokens';
 import { Icono } from './Icono';
 import { EtiquetaEstado } from './Mensajes';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
 
 /** Ícono por tipo (8.8). Solo el bloqueo en garantía resta: los demás entran a la billetera de quien los ve. */
 const icono: Record<TipoMovimiento, ComponentProps<typeof Icono>['nombre']> = {
@@ -30,6 +31,8 @@ export function FilaMovimiento({
   primero: boolean;
   ultimo: boolean;
 }) {
+  const colores = useColores();
+  const estilos = useEstilos();
   const resta = m.tipo === 'bloqueo_reserva';
   const hora = formatearHoraLocal(m.creadoEn);
   return (
@@ -78,6 +81,8 @@ export function FilaMovimiento({
 
 /** «Ver en el explorador»: abre la transacción solo si es https. */
 export function EnlaceExplorador({ url }: { url: string }) {
+  const colores = useColores();
+  const estilos = useEstilos();
   return (
     <Pressable
       accessibilityRole="link"
@@ -94,7 +99,7 @@ export function EnlaceExplorador({ url }: { url: string }) {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   fila: {
     minHeight: 56,
     flexDirection: 'row',
@@ -138,4 +143,4 @@ const estilos = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   unidad: { ...tipografia.pequeno, color: colores.textoSecundario },
-});
+}));

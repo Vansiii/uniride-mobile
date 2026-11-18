@@ -1,7 +1,6 @@
-import { StatusBar } from 'expo-status-bar';
 import { Image } from 'expo-image';
 import { Redirect, router } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSesion } from '@/contexto/sesion';
 import { Boton } from '@/componentes/Boton';
@@ -9,10 +8,14 @@ import { ZonaAccion } from '@/componentes/Estructura';
 import { Ilustracion } from '@/componentes/Ilustracion';
 import { EtiquetaEstado } from '@/componentes/Mensajes';
 import { t } from '@/i18n';
-import { colores, espacio, tipografia } from '@/tema/tokens';
+import { espacio, tipografia } from '@/tema/tokens';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
+import { BarraEstado } from '@/componentes/BarraEstado';
 
 /** Pantalla de resultado (10.1): membresía pendiente o rechazada en todas sus organizaciones. */
 export default function EstadoMembresia() {
+  const colores = useColores();
+  const estilos = useEstilos();
   const { cargando, usuario, cerrar } = useSesion();
   const { top } = useSafeAreaInsets();
   if (cargando) return null;
@@ -24,7 +27,7 @@ export default function EstadoMembresia() {
   const rechazada = usuario.membresias.every((m) => m.estado === 'rechazada');
   return (
     <View style={estilos.raiz}>
-      <StatusBar style="dark" />
+      <BarraEstado />
       <View style={[estilos.encabezado, { paddingTop: top }]}>
         <Image
           source={require('../../assets/marca/firma-horizontal.svg')}
@@ -84,7 +87,7 @@ export default function EstadoMembresia() {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   encabezado: {
     minHeight: 56,
@@ -110,4 +113,4 @@ const estilos = StyleSheet.create({
     color: colores.textoSecundario,
     textAlign: 'center',
   },
-});
+}));

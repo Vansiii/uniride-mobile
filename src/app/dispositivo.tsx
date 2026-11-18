@@ -1,8 +1,7 @@
-import { StatusBar } from 'expo-status-bar';
 import * as Dispositivo from 'expo-device';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   consultarMiDispositivo,
@@ -28,13 +27,9 @@ import {
 } from '@/dispositivo/keystore';
 import { ejecutarLiveness, ErrorLiveness } from '@/identidad/liveness';
 import { formatearHora, t } from '@/i18n';
-import {
-  colores,
-  espacio,
-  radio,
-  sombraTarjeta,
-  tipografia,
-} from '@/tema/tokens';
+import { espacio, radio, sombraTarjeta, tipografia } from '@/tema/tokens';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
+import { BarraEstado } from '@/componentes/BarraEstado';
 
 /** Traduce el `codigo` de la API; nunca muestra códigos técnicos (DESIGN_SYSTEM §13.4). */
 function textoDe(error: unknown): string {
@@ -83,6 +78,8 @@ function textoDe(error: unknown): string {
  * que falló porque la llave se anuló (huella nueva) o porque este teléfono no la tiene.
  */
 export default function DispositivoPantalla() {
+  const colores = useColores();
+  const estilos = useEstilos();
   const { cargando, usuario } = useSesion();
   const { motivo } = useLocalSearchParams<{
     motivo?: 'llave_anulada' | 'sin_llave';
@@ -197,7 +194,7 @@ export default function DispositivoPantalla() {
 
   return (
     <View style={estilos.raiz}>
-      <StatusBar style="dark" />
+      <BarraEstado />
       <View style={[estilos.encabezado, { paddingTop: top }]}>
         <BotonIcono
           icono="arrow_back"
@@ -311,7 +308,7 @@ export default function DispositivoPantalla() {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   encabezado: {
     minHeight: 56,
@@ -348,4 +345,4 @@ const estilos = StyleSheet.create({
   dato: { gap: 2 },
   etiqueta: { ...tipografia.etiqueta, color: colores.textoSecundario },
   valor: { ...tipografia.cuerpo, color: colores.texto },
-});
+}));
