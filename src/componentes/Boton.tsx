@@ -1,7 +1,16 @@
 import type { ComponentProps } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
-import { colores, espacio, radio, tamano, tipografia } from '@/tema/tokens';
+import { ActivityIndicator, Text } from 'react-native';
+import {
+  degradadoBoton,
+  espacio,
+  radio,
+  tamano,
+  tipografia,
+} from '@/tema/tokens';
+import { Toque } from './Animado';
 import { Icono } from './Icono';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
+import type { Paleta } from '@/tema/paletas';
 
 type NombreIcono = ComponentProps<typeof Icono>['nombre'];
 
@@ -9,18 +18,23 @@ interface Props {
   /** Texto ya traducido con t(); en gerundio cuando `cargando` ("Entrando…"). */
   etiqueta: string;
   alPresionar: () => void;
-  variante?: 'primario' | 'secundario' | 'texto';
+  /** `suave`: píldora tonal para acciones rápidas junto a un formulario. */
+  variante?: 'primario' | 'secundario' | 'texto' | 'suave';
   icono?: NombreIcono;
   /** Bloquea toques repetidos mientras se llama a la API. */
   cargando?: boolean;
   anchoCompleto?: boolean;
+  /** Acción que todavía no se puede usar. */
+  deshabilitado?: boolean;
 }
 
-const colorTexto = {
-  primario: colores.sobrePrimario,
-  secundario: colores.primario,
-  texto: colores.primario,
-} as const;
+const colorTexto = (colores: Paleta) =>
+  ({
+    primario: colores.sobrePrimario,
+    secundario: colores.primarioTexto,
+    texto: colores.primario,
+    suave: colores.primarioTexto,
+  }) as const;
 
 export function Boton({
   etiqueta,
@@ -29,32 +43,38 @@ export function Boton({
   icono,
   cargando = false,
   anchoCompleto = false,
+  deshabilitado = false,
 }: Props) {
+  const colores = useColores();
+  const estilos = useEstilos();
+  const color = deshabilitado
+    ? colores.textoDeshabilitado
+    : colorTexto(colores)[variante];
   return (
-    <Pressable
+    <Toque
       accessibilityRole="button"
       accessibilityLabel={etiqueta}
-      accessibilityState={{ busy: cargando, disabled: cargando }}
-      disabled={cargando}
+      accessibilityState={{
+        busy: cargando,
+        disabled: cargando || deshabilitado,
+      }}
+      disabled={cargando || deshabilitado}
       onPress={alPresionar}
-      style={({ pressed }) => [
+      escala={variante === 'texto' ? 0.97 : 0.95}
+      style={[
         estilos.base,
         estilos[variante],
-        pressed && estilos[`${variante}Presionado`],
         anchoCompleto && estilos.completo,
+        deshabilitado && estilos.deshabilitado,
       ]}
     >
       {cargando ? (
-        <ActivityIndicator color={colorTexto[variante]} />
+        <ActivityIndicator color={color} />
       ) : (
-        icono && (
-          <Icono nombre={icono} color={colorTexto[variante]} tamano={20} />
-        )
+        icono && <Icono nombre={icono} color={color} tamano={20} />
       )}
-      <Text style={[estilos.etiqueta, { color: colorTexto[variante] }]}>
-        {etiqueta}
-      </Text>
-    </Pressable>
+      <Text style={[estilos.etiqueta, { color }]}>{etiqueta}</Text>
+    </Toque>
   );
 }
 
@@ -63,54 +83,72 @@ export function BotonIcono({
   icono,
   etiqueta,
   alPresionar,
-  color = colores.textoSecundario,
+  color,
+  deshabilitado = false,
 }: {
   icono: NombreIcono;
   /** Nombre accesible obligatorio. */
   etiqueta: string;
   alPresionar: () => void;
   color?: string;
+  deshabilitado?: boolean;
 }) {
+  const colores = useColores();
+  const estilos = useEstilos();
   return (
-    <Pressable
+    <Toque
       accessibilityRole="button"
       accessibilityLabel={etiqueta}
+      accessibilityState={{ disabled: deshabilitado }}
+      disabled={deshabilitado}
       onPress={alPresionar}
-      style={({ pressed }) => [
-        estilos.icono,
-        pressed && { backgroundColor: colores.fondoSutil },
-      ]}
+      escala={0.86}
+      style={[estilos.icono, deshabilitado && { opacity: 0.5 }]}
     >
-      <Icono nombre={icono} color={color} />
-    </Pressable>
+      <Icono nombre={icono} color={color ?? colores.textoSecundario} />
+    </Toque>
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   base: {
     minHeight: tamano.altoControl,
-    paddingHorizontal: espacio(5),
-    borderRadius: radio.m,
-    borderWidth: 1,
-    borderColor: 'transparent',
+    paddingHorizontal: espacio(6),
+    borderRadius: radio.l,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: espacio(2),
   },
   completo: { alignSelf: 'stretch' },
-  primario: { backgroundColor: colores.primario },
-  primarioPresionado: { backgroundColor: colores.primarioPresionado },
+  deshabilitado: {
+    backgroundColor: colores.fondoDeshabilitado,
+    experimental_backgroundImage: 'none',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  primario: {
+    backgroundColor: colores.primario,
+    experimental_backgroundImage: degradadoBoton,
+    shadowColor: '#2A39A6',
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 7 },
+    elevation: 7,
+  },
   secundario: {
     backgroundColor: colores.superficie,
-    borderColor: colores.bordeCampo,
-  },
-  secundarioPresionado: {
-    backgroundColor: colores.primarioSuave,
+    borderWidth: 1.5,
     borderColor: colores.primario,
   },
+  suave: {
+    alignSelf: 'flex-start',
+    minHeight: 44,
+    paddingHorizontal: espacio(4),
+    borderRadius: radio.completo,
+    backgroundColor: colores.primarioSuave,
+  },
   texto: { paddingHorizontal: espacio(3) },
-  textoPresionado: { backgroundColor: colores.primarioSuave },
   etiqueta: { ...tipografia.cuerpoEnfasis, textAlign: 'center' },
   icono: {
     width: tamano.tactilMinimo,
@@ -119,4 +157,4 @@ const estilos = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-});
+}));

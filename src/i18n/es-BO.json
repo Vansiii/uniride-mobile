@@ -13,8 +13,79 @@
       "cargando": "Cargando…"
     },
     "errores": {
+      "bloqueo_preventivo": "Tu cuenta tiene un bloqueo preventivo hasta el {dia} a las {hora}. Si crees que es un error, contacta al administrador de tu organización.",
       "sin_conexion": "No hay conexión. Revisa tu internet e inténtalo de nuevo.",
-      "desconocido": "Algo salió mal. Inténtalo de nuevo en unos minutos."
+      "desconocido": "Algo salió mal. Inténtalo de nuevo en unos minutos.",
+      "coordenadas_invalidas": "No pudimos leer ese punto de salida. Elige otro lugar.",
+      "peticion_expirada": "La comprobación de tu teléfono venció. Inténtalo de nuevo."
+    },
+    "biometria": {
+      "sin_registrar": "Tu teléfono no tiene ninguna huella o rostro registrado. Agrega uno en los ajustes de tu teléfono.",
+      "bloqueada": "Tu teléfono bloqueó la huella por demasiados intentos. Desbloquéalo con tu PIN, patrón o contraseña y vuelve a intentarlo.",
+      "no_confirmado": "No se confirmó {accion}.",
+      "confirmando": "Confirmando…",
+      "accion": {
+        "recarga": "el pago",
+        "publicar": "la publicación de tu viaje",
+        "crear_billetera": "la creación de tu billetera",
+        "reservar": "la reserva de tu asiento",
+        "mostrar_codigo": "la apertura del código de abordaje",
+        "abordar": "tu abordaje",
+        "cancelar_reserva": "la cancelación de tu reserva",
+        "cancelar_viaje": "la cancelación de tu viaje"
+      },
+      "dialogo": {
+        "recarga": {
+          "titulo": "Confirma tu recarga",
+          "subtitulo": "Pagas {monto} Bs y recibes {monto} URC"
+        },
+        "publicar": {
+          "titulo": "Confirma la publicación de tu viaje",
+          "subtitulo": "{monto} URC por asiento"
+        },
+        "crear_billetera": {
+          "titulo": "Confirma la creación de tu billetera",
+          "subtitulo": "Usa tu huella o rostro para continuar."
+        },
+        "reservar": {
+          "titulo": "Confirma tu reserva",
+          "subtitulo": "{monto} URC quedan en garantía hasta que termine el viaje"
+        },
+        "mostrar_codigo": {
+          "titulo": "Confirma que eres el conductor",
+          "subtitulo": "Para mostrar el código de abordaje"
+        },
+        "abordar": {
+          "titulo": "Confirma tu abordaje",
+          "subtitulo": "Verificamos que estás junto al conductor"
+        },
+        "cancelar_reserva": {
+          "titulo": "Confirma la cancelación de tu reserva",
+          "subtitulo": "Usa tu huella o rostro para continuar."
+        },
+        "cancelar_viaje": {
+          "titulo": "Confirma la cancelación de tu viaje",
+          "subtitulo": "Usa tu huella o rostro para continuar."
+        }
+      }
+    },
+    "apariencia": {
+      "titulo": "Apariencia",
+      "tema": "Tema",
+      "automatico": "Automático",
+      "claro": "Claro",
+      "oscuro": "Oscuro",
+      "texto": "Tamaño de texto",
+      "normal": "Normal",
+      "grande": "Grande",
+      "muy_grande": "Muy grande",
+      "contraste": "Alto contraste",
+      "contraste_ayuda": "Texto y bordes más marcados para leer mejor.",
+      "opcion_tema": "Tema {opcion}",
+      "opcion_texto": "Texto {opcion}",
+      "seleccionada": "seleccionado",
+      "no_guardada": "No pudimos guardar tu elección; se aplica solo en esta sesión.",
+      "ayuda": "Se guarda solo en este teléfono."
     }
   },
   "autenticacion": {
@@ -92,11 +163,38 @@
       "confirmando": "Confirmando…"
     }
   },
+  "perfil": {
+    "pestana": "Perfil",
+    "progreso_titulo": "Completa tu perfil",
+    "progreso": "{hechos} de {total} pasos listos",
+    "progreso_completo": "Todo listo para viajar",
+    "estado": {
+      "registrado": "Registrado",
+      "vinculado": "Vinculado",
+      "verificada": "Verificada",
+      "pendiente": "Pendiente"
+    },
+    "ayuda": {
+      "titulo": "Comandos de voz y ayuda"
+    },
+    "apariencia": {
+      "titulo": "Apariencia"
+    }
+  },
   "inicio": {
+    "voz_pronto": "Hablar con UniRide, disponible pronto",
     "cuenta": "Tu cuenta",
     "nombre": "Nombre",
     "correo": "Correo",
-    "organizacion": "Organización activa"
+    "organizacion": "Organización activa",
+    "pestana": "Buscar",
+    "publica_titulo": "¿Tienes auto?",
+    "publica_texto": "Publica tu viaje, comparte los gastos y llega con compañía.",
+    "publica_boton": "Publicar un viaje",
+    "atajos": "Atajos",
+    "atajo_movimientos": "Movimientos",
+    "atajo_vehiculo": "Mi vehículo",
+    "atajo_identidad": "Mi identidad"
   },
   "membresias": {
     "lista": {
@@ -180,5 +278,580 @@
       "sin_permiso_camara": "Para tomar la foto necesitamos permiso de la cámara. También puedes elegirla de la galería.",
       "sin_membresia": "Necesitas ser miembro aprobado de una organización para registrar un vehículo."
     }
+  },
+  "dispositivo": {
+    "vinculacion": {
+      "titulo": "Mi teléfono",
+      "ver": "Vincular mi teléfono",
+      "explicacion": "Para operar tu cuenta con seguridad, UniRide la ata a tu teléfono. Solo un teléfono por cuenta.",
+      "privacidad": "Se crea una llave dentro del teléfono que nadie puede copiar y que pide tu huella o rostro cada vez que se usa.",
+      "vincular": "Vincular este teléfono",
+      "vinculando": "Vinculando…",
+      "vinculado": "Tu teléfono quedó vinculado.",
+      "modelo": "Teléfono",
+      "vinculado_desde": "Vinculado el",
+      "no_integro": "No pudimos comprobar que este teléfono es original. Usa un teléfono sin root y la app oficial.",
+      "ya_vinculado": "Tu cuenta ya tiene un teléfono vinculado.",
+      "desafio_invalido": "La comprobación venció. Inténtalo de nuevo.",
+      "llave_invalida": "No pudimos registrar la llave de seguridad de tu teléfono.",
+      "servicio_no_disponible": "No pudimos comprobar tu teléfono por un problema del servicio. No se guardó nada; inténtalo más tarde.",
+      "keystore_no_disponible": "Esta versión de la app todavía no puede vincular el teléfono. Inténtalo de nuevo."
+    },
+    "llave_anulada": {
+      "explicacion": "Registraste una huella nueva. Por seguridad, confirma tu identidad para volver a activar este teléfono.",
+      "confirmar": "Confirmar mi identidad"
+    },
+    "revincular": {
+      "boton": "Pasar mi cuenta a este teléfono",
+      "telefono_nuevo": "Tu cuenta está vinculada a otro teléfono. Para usar este, confirma tu identidad.",
+      "revinculando": "Vinculando…",
+      "rostro_no_coincide": "Tu rostro no coincide con el de tu carnet verificado. No pudimos vincular este teléfono.",
+      "concurrente": "Tu cuenta se estaba pasando a otro teléfono al mismo tiempo. Revisa cuál quedó vinculado y vuelve a intentarlo si hace falta."
+    },
+    "autenticacion": {
+      "titulo": "Confirma que eres tú",
+      "subtitulo": "Usa tu huella o rostro para continuar.",
+      "cancelar": "Cancelar",
+      "cancelada": "Cancelaste la verificación biométrica, así que no se hizo la acción."
+    }
+  },
+  "identidad": {
+    "verificacion": {
+      "titulo": "Verifica tu identidad",
+      "ver": "Verificar identidad",
+      "explicacion": "Para ofrecer o reservar viajes necesitamos comprobar que eres tú. Es un paso único, en tres pasos cortos.",
+      "paso": "Paso {actual} de 3",
+      "paso1": "Consentimiento y carnet",
+      "paso2": "Foto del carnet",
+      "paso3": "Prueba de vida",
+      "numero": "Número de carnet",
+      "numero_ayuda": "Solo lo usamos para evitar cuentas duplicadas; no guardamos el número.",
+      "consentimiento": "Acepto que UniRide trate mis datos biométricos (rostro y carnet) solo para verificar mi identidad, de forma cifrada.",
+      "siguiente": "Siguiente",
+      "tomar_carnet": "Tomar foto del carnet",
+      "cambiar_carnet": "Tomar otra foto",
+      "carnet_ayuda": "Encuadra el anverso del carnet con buena luz, sin brillos ni reflejos.",
+      "carnet_previa": "Foto del carnet tomada",
+      "iniciar_prueba": "Iniciar prueba de vida",
+      "prueba_ayuda": "Mira a la cámara con buena luz, sin fotos ni pantallas. Seguirás las indicaciones en pantalla.",
+      "verificando": "Verificando…",
+      "verificada": "Tu identidad está verificada.",
+      "verificada_desde": "Verificada el {fecha}",
+      "bloqueada": "La verificación está bloqueada hasta las {hora}. Podrás intentarlo de nuevo después.",
+      "rechazada": "No pudimos verificar tu identidad. Puedes intentarlo de nuevo.",
+      "privacidad": "La foto de tu carnet se guarda cifrada y nadie más la ve.",
+      "numero_requerido": "Escribe el número de tu carnet.",
+      "numero_invalido": "Revisa el número: usa solo letras, números y guiones.",
+      "consentimiento_requerido": "Necesitamos tu consentimiento para verificarte.",
+      "carnet_requerido": "Toma la foto del carnet.",
+      "sin_permiso_camara": "Para tomar la foto necesitamos permiso de la cámara.",
+      "prueba_vida_fallida": "No pudimos confirmar que eres una persona real. Repite la prueba con buena luz, sin fotos ni pantallas.",
+      "rostro_no_coincide": "Tu rostro no coincide con la foto del carnet. Revisa que el carnet sea tuyo y vuelve a intentarlo.",
+      "documento_duplicado": "Ese carnet ya está registrado en otra cuenta de UniRide.",
+      "rostro_duplicado": "Tu rostro ya está registrado en otra cuenta de UniRide.",
+      "imagen_ilegible": "No pudimos leer la foto del carnet. Debe ser nítida, sin brillos y con tu rostro visible.",
+      "intentos_agotados": "Superaste los intentos de verificación. Podrás intentarlo de nuevo a las {hora}.",
+      "servicio_no_disponible": "No pudimos completar la verificación por un problema del servicio. Inténtalo de nuevo más tarde.",
+      "liveness_no_disponible": "Esta versión de la app todavía no puede hacer la prueba de vida. Actualiza la app e inténtalo de nuevo.",
+      "ya_verificada": "Tu identidad ya estaba verificada."
+    }
+  },
+  "billetera": {
+    "pantalla": {
+      "titulo": "Billetera",
+      "saldo": "Saldo disponible",
+      "unidad": "URC",
+      "prueba": "Saldo de prueba · sin valor real · 1 URC = 1 Bs",
+      "actualizar": "Actualizar saldo",
+      "direccion": "Dirección de tu billetera",
+      "copiar": "Copiar dirección completa",
+      "copiada": "Dirección copiada.",
+      "copia_fallida": "No pudimos copiar la dirección. Inténtalo de nuevo.",
+      "explorador": "Ver en el explorador",
+      "explorador_detalle": "Polygonscan · red de prueba Amoy",
+      "sin_billetera_titulo": "Tu billetera se crea al verificar tu identidad",
+      "sin_billetera_texto": "Con ella pagas y cobras viajes. No tienes que configurar llaves ni guardar contraseñas extra.",
+      "verificar": "Verificar identidad",
+      "crear_titulo": "Tu billetera aún no está lista",
+      "crear_texto": "Se crea a tu nombre y vacía, para pagar y cobrar viajes. No mueve dinero. Te pediremos tu huella o rostro para confirmarlo.",
+      "crear": "Crear mi billetera",
+      "vincular_texto": "Para ver tu billetera, primero vincula este teléfono. Al abrirla te pediremos tu huella o rostro, así nadie más puede verla.",
+      "vincular": "Vincular mi teléfono",
+      "cuenta_suspendida": "Tu cuenta está suspendida, por eso no podemos mostrar tu billetera. Comunícate con tu organización.",
+      "servicio_no_disponible": "No pudimos consultar tu saldo en este momento. No se perdió nada; inténtalo de nuevo.",
+      "biometria_cancelada": "Cancelaste la confirmación con tu huella, así que no mostramos tu billetera. Puedes volver a intentarlo cuando quieras.",
+      "keystore_no_disponible": "No pudimos usar la llave de seguridad de tu teléfono. Inténtalo de nuevo.",
+      "movimientos": "Movimientos",
+      "direccion_no_disponible": "No pudimos cargar la dirección de tu billetera por ahora.",
+      "direccion_reintentar": "Cargar la dirección (pide tu huella)"
+    },
+    "saldo": {
+      "total": "Total: {monto} URC",
+      "en_garantia": "En garantía: {monto} URC",
+      "sincronizacion_pendiente": "Mostramos el último saldo sincronizado ({monto} URC). Lo actualizaremos al reconectar."
+    },
+    "creacion": {
+      "identidad_requerida": "Verifica tu identidad para ver tus movimientos. Tu billetera se crea al verificarla."
+    },
+    "historial": {
+      "sin_billetera": "Tu billetera aún no está lista. Créala desde Billetera: te pediremos tu huella o rostro.",
+      "ir_billetera": "Ir a Billetera",
+      "titulo": "Movimientos",
+      "hoy": "Hoy",
+      "vacio": "Todavía no tienes movimientos",
+      "vacio_detalle": "Cuando recargues o pagues un viaje, lo verás aquí.",
+      "vacio_filtro": "No hay movimientos de este tipo.",
+      "confirmandose": "confirmándose",
+      "filtros": "Filtrar por tipo",
+      "filtro": {
+        "todos": "Todos",
+        "recargas": "Recargas",
+        "pagos": "Pagos",
+        "reembolsos": "Reembolsos"
+      },
+      "tipo": {
+        "recarga": "Recarga",
+        "bloqueo_reserva": "Reserva en garantía",
+        "liberacion_viaje": "Pago de viaje recibido",
+        "reembolso_reserva": "Reembolso",
+        "compensacion_cancelacion": "Compensación por cancelación"
+      },
+      "estado": {
+        "pendiente": "Pendiente",
+        "fallido": "No se completó"
+      },
+      "explorador": "Ver en el explorador",
+      "cargando_mas": "Cargando más movimientos…",
+      "error_pagina": "No pudimos cargar más movimientos.",
+      "error": "No pudimos cargar tus movimientos. No se perdió nada; inténtalo de nuevo."
+    },
+    "pago": {
+      "recibiras": "Recibirás {monto} URC",
+      "recibiste": "Recibiste {monto} URC",
+      "al_conductor": "Pago al conductor: {monto} URC",
+      "pendiente": "Se está registrando en la red de prueba; puede tardar unos minutos.",
+      "pagado": "Pagado"
+    },
+    "recarga": {
+      "boton": "Recargar",
+      "titulo": "Recargar saldo",
+      "cuanto": "¿Cuánto quieres recargar?",
+      "otro_monto": "Otro monto",
+      "otro_monto_ayuda": "Entre 10 y 500 Bs",
+      "pagas": "Pagas",
+      "recibes": "Recibes en tu billetera",
+      "simulado": "Pago simulado · red de prueba · sin valor real",
+      "generar": "Generar QR de pago",
+      "titulo_qr": "Pagar con QR",
+      "monto_a_pagar": "Monto a pagar",
+      "qr": "Código QR de pago simulado",
+      "etiqueta_simulado": "Pago simulado · red de prueba",
+      "vence_en": "Vence en {tiempo}",
+      "instruccion": "No se cobra dinero real. Toca el botón para simular el pago y confirma con tu huella.",
+      "simular": "Simular pago de {monto} Bs",
+      "en_camino": "Recarga en camino",
+      "en_camino_texto": "Pagaste {monto} Bs. Estamos registrando tus {monto} URC en la red de prueba; puede tardar unos minutos.",
+      "seguir_usando": "Puedes seguir usando la app mientras tanto.",
+      "acreditada": "Recarga acreditada",
+      "acreditada_texto": "Sumamos {monto} URC a tu billetera.",
+      "ver_billetera": "Ver mi billetera",
+      "qr_nuevo": "Generar un QR nuevo",
+      "vencida_titulo": "Este QR venció",
+      "pendiente": "Tienes una recarga de {monto} URC pendiente de confirmación.",
+      "monto_fuera_de_rango": "Puedes recargar entre 10 y 500 Bs por vez.",
+      "monto_invalido": "Escribe un monto con hasta 2 decimales.",
+      "ya_procesada": "Esta recarga ya se acreditó. No se cobró ni se sumó dos veces.",
+      "orden_expirada": "Pasaron 15 minutos sin confirmar el pago. No se cobró nada.",
+      "procesando_onchain": "Tu pago quedó registrado. Seguimos intentando sumar los URC; aparecerá como pendiente hasta lograrlo.",
+      "identidad_requerida": "Verifica tu identidad para recargar. Tu billetera se crea al verificarla.",
+      "vincular_requerido": "Para confirmar la recarga, primero vincula este teléfono.",
+      "cuenta_suspendida": "Tu cuenta está suspendida, por eso no puedes recargar. Comunícate con tu organización.",
+      "error": "No pudimos completar este paso. Inténtalo de nuevo: una misma recarga nunca se cobra dos veces."
+    }
+  },
+  "viajes": {
+    "publicar": {
+      "pestana": "Publicar",
+      "titulo": "Publicar viaje",
+      "seccion_ruta": "Ruta",
+      "seccion_cuando": "Cuándo sales",
+      "seccion_precio": "Asientos y precio",
+      "requisitos_titulo": "Para ofrecer viajes en {organizacion} te falta:",
+      "requisito_vehiculo": "Registra tu vehículo",
+      "requisito_vehiculo_texto": "Los pasajeros verán la placa, la marca, el modelo y el color",
+      "requisito_vehiculo_hecho": "Vehículo registrado",
+      "requisito_identidad": "Verifica tu identidad",
+      "requisito_identidad_texto": "Para que tus pasajeros sepan que eres tú",
+      "requisito_identidad_hecho": "Identidad verificada",
+      "requisito_dispositivo": "Vincula este teléfono",
+      "requisito_dispositivo_texto": "Cada viaje se firma desde tu teléfono",
+      "requisito_dispositivo_hecho": "Teléfono vinculado",
+      "requisito_incompleto": "Antes de publicar, completa lo que te falta.",
+      "cuenta_suspendida": "Tu cuenta está suspendida, por eso no puedes publicar viajes. Comunícate con tu organización.",
+      "sin_membresia_activa": "Ya no tienes una membresía aprobada en tu organización activa. Elige otra para publicar.",
+      "elegir_organizacion": "Elegir organización",
+      "origen": "Punto de encuentro",
+      "destino": "Destino",
+      "buscar_lugar": "Buscar lugar",
+      "buscando": "Buscando…",
+      "busqueda_ayuda": "Escribe el lugar, busca y elige una opción.",
+      "busqueda_corta": "Escribe al menos 3 letras para buscar.",
+      "busqueda_sin_resultados": "No encontramos ese lugar. Prueba con otro nombre.",
+      "busqueda_fallida": "No pudimos buscar el lugar. Revisa tu conexión e inténtalo de nuevo.",
+      "lugar_requerido": "Busca el lugar y elige una opción de la lista.",
+      "varios_errores": "Revisa los campos marcados.",
+      "intercambiar": "Intercambiar origen y destino",
+      "atribucion_mapa": "© OpenStreetMap",
+      "fecha": "Fecha",
+      "hora": "Hora de salida",
+      "hora_menos": "15 min antes",
+      "hora_mas": "15 min después",
+      "hora_ayuda": "En 24 horas, por ejemplo 07:30.",
+      "hora_invalida": "Escribe la hora en 24 horas, por ejemplo 07:30.",
+      "horario_invalido": "Elige una salida con al menos 15 minutos de anticipación y hasta dentro de 7 días.",
+      "horario_pronto": "Sale en menos de 15 minutos. Elige una hora a partir de las {hora} y hasta dentro de 7 días.",
+      "hoy": "Hoy",
+      "manana": "Mañana",
+      "asientos": "Asientos que ofreces",
+      "asientos_ayuda": "Tu {vehiculo} tiene {capacidad} asientos para pasajeros.",
+      "asientos_ayuda_uno": "Tu {vehiculo} tiene 1 asiento para pasajeros.",
+      "asiento_opcion": "{cantidad} asientos",
+      "asiento_opcion_uno": "1 asiento",
+      "cupos_exceden_capacidad": "Tu vehículo tiene {maximo} asientos para pasajeros. Ofrece {maximo} o menos.",
+      "cupos_exceden_capacidad_uno": "Tu vehículo tiene 1 asiento para pasajeros. Ofrece solo 1.",
+      "precio": "Precio por asiento (URC)",
+      "precio_ayuda": "Entre {minimo} y {maximo} URC, el máximo de {organizacion}.",
+      "precio_invalido": "El precio debe estar entre {minimo} y {maximo} URC.",
+      "lugares_iguales": "El punto de encuentro y el destino no pueden ser el mismo lugar.",
+      "viaje_solapado_titulo": "Choca con otro viaje tuyo",
+      "viaje_solapado": "Ya tienes uno para {dia} a las {hora}. Deja al menos {horas} horas entre tus viajes.",
+      "publicar": "Publicar viaje",
+      "publicando": "Publicando…",
+      "vincular_requerido": "Vincula este teléfono para publicar: cada viaje se firma desde él.",
+      "vincular": "Vincular teléfono",
+      "estado_publicado": "Publicado",
+      "resultado_titulo": "Viaje publicado",
+      "resultado_texto": "Los miembros de {organizacion} ya pueden verlo.",
+      "resultado_resumen": "{asientos} · {precio} URC c/u",
+      "listo": "Listo"
+    },
+    "mapa": {
+      "ver_trayecto": "Ver el trayecto en el mapa",
+      "creditos": "Ver los créditos del mapa",
+      "ver_relieve": "Ver el relieve",
+      "ver_calles": "Ver las calles",
+      "buscar_lugar": "Buscar un lugar",
+      "elegir_en_mapa": "Toca para elegir en el mapa",
+      "buscar_en_mapa": "Buscar en el mapa",
+      "sin_resultados": "No encontramos ese lugar",
+      "mueve_mapa": "Mueve el mapa para ajustar el punto",
+      "ubicando": "Buscando la dirección…",
+      "atribucion": "OpenFreeMap © OpenMapTiles © OpenStreetMap",
+      "atribucion_relieve": "© OpenStreetMap · Relieve: Mapzen, USGS, NOAA y otros"
+    },
+    "buscar": {
+      "desde": "Desde",
+      "buscar": "Buscar viajes",
+      "mi_ubicacion": "Tu ubicación",
+      "punto_mapa": "Punto en el mapa",
+      "usar_ubicacion": "Mi ubicación",
+      "elegir_mapa": "En el mapa",
+      "usar_punto": "Usar este punto",
+      "hora_pasada": "Esa hora ya pasó. Elige una más tarde.",
+      "acercar": "Acercar el mapa",
+      "alejar": "Alejar el mapa",
+      "sin_permiso": "UniRide usa tu ubicación solo para buscar viajes que salgan cerca de ti. También puedes elegir el lugar.",
+      "ir_a_ajustes": "El permiso de ubicación está desactivado. Actívalo en los ajustes o elige el lugar.",
+      "abrir_ajustes": "Abrir ajustes",
+      "fallo": "No pudimos obtener tu ubicación. Revisa que el GPS esté activo o elige el lugar.",
+      "ubicacion_mapa_fallo": "No pudimos obtener tu ubicación. Elige en el mapa el punto de salida.",
+      "ventana": "Viajes entre {desde} y {hasta}, a menos de 1 km.",
+      "titulo_resultados": "Viajes cerca de ti",
+      "resumen": "{dia} · {desde}–{hasta} · a menos de 1 km",
+      "sin_resultados": "No hay viajes cerca a esa hora",
+      "sin_resultados_texto": "Buscamos: {ventana}. Prueba con otra hora: los viajes se publican hasta con 7 días de anticipación.",
+      "cambiar_hora": "Cambiar la hora",
+      "sin_membresia": "Para buscar viajes necesitas una membresía aprobada en tu organización activa. Elige otra o espera la aprobación.",
+      "no_encontrado": "Este viaje ya no está disponible.",
+      "asiento_libre": "1 asiento libre",
+      "asientos_libres": "{cantidad} asientos libres",
+      "origen_distancia": "{origen} · a {distancia}",
+      "verificado": "Conductor verificado",
+      "nuevo": "Nuevo",
+      "tarjeta_accesible": "Viaje a las {hora} de {origen}, a {distancia}, a {destino}, {precio}, {asientos}, conductor {conductor}, {vehiculo}, placa {placa}",
+      "titulo_detalle": "Detalle del viaje",
+      "precio_asiento": "Precio por asiento",
+      "disponibles": "Asientos libres",
+      "de_total": "{libres} de {total}",
+      "garantia": "Al reservar, el pasaje queda en garantía y solo se paga a {conductor} cuando el viaje se verifica.",
+      "reservar_pronto": "Reservar · disponible pronto",
+      "subtitulo": "¿A dónde vas hoy?",
+      "promedio": "{promedio} · {cantidad} calificaciones"
+    },
+    "reservar": {
+      "boton": "Reservar y pagar {precio}",
+      "enviando": "Reservando…",
+      "resumen_titulo": "Tu pasaje",
+      "saldo_disponible": "Saldo disponible",
+      "saldo_despues": "Saldo disponible después",
+      "recargar": "Recargar saldo",
+      "faltante": "Te faltan {monto} URC para reservar este viaje.",
+      "saldo_insuficiente": "Tu saldo disponible no alcanza para este pasaje. Recarga para reservarlo.",
+      "sin_asientos": "Ya no quedan asientos en este viaje.",
+      "viaje_propio": "Este viaje es tuyo: no puedes reservarlo.",
+      "ya_reservado": "Ya tienes una reserva en este viaje.",
+      "no_disponible": "Este viaje ya no admite reservas.",
+      "ver_mis_viajes": "Ver mis viajes",
+      "identidad_requerida": "Verifica tu identidad para reservar viajes y pagar con tu billetera.",
+      "vincular_requerido": "Vincula este teléfono para reservar: cada reserva se confirma con tu huella o rostro.",
+      "cuenta_suspendida": "Tu cuenta está suspendida, por eso no puedes reservar viajes. Comunícate con tu organización.",
+      "par_bloqueado": "No puedes reservar este viaje por ahora.",
+      "error": "No pudimos reservar el viaje. Inténtalo de nuevo.",
+      "garantia_resumen": "Pagas {precio} y queda en garantía; el conductor lo cobra solo cuando el viaje se verifique.",
+      "no_disponible_boton": "No admite reservas"
+    },
+    "estado": {
+      "publicado": "Publicado",
+      "reservado": "Reservado",
+      "en_curso": "En curso",
+      "verificado": "Verificado",
+      "pagado": "Pagado",
+      "cancelado": "Cancelado",
+      "expirado": "Expirado"
+    },
+    "cancelar": {
+      "boton": "Cancelar viaje",
+      "titulo": "Cancelar viaje",
+      "intro": "Al cancelar tu viaje se devolverá el 100 % del pasaje a todos tus pasajeros.",
+      "resumen_pasajeros": "Se devuelve el 100 % a {total} pasajeros",
+      "sin_pasajeros": "Este viaje no tiene pasajeros confirmados.",
+      "boton_confirmar": "Cancelar viaje",
+      "exito_titulo": "Viaje cancelado",
+      "exito_texto": "Tu viaje fue cancelado. Cada pasajero recibirá un correo con el aviso de reembolso.",
+      "no_cancelable": "Este viaje ya no se puede cancelar."
+    }
+  },
+  "reservas": {
+    "estado": {
+      "pendiente": "Pendiente",
+      "confirmada": "Confirmada",
+      "abordada": "A bordo",
+      "verificada": "Verificada",
+      "pagada": "Pagada",
+      "fallida": "No se completó",
+      "verificacion_fallida": "Verificación fallida",
+      "cancelada": "Cancelada",
+      "expirada": "Expirada"
+    },
+    "resultado": {
+      "titulo": "Tu reserva",
+      "pendiente_titulo": "Dejando tu pasaje en garantía",
+      "pendiente_texto": "Tu asiento ya está apartado. Estamos registrando {monto} URC en garantía; no tienes que hacer nada.",
+      "pendiente_demora": "La red de pagos tarda más de lo normal. Seguimos intentando y tu asiento sigue apartado.",
+      "confirmada_titulo": "Reserva confirmada",
+      "confirmada_texto": "Tu pasaje de {monto} URC quedó en garantía. Se le paga al conductor solo cuando el viaje se verifique.",
+      "fallida_titulo": "No se completó tu reserva",
+      "fallida_texto": "No se descontó nada de tu saldo y el asiento quedó libre. Puedes intentarlo otra vez.",
+      "cancelada_titulo": "Reserva cancelada",
+      "cancelada_texto": "Tu reserva fue cancelada. Te devolvimos {monto} URC.",
+      "expirada_titulo": "Reserva expirada",
+      "expirada_texto": "No se abordó a tiempo el viaje. Te devolvimos {monto} URC.",
+      "otro_estado_texto": "Tu reserva está {estado}.",
+      "en_garantia": "En garantía",
+      "transaccion": "Ver la transacción",
+      "salida": "Salida",
+      "conductor": "Conductor",
+      "intentar_otra_vez": "Intentar otra vez",
+      "ver_mis_viajes": "Ver mis viajes",
+      "no_encontrada": "No encontramos esta reserva.",
+      "actualizar": "Actualizar",
+      "reembolso_en_camino": "Reembolso en camino",
+      "reembolso_confirmado": "Reembolso acreditado"
+    },
+    "cancelar": {
+      "titulo": "Cancelar reserva",
+      "intro": "Revisa los detalles antes de confirmar tu cancelación.",
+      "politica_titulo": "Política de cancelación",
+      "politica_texto": "Si cancelas con más de 30 minutos de anticipación recibes el 100 %; con menos, el 50 %.",
+      "devolucion_pasajero": "Te devolvemos {monto} URC",
+      "compensacion_conductor": "El conductor recibe {monto} URC",
+      "boton_confirmar": "Cancelar reserva",
+      "politica_cambio": "Cambió el tiempo para la salida. La política actualizada ahora devuelve el 50 %.",
+      "exito_titulo": "Reserva cancelada",
+      "exito_texto": "Cancelaste tu reserva con éxito. El reembolso se está procesando en tu billetera.",
+      "volver_inicio": "Volver a Mis viajes",
+      "no_cancelable": "Esta reserva ya no se puede cancelar."
+    },
+    "mis_viajes": {
+      "pestana": "Mis viajes",
+      "titulo": "Mis viajes",
+      "reservas_titulo": "Mis reservas",
+      "publicados_titulo": "Viajes que ofrezco",
+      "sin_reservas": "Todavía no reservaste ningún viaje.",
+      "sin_publicados": "No publicaste ningún viaje.",
+      "buscar": "Buscar un viaje",
+      "publicar": "Publicar un viaje",
+      "ver_pasajeros": "Ver pasajeros",
+      "ocultar_pasajeros": "Ocultar pasajeros",
+      "sin_pasajeros": "Aún no hay pasajeros.",
+      "pasajeros_error": "No pudimos cargar a tus pasajeros. Inténtalo de nuevo.",
+      "error": "No pudimos cargar tus viajes. Revisa tu conexión e inténtalo de nuevo.",
+      "activo_titulo": "Tu próximo viaje",
+      "activo_en_curso": "Tu viaje en curso",
+      "reserva_accesible": "Reserva con {conductor}, de {origen} a {destino}, {dia} a las {hora}, {estado}, {monto} URC en garantía",
+      "mostrar_codigo": "Mostrar código de abordaje"
+    }
+  },
+  "presencia": {
+    "abordaje": {
+      "titulo_conductor": "Código de abordaje",
+      "intro_conductor": "Tus pasajeros escanean este código para verificar que se encontraron contigo. Se renueva solo.",
+      "boton_mostrar": "Mostrar código",
+      "preparando": "Preparando el código…",
+      "qr": "Código QR de abordaje",
+      "nuevo_en": "Nuevo código en {segundos} s",
+      "recordatorio": "El pasajero debe estar a menos de 50 m.",
+      "pasajeros": "Pasajeros",
+      "pasajero_esperando": "Esperando",
+      "pasajero_verificado": "Verificado ✓",
+      "titulo_pasajero": "Escanear código",
+      "boton_escanear": "Escanear código del conductor",
+      "apunta": "Apunta al código del teléfono de {nombre}",
+      "placa": "Vehículo con placa {placa}",
+      "boton_confirmar": "Confirmar abordaje",
+      "verificando": "Verificando…",
+      "leido": "Código leído. Confirma con tu huella.",
+      "volver_a_escanear": "Volver a escanear",
+      "verificado": "Abordaje verificado",
+      "verificado_texto": "Tu viaje está en curso. ¡Buen viaje!",
+      "ya_verificado": "Tu abordaje ya estaba verificado.",
+      "codigo_invalido": "Ese código ya no sirve. Escanea el que muestra ahora el conductor.",
+      "qr_ajeno": "Ese no es un código de abordaje de UniRide.",
+      "distancia": "Estás a más de 50 m del conductor (a {distancia} m). Acércate y vuelve a escanear.",
+      "ubicacion_simulada": "No pudimos confirmar tu ubicación. Desactiva cualquier app que cambie tu ubicación.",
+      "integridad": "Este teléfono no puede verificar viajes.",
+      "sin_reserva": "No tienes una reserva en este viaje.",
+      "fuera_de_ventana": "El código se puede mostrar de {desde} a {hasta}.",
+      "sin_reservas": "Este viaje no tiene reservas confirmadas.",
+      "senal_gps": "La señal de ubicación es débil. Sal a un lugar abierto y vuelve a intentarlo.",
+      "activa_ubicacion": "Activa tu ubicación para verificar el abordaje.",
+      "permiso_ubicacion": "UniRide necesita tu ubicación para verificar el abordaje. Dale permiso en los ajustes del teléfono.",
+      "permiso_camara": "UniRide necesita la cámara para leer el código del conductor.",
+      "dar_permiso_camara": "Permitir cámara",
+      "abrir_ajustes": "Abrir ajustes",
+      "sin_conexion": "Sin conexión. El código sigue en la pantalla del conductor; vuelve a escanear cuando tengas señal.",
+      "servicio_no_disponible": "No pudimos verificar ahora. Vuelve a intentarlo en un momento.",
+      "vincular_requerido": "Vincula este teléfono para verificar el abordaje: el código y cada escaneo se firman desde él.",
+      "firma_vencida": "El código dejó de renovarse. Confirma otra vez con tu huella.",
+      "error": "No pudimos completar la verificación. Vuelve a intentarlo."
+    },
+    "bajada": {
+      "titulo_conductor": "Código de bajada",
+      "intro_conductor": "Tu pasajero escanea este código al bajar para verificar el viaje. Se renueva solo.",
+      "qr": "Código QR de bajada",
+      "titulo_pasajero": "Escanear código de bajada",
+      "verificado": "Viaje verificado",
+      "verificado_texto": "Tu viaje quedó verificado. ¡Gracias por viajar con UniRide!",
+      "ya_verificado": "Este viaje ya estaba verificado.",
+      "no_verificado": "Viaje no verificado",
+      "no_abordada": "Esta reserva no está a bordo: no hay bajada que verificar.",
+      "viaje_no_en_curso": "Este viaje ya no está en curso.",
+      "qr_ajeno": "Ese no es un código de bajada de UniRide.",
+      "activa_ubicacion": "Activa tu ubicación para verificar la bajada.",
+      "permiso_ubicacion": "UniRide necesita tu ubicación para verificar la bajada. Dale permiso en los ajustes del teléfono.",
+      "vincular_requerido": "Vincula este teléfono para verificar la bajada: el código y cada escaneo se firman desde él.",
+      "error": "No pudimos verificar la bajada. Vuelve a intentarlo."
+    },
+    "trayecto": {
+      "titulo": "En viaje a {destino}",
+      "titulo_sin_destino": "Viaje en curso",
+      "compartiendo": "Compartiendo tu ubicación cada 15 s",
+      "notificacion_titulo": "UniRide · Viaje en curso",
+      "sin_conexion": "Sin señal. Guardamos tus posiciones y las enviamos cuando vuelva la conexión.",
+      "activa_ubicacion": "Tu ubicación está apagada. Actívala: sin ella el viaje puede no verificarse.",
+      "permiso_segundo_plano": "Para seguir con la pantalla apagada, UniRide necesita tu ubicación «Todo el tiempo». Sin ese permiso el viaje puede no verificarse.",
+      "permitir_siempre": "Permitir todo el tiempo",
+      "detenido": "Ya no se comparte tu ubicación en este viaje.",
+      "firma_vencida": "Tus posiciones dejaron de aceptarse porque cambió la llave de este teléfono. Vuelve a confirmar con tu huella desde el código del viaje.",
+      "verificacion_fallida": "No pudimos verificar que viajaron juntos. El pago queda retenido mientras se revisa.",
+      "datos_insuficientes": "No hay suficientes datos del trayecto. El pago queda retenido mientras se revisa.",
+      "bajada_conductor": "Mostrar código de bajada",
+      "bajada_pasajero": "Escanear QR de bajada",
+      "ver_viaje": "Ver viaje en curso"
+    }
+  },
+  "voz": {
+    "boton": {
+      "etiqueta": "Hablar con UniRide"
+    },
+    "panel": {
+      "te_escucho": "Te escucho…",
+      "ejemplo": "Ejemplo: «Busca un viaje a la UAGRM a las 7»",
+      "procesando": "Procesando…",
+      "volver_intentar": "Volver a intentar"
+    },
+    "comun": {
+      "no_entendi": "No entendí. Puedes decir: busca un viaje a la UAGRM a las 7",
+      "usar_teclado": "Hazlo con el teclado",
+      "no_disponible": "La voz no está disponible ahora. Usa la búsqueda.",
+      "no_te_escuche": "No te escuché. Toca el micrófono para hablar."
+    },
+    "permiso": {
+      "microfono": "UniRide usa el micrófono para escuchar tus comandos de voz.",
+      "abrir_ajustes": "Abrir ajustes"
+    },
+    "buscar": {
+      "falta_hora": "¿A qué hora quieres salir?",
+      "falta_destino": "¿A dónde quieres ir?",
+      "sin_ubicacion": "Activa tu ubicación para buscar viajes por voz.",
+      "sin_resultados": "No encontré viajes a {destino} a esa hora.",
+      "resultados": "Encontré {n} viajes. El primero sale a las {hora} a {destino} por {precio} URC.",
+      "resultado_uno": "Encontré 1 viaje. Sale a las {hora} a {destino} por {precio} URC."
+    },
+    "reservar": {
+      "confirmar_huella": "Viaje de las {hora} a {destino}, {precio} URC. Confirma con tu huella.",
+      "saldo_insuficiente": "Te faltan {falta} URC para reservar este viaje. Recarga tu saldo.",
+      "numero_invalido": "Hay {total} viajes. ¿Cuál quieres?",
+      "sin_resultados": "Primero busca un viaje."
+    },
+    "saldo": {
+      "disponible": "Tienes {disponible} URC disponibles y {enGarantia} en garantía.",
+      "sin_billetera": "Aún no tienes billetera."
+    },
+    "conductor": {
+      "en_punto": "Tu conductor ya está en el punto de encuentro.",
+      "distancia": "Tu conductor está a {distancia} del punto de encuentro.",
+      "sin_ubicacion": "Aún no tenemos la ubicación de tu conductor. Tu viaje sale a las {hora} desde {origen}."
+    },
+    "viaje": {
+      "sin_viajes": "No tienes viajes próximos.",
+      "proximo": "Tu próximo viaje sale {dia} a las {hora} a {destino}."
+    },
+    "cancelar": {
+      "vista_previa": "Si cancelas ahora te devolvemos {monto} URC. Confirma con tu huella.",
+      "nada": "No tienes viajes que se puedan cancelar.",
+      "numero_invalido": "Tienes {total} viajes cancelables. ¿Cuál cancelo?"
+    },
+    "ayuda": {
+      "texto": "Puedes pedirme: buscar un viaje, reservar, tu saldo, dónde está tu conductor, cómo va tu viaje o cancelar tu viaje."
+    }
+  },
+  "calificaciones": {
+    "titulo": "Calificar a {nombre}",
+    "estrellas": "Estrellas",
+    "estrella_uno": "1 estrella",
+    "estrellas_n": "{n} estrellas",
+    "comentario": "Comentario (opcional)",
+    "comentario_ayuda": "{n} de 140 caracteres. Solo lo verá la persona calificada.",
+    "enviar": "Enviar",
+    "enviando": "Enviando…",
+    "gracias": "Gracias por calificar",
+    "ya_calificada": "Ya calificaste este viaje.",
+    "plazo_vencido": "Ya pasó el plazo para calificar.",
+    "no_pagada": "Solo puedes calificar un viaje ya pagado.",
+    "error": "No pudimos enviar tu calificación. Intenta otra vez.",
+    "recibida": "{nombre} te calificó con {n} de 5",
+    "boton": "Calificar a {nombre}",
+    "elige": "Elige de 1 a 5 estrellas."
   }
 }

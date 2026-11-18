@@ -364,6 +364,1152 @@ function leerCuerpo(cuerpo: unknown): unknown {
   return Object.fromEntries(partes);
 }
 
+// HU-09: formas según el contrato del backend (DTOs de `dispositivos`); Play Integrity real no se probó.
+export const dispositivoReal = {
+  sinDispositivo: ok(404, {
+    codigo: 'NO_ENCONTRADO',
+    mensaje: 'No se encontró lo que buscas.',
+  }),
+  vinculado: ok(200, {
+    id: '0b6f1d3a-7c2e-4a55-9d21-5f8e3b9c4a10',
+    modelo: 'Pixel 8',
+    vinculadoEn: '2026-11-04T15:00:00.000Z',
+    activo: true,
+  }),
+  desafio: ok(201, {
+    desafio: 'ZGVzYWZpby1kZS1wcnVlYmE',
+    expiraEn: '2026-11-04T15:05:00.000Z',
+  }),
+  vinculadoOk: ok(200, {
+    id: '0b6f1d3a-7c2e-4a55-9d21-5f8e3b9c4a10',
+    estado: 'vinculado',
+  }),
+  noIntegro: ok(422, {
+    codigo: 'DISPOSITIVO_NO_INTEGRO',
+    mensaje: 'No pudimos comprobar tu teléfono.',
+  }),
+  yaVinculado: ok(400, {
+    codigo: 'DISPOSITIVO_YA_VINCULADO',
+    mensaje: 'Ya tienes un dispositivo vinculado.',
+  }),
+  desafioRevinculacion: ok(201, {
+    desafio: 'ZGVzYWZpby1yZXZpbmN1bGFjaW9u',
+    expiraEn: '2026-11-08T15:05:00.000Z',
+    requiereIdentidad: true,
+    sesionLivenessId: 'liveness-ses-123',
+  }),
+  desafioRevinculacionSinIdentidad: ok(201, {
+    desafio: 'ZGVzYWZpby1yZXZpbmN1bGFjaW9u',
+    expiraEn: '2026-11-08T15:05:00.000Z',
+    requiereIdentidad: false,
+  }),
+  revinculadoOk: ok(201, {
+    id: '0b6f1d3a-7c2e-4a55-9d21-5f8e3b9c4a10',
+    estado: 'vinculado',
+  }),
+  rostroNoCoincide: ok(422, {
+    codigo: 'ROSTRO_NO_COINCIDE',
+    mensaje: 'Tu rostro no coincide con la foto del carnet verificado.',
+  }),
+  // Códigos de HU-08 que reutiliza `revincular` (plan §3).
+  pruebaVidaFallida: ok(422, {
+    codigo: 'PRUEBA_VIDA_FALLIDA',
+    mensaje: 'No pudimos confirmar que eres una persona real.',
+  }),
+  intentosAgotados: ok(429, {
+    codigo: 'INTENTOS_AGOTADOS',
+    mensaje: 'Superaste los intentos de verificación.',
+    bloqueadoHasta: '2026-11-09T15:00:00.000Z',
+  }),
+  conflictoConcurrente: ok(409, {
+    codigo: 'CONFLICTO_CONCURRENTE',
+    mensaje: 'Otra revinculación de tu cuenta terminó al mismo tiempo.',
+  }),
+};
+
+// HU-08: formas según el contrato del backend (DTOs de `identidad`); el motor facial real no se probó.
+export const identidadReal = {
+  sinVerificar: ok(200, {
+    estado: 'no_verificada',
+    verificadoEn: null,
+    bloqueadoHasta: null,
+  }),
+  verificada: ok(200, {
+    estado: 'verificada',
+    verificadoEn: '2026-11-04T15:00:00.000Z',
+    bloqueadoHasta: null,
+  }),
+  bloqueada: ok(200, {
+    estado: 'bloqueada_temporal',
+    verificadoEn: null,
+    bloqueadoHasta: '2026-11-05T15:00:00.000Z',
+  }),
+  sesion: ok(201, { sesionId: 'sim-3f2b8c1e-5a4d-4e6f-9b7a-1c2d3e4f5a6b' }),
+  exito: ok(200, {
+    estado: 'verificada',
+    verificadoEn: '2026-11-04T15:00:00.000Z',
+  }),
+  rostroNoCoincide: ok(422, {
+    codigo: 'ROSTRO_NO_COINCIDE',
+    mensaje: 'Tu rostro no coincide con la foto del carnet.',
+  }),
+  documentoDuplicado: ok(409, {
+    codigo: 'DOCUMENTO_DUPLICADO',
+    mensaje: 'Ese carnet ya está registrado.',
+  }),
+  intentosAgotados: ok(429, {
+    codigo: 'INTENTOS_AGOTADOS',
+    mensaje: 'Superaste los intentos de verificación.',
+    bloqueadoHasta: '2026-11-05T15:00:00.000Z',
+  }),
+};
+
+// HU-12: respuestas capturadas de un backend propio (PostgreSQL local, nodo Hardhat de compose, firma real de
+// dispositivo, 06/11/2026). `exploradorUrl` es `null` porque Hardhat no tiene explorador; la forma con URL sigue el
+// contrato (`https://amoy.polygonscan.com/address/<direccion>`) y Polygon Amoy nunca se tocó.
+const DIRECCION_BILLETERA = '0x3021f987aaE8Fb0be0C809E13A05F79b04706805';
+export const billeteraReal = {
+  direccion: DIRECCION_BILLETERA,
+  /** GET /billetera/mia, tras acuñar 12.349 URC en Hardhat (la API trunca a 2 decimales). */
+  conSaldo: ok(200, {
+    id: 'd0c05fca-d161-447f-92c4-0791765882b3',
+    direccion: DIRECCION_BILLETERA,
+    saldoUrc: '12.34',
+    exploradorUrl: null,
+  }),
+  /** GET /billetera/mia recién creada. */
+  sinSaldo: ok(200, {
+    id: 'd0c05fca-d161-447f-92c4-0791765882b3',
+    direccion: DIRECCION_BILLETERA,
+    saldoUrc: '0.00',
+    exploradorUrl: null,
+  }),
+  /** POST /billetera cuando la crea. */
+  creada: ok(201, {
+    id: 'd0c05fca-d161-447f-92c4-0791765882b3',
+    direccion: DIRECCION_BILLETERA,
+    saldoUrc: '0.00',
+    exploradorUrl: null,
+  }),
+  /** Forma del contrato en Polygon Amoy (no capturada: Amoy nunca se tocó). */
+  enAmoy: ok(200, {
+    id: 'd0c05fca-d161-447f-92c4-0791765882b3',
+    direccion: DIRECCION_BILLETERA,
+    saldoUrc: '12.30',
+    exploradorUrl: `https://amoy.polygonscan.com/address/${DIRECCION_BILLETERA}`,
+  }),
+  /** GET /billetera/mia sin billetera todavía → 404. */
+  noEncontrada: ok(404, {
+    codigo: 'BILLETERA_NO_ENCONTRADA',
+    mensaje: 'Todavía no tienes una billetera.',
+  }),
+  identidadNoVerificada: ok(403, {
+    codigo: 'IDENTIDAD_NO_VERIFICADA',
+    mensaje: 'Debes verificar tu identidad para realizar esta acción.',
+  }),
+  firmaInvalida: ok(401, {
+    codigo: 'FIRMA_DISPOSITIVO_INVALIDA',
+    mensaje:
+      'No pudimos comprobar que la petición viene de tu teléfono vinculado.',
+  }),
+  peticionExpirada: ok(401, {
+    codigo: 'PETICION_EXPIRADA',
+    mensaje: 'La petición expiró o ya fue usada. Inténtalo de nuevo.',
+  }),
+  cuentaSuspendida: ok(403, {
+    codigo: 'CUENTA_SUSPENDIDA',
+    mensaje: 'Tu cuenta está suspendida. No puedes usar la billetera.',
+  }),
+  /** Con el nodo Hardhat apagado. */
+  cadenaCaida: ok(503, {
+    codigo: 'SERVICIO_BLOCKCHAIN_NO_DISPONIBLE',
+    mensaje:
+      'No pudimos conectar con la red de tu billetera. Inténtalo de nuevo en unos minutos.',
+  }),
+};
+// HU-14: capturadas de un backend propio (PostgreSQL local, nodo Hardhat de compose, 06/11/2026) con una persona
+// verificada, con billetera, 46 movimientos de los 4 tipos (un pendiente y un fallido) y 347 URC acuñados. Sin firma:
+// estas rutas van solo con token. `exploradorUrl` es `null` porque Hardhat no tiene explorador; la forma con URL
+// sigue el contrato (`https://amoy.polygonscan.com/tx/<hash>`) y Polygon Amoy nunca se tocó.
+export const historialReal = {
+  /** GET /billetera/saldo → 200 */
+  saldo: ok(200, {
+    saldoTotal: '362.00',
+    saldoDisponible: '347.00',
+    saldoBloqueadoEscrow: '15.00',
+    moneda: 'URC',
+    enLinea: true,
+  }),
+  /** GET /billetera/saldo con el nodo caído (backend con CADENA_RPC_URL inalcanzable) → 200 con el saldo contable. */
+  saldoSinNodo: ok(200, {
+    saldoTotal: '362.00',
+    saldoDisponible: '347.00',
+    saldoBloqueadoEscrow: '15.00',
+    moneda: 'URC',
+    enLinea: false,
+  }),
+  /** GET /billetera/movimientos?pagina=1&limite=20 → 200 (el pendiente va primero) */
+  pagina1: ok(200, {
+    items: [
+      {
+        id: '2c1c7809-0f79-4760-a890-fcab41fe219b',
+        tipo: 'recarga',
+        monto: '50.00',
+        estado: 'pendiente',
+        hashTx: null,
+        exploradorUrl: null,
+        creadoEn: '2026-11-07T01:23:06.896Z',
+      },
+      {
+        id: '1e4bc003-59da-4841-b7a1-98bc2555a012',
+        tipo: 'liberacion_viaje',
+        monto: '12.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000002',
+        exploradorUrl: null,
+        creadoEn: '2026-11-07T00:00:06.897Z',
+      },
+      {
+        id: 'f9f047f3-acd3-4510-a994-e998efe30ec3',
+        tipo: 'bloqueo_reserva',
+        monto: '15.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000003',
+        exploradorUrl: null,
+        creadoEn: '2026-11-06T00:35:06.897Z',
+      },
+      {
+        id: '32f355eb-40ab-4df2-99b5-56157d623432',
+        tipo: 'reembolso_reserva',
+        monto: '10.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000005',
+        exploradorUrl: null,
+        creadoEn: '2026-11-05T21:35:06.898Z',
+      },
+      {
+        id: '718b8efc-432f-4edf-be9b-b67b97580b34',
+        tipo: 'bloqueo_reserva',
+        monto: '10.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000004',
+        exploradorUrl: null,
+        creadoEn: '2026-11-05T20:35:06.897Z',
+      },
+      {
+        id: '22229e4b-5ace-4e45-90b9-89225fc0511b',
+        tipo: 'recarga',
+        monto: '5.00',
+        estado: 'fallido',
+        hashTx: null,
+        exploradorUrl: null,
+        creadoEn: '2026-11-05T18:55:06.898Z',
+      },
+      {
+        id: 'f2bbbad7-03c7-42c6-8d30-96cebda17d1e',
+        tipo: 'recarga',
+        monto: '5.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000007',
+        exploradorUrl: null,
+        creadoEn: '2026-11-05T01:35:06.898Z',
+      },
+      {
+        id: 'c705beb9-82b1-4b53-b8f9-7880ad26f922',
+        tipo: 'recarga',
+        monto: '7.50',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000008',
+        exploradorUrl: null,
+        creadoEn: '2026-11-04T20:05:06.898Z',
+      },
+      {
+        id: '395c643f-14de-459e-93dd-07d47d6c43df',
+        tipo: 'recarga',
+        monto: '10.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000009',
+        exploradorUrl: null,
+        creadoEn: '2026-11-04T14:35:06.898Z',
+      },
+      {
+        id: '6b9f07a4-ed82-485d-a197-141ea8e4aee0',
+        tipo: 'recarga',
+        monto: '12.50',
+        estado: 'confirmado',
+        hashTx:
+          '0x000000000000000000000000000000000000000000000000000000000000000a',
+        exploradorUrl: null,
+        creadoEn: '2026-11-04T09:05:06.898Z',
+      },
+      {
+        id: '0e3d541c-366b-4bc6-b13b-ab2162f501ad',
+        tipo: 'recarga',
+        monto: '5.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x000000000000000000000000000000000000000000000000000000000000000b',
+        exploradorUrl: null,
+        creadoEn: '2026-11-04T03:35:06.898Z',
+      },
+      {
+        id: 'd7101fe3-9229-478d-afd8-f9cd0956c546',
+        tipo: 'recarga',
+        monto: '7.50',
+        estado: 'confirmado',
+        hashTx:
+          '0x000000000000000000000000000000000000000000000000000000000000000c',
+        exploradorUrl: null,
+        creadoEn: '2026-11-03T22:05:06.898Z',
+      },
+      {
+        id: 'f862d26f-91a4-43e1-8b1e-d52a2d5c0b59',
+        tipo: 'recarga',
+        monto: '10.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x000000000000000000000000000000000000000000000000000000000000000d',
+        exploradorUrl: null,
+        creadoEn: '2026-11-03T16:35:06.898Z',
+      },
+      {
+        id: 'ab0596b9-0157-4a2a-bb10-474ad4c1923e',
+        tipo: 'recarga',
+        monto: '12.50',
+        estado: 'confirmado',
+        hashTx:
+          '0x000000000000000000000000000000000000000000000000000000000000000e',
+        exploradorUrl: null,
+        creadoEn: '2026-11-03T11:05:06.898Z',
+      },
+      {
+        id: 'ff286de6-8ffe-43e1-bfe5-5331b072b7e6',
+        tipo: 'recarga',
+        monto: '5.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x000000000000000000000000000000000000000000000000000000000000000f',
+        exploradorUrl: null,
+        creadoEn: '2026-11-03T05:35:06.898Z',
+      },
+      {
+        id: '18629b53-00f1-4fb9-84f5-d1059e80bed3',
+        tipo: 'recarga',
+        monto: '7.50',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000010',
+        exploradorUrl: null,
+        creadoEn: '2026-11-03T00:05:06.898Z',
+      },
+      {
+        id: '82c67eb5-059a-406e-b986-7a56cc7c887b',
+        tipo: 'recarga',
+        monto: '10.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000011',
+        exploradorUrl: null,
+        creadoEn: '2026-11-02T18:35:06.898Z',
+      },
+      {
+        id: '45420378-3108-4b1d-875b-d95b08209b53',
+        tipo: 'recarga',
+        monto: '12.50',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000012',
+        exploradorUrl: null,
+        creadoEn: '2026-11-02T13:05:06.898Z',
+      },
+      {
+        id: '6319d846-2efd-46e0-b139-7e2740ccd809',
+        tipo: 'recarga',
+        monto: '5.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000013',
+        exploradorUrl: null,
+        creadoEn: '2026-11-02T07:35:06.898Z',
+      },
+      {
+        id: '2a5b4f39-cd1e-40d5-adc7-b5c29e719fef',
+        tipo: 'recarga',
+        monto: '7.50',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000014',
+        exploradorUrl: null,
+        creadoEn: '2026-11-02T02:05:06.898Z',
+      },
+    ],
+    total: 46,
+    pagina: 1,
+    paginas: 3,
+  }),
+  /** …pagina=2 */
+  pagina2: ok(200, {
+    items: [
+      {
+        id: 'a4534aa2-a88e-48f4-aece-8a3e1ae63b3c',
+        tipo: 'recarga',
+        monto: '10.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000015',
+        exploradorUrl: null,
+        creadoEn: '2026-11-01T20:35:06.898Z',
+      },
+      {
+        id: 'aecf0aef-958c-412c-b129-df6234c7d637',
+        tipo: 'recarga',
+        monto: '12.50',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000016',
+        exploradorUrl: null,
+        creadoEn: '2026-11-01T15:05:06.898Z',
+      },
+      {
+        id: '55ef17c2-cfd7-4972-abb1-b9c4e91dd0ed',
+        tipo: 'recarga',
+        monto: '5.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000017',
+        exploradorUrl: null,
+        creadoEn: '2026-11-01T09:35:06.898Z',
+      },
+      {
+        id: 'ac522b0e-f0c9-4660-bd88-ae54cccf44b9',
+        tipo: 'recarga',
+        monto: '7.50',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000018',
+        exploradorUrl: null,
+        creadoEn: '2026-11-01T04:05:06.898Z',
+      },
+      {
+        id: '76a623d7-c697-44fc-8077-29cf4290c4aa',
+        tipo: 'recarga',
+        monto: '10.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000019',
+        exploradorUrl: null,
+        creadoEn: '2026-10-31T22:35:06.898Z',
+      },
+      {
+        id: 'acf6e784-9195-4eae-8a07-1dc626226ddb',
+        tipo: 'recarga',
+        monto: '12.50',
+        estado: 'confirmado',
+        hashTx:
+          '0x000000000000000000000000000000000000000000000000000000000000001a',
+        exploradorUrl: null,
+        creadoEn: '2026-10-31T17:05:06.898Z',
+      },
+      {
+        id: '2108ddb6-05da-498f-8636-c29e53664b38',
+        tipo: 'recarga',
+        monto: '5.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x000000000000000000000000000000000000000000000000000000000000001b',
+        exploradorUrl: null,
+        creadoEn: '2026-10-31T11:35:06.898Z',
+      },
+      {
+        id: '7dd3ae96-1f87-484a-b5f1-7210cd1e69a4',
+        tipo: 'recarga',
+        monto: '7.50',
+        estado: 'confirmado',
+        hashTx:
+          '0x000000000000000000000000000000000000000000000000000000000000001c',
+        exploradorUrl: null,
+        creadoEn: '2026-10-31T06:05:06.898Z',
+      },
+      {
+        id: '8c4d1937-f1bb-4e2f-b0df-5090c2b70295',
+        tipo: 'recarga',
+        monto: '10.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x000000000000000000000000000000000000000000000000000000000000001d',
+        exploradorUrl: null,
+        creadoEn: '2026-10-31T00:35:06.898Z',
+      },
+      {
+        id: 'f3e2c50f-6cab-42ab-9a54-af1f20c38983',
+        tipo: 'recarga',
+        monto: '12.50',
+        estado: 'confirmado',
+        hashTx:
+          '0x000000000000000000000000000000000000000000000000000000000000001e',
+        exploradorUrl: null,
+        creadoEn: '2026-10-30T19:05:06.898Z',
+      },
+      {
+        id: 'd4e6719c-df85-4bbc-aa5d-b9d566b3c51d',
+        tipo: 'recarga',
+        monto: '5.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x000000000000000000000000000000000000000000000000000000000000001f',
+        exploradorUrl: null,
+        creadoEn: '2026-10-30T13:35:06.898Z',
+      },
+      {
+        id: '119353e5-b864-4695-b109-f2bef909f046',
+        tipo: 'recarga',
+        monto: '7.50',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000020',
+        exploradorUrl: null,
+        creadoEn: '2026-10-30T08:05:06.898Z',
+      },
+      {
+        id: '2d585fbd-8509-43c8-ace6-e1ca0b7c8142',
+        tipo: 'recarga',
+        monto: '10.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000021',
+        exploradorUrl: null,
+        creadoEn: '2026-10-30T02:35:06.898Z',
+      },
+      {
+        id: '9dabd83c-7d1e-43c0-909f-144fc5d65787',
+        tipo: 'recarga',
+        monto: '12.50',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000022',
+        exploradorUrl: null,
+        creadoEn: '2026-10-29T21:05:06.898Z',
+      },
+      {
+        id: '39fe624c-457c-4ccc-b314-fd2b795fee6e',
+        tipo: 'recarga',
+        monto: '5.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000023',
+        exploradorUrl: null,
+        creadoEn: '2026-10-29T15:35:06.898Z',
+      },
+      {
+        id: 'bcafccda-773f-4302-9ed7-131a4c760e16',
+        tipo: 'recarga',
+        monto: '7.50',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000024',
+        exploradorUrl: null,
+        creadoEn: '2026-10-29T10:05:06.898Z',
+      },
+      {
+        id: '36f609f2-4981-4d8d-82d7-4a297d683186',
+        tipo: 'recarga',
+        monto: '10.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000025',
+        exploradorUrl: null,
+        creadoEn: '2026-10-29T04:35:06.898Z',
+      },
+      {
+        id: '30178c17-84c5-41d4-9573-e3a7599acd3d',
+        tipo: 'recarga',
+        monto: '12.50',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000026',
+        exploradorUrl: null,
+        creadoEn: '2026-10-28T23:05:06.898Z',
+      },
+      {
+        id: '6b97c5d3-bcfb-43d4-83a7-692c765dc1c1',
+        tipo: 'recarga',
+        monto: '5.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000027',
+        exploradorUrl: null,
+        creadoEn: '2026-10-28T17:35:06.898Z',
+      },
+      {
+        id: 'edbbc911-adaf-4cfa-8779-8dbe97b74d19',
+        tipo: 'recarga',
+        monto: '7.50',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000028',
+        exploradorUrl: null,
+        creadoEn: '2026-10-28T12:05:06.898Z',
+      },
+    ],
+    total: 46,
+    pagina: 2,
+    paginas: 3,
+  }),
+  /** …pagina=3 (las últimas 6) */
+  pagina3: ok(200, {
+    items: [
+      {
+        id: '40ce3624-3249-4969-af82-6cea7e1e0f86',
+        tipo: 'recarga',
+        monto: '10.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000029',
+        exploradorUrl: null,
+        creadoEn: '2026-10-28T06:35:06.898Z',
+      },
+      {
+        id: 'a926e7f8-661b-4cb3-b075-3624b0b73778',
+        tipo: 'recarga',
+        monto: '12.50',
+        estado: 'confirmado',
+        hashTx:
+          '0x000000000000000000000000000000000000000000000000000000000000002a',
+        exploradorUrl: null,
+        creadoEn: '2026-10-28T01:05:06.898Z',
+      },
+      {
+        id: '51f12b1d-edc1-42a2-919c-293826dec25e',
+        tipo: 'recarga',
+        monto: '5.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x000000000000000000000000000000000000000000000000000000000000002b',
+        exploradorUrl: null,
+        creadoEn: '2026-10-27T19:35:06.898Z',
+      },
+      {
+        id: '19ffbbb9-b669-471a-a8d2-1902fd33693d',
+        tipo: 'recarga',
+        monto: '7.50',
+        estado: 'confirmado',
+        hashTx:
+          '0x000000000000000000000000000000000000000000000000000000000000002c',
+        exploradorUrl: null,
+        creadoEn: '2026-10-27T14:05:06.898Z',
+      },
+      {
+        id: '976afc57-e5db-4abd-aa8d-945a6f9e0cd6',
+        tipo: 'recarga',
+        monto: '10.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x000000000000000000000000000000000000000000000000000000000000002d',
+        exploradorUrl: null,
+        creadoEn: '2026-10-27T08:35:06.898Z',
+      },
+      {
+        id: '7f5b5a05-732f-437e-babf-015878688207',
+        tipo: 'recarga',
+        monto: '12.50',
+        estado: 'confirmado',
+        hashTx:
+          '0x000000000000000000000000000000000000000000000000000000000000002e',
+        exploradorUrl: null,
+        creadoEn: '2026-10-27T03:05:06.898Z',
+      },
+    ],
+    total: 46,
+    pagina: 3,
+    paginas: 3,
+  }),
+  /** …&tipo=reembolso_reserva */
+  reembolsos: ok(200, {
+    items: [
+      {
+        id: '32f355eb-40ab-4df2-99b5-56157d623432',
+        tipo: 'reembolso_reserva',
+        monto: '10.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000005',
+        exploradorUrl: null,
+        creadoEn: '2026-11-05T21:35:06.898Z',
+      },
+    ],
+    total: 1,
+    pagina: 1,
+    paginas: 1,
+  }),
+  /** …&tipo=bloqueo_reserva,liberacion_viaje (los pagos) */
+  pagos: ok(200, {
+    items: [
+      {
+        id: '1e4bc003-59da-4841-b7a1-98bc2555a012',
+        tipo: 'liberacion_viaje',
+        monto: '12.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000002',
+        exploradorUrl: null,
+        creadoEn: '2026-11-07T00:00:06.897Z',
+      },
+      {
+        id: 'f9f047f3-acd3-4510-a994-e998efe30ec3',
+        tipo: 'bloqueo_reserva',
+        monto: '15.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000003',
+        exploradorUrl: null,
+        creadoEn: '2026-11-06T00:35:06.897Z',
+      },
+      {
+        id: '718b8efc-432f-4edf-be9b-b67b97580b34',
+        tipo: 'bloqueo_reserva',
+        monto: '10.00',
+        estado: 'confirmado',
+        hashTx:
+          '0x0000000000000000000000000000000000000000000000000000000000000004',
+        exploradorUrl: null,
+        creadoEn: '2026-11-05T20:35:06.897Z',
+      },
+    ],
+    total: 3,
+    pagina: 1,
+    paginas: 1,
+  }),
+  /** Persona sin movimientos → 200 */
+  vacio: ok(200, { items: [], total: 0, pagina: 1, paginas: 0 }),
+  /** Verificada sin billetera → 404 (saldo y movimientos) */
+  noEncontrada: ok(404, {
+    codigo: 'BILLETERA_NO_ENCONTRADA',
+    mensaje: 'Todavía no tienes una billetera.',
+  }),
+  /** Sin identidad verificada → 403 */
+  identidadNoVerificada: ok(403, {
+    codigo: 'IDENTIDAD_NO_VERIFICADA',
+    mensaje: 'Debes verificar tu identidad para realizar esta acción.',
+  }),
+};
+
+const ORDEN_RECARGA = {
+  ordenId: '7f1c1a52-6f3e-4a1b-9c55-0d6a3f6f1b11',
+  monto: '50.00',
+  estado: 'pendiente',
+  expiraEn: '2026-11-07T15:15:00.000Z',
+  hashTx: null,
+};
+
+// Contrato de `backend/src/billetera/dto/recarga.dto.ts` (HU-13).
+export const recargaReal = {
+  ordenId: ORDEN_RECARGA.ordenId,
+  /** POST /billetera/recargas → 201 */
+  creada: (expiraEn = ORDEN_RECARGA.expiraEn) =>
+    ok(201, {
+      ...ORDEN_RECARGA,
+      expiraEn,
+      qrTexto: `uniride://recarga/${ORDEN_RECARGA.ordenId}`,
+      qrImagenBase64: 'iVBORw0KGgo=',
+    }),
+  /** POST .../confirmar → 202, y GET mientras se acredita → 200 */
+  procesando: (estado = 202) =>
+    ok(estado, { ...ORDEN_RECARGA, estado: 'procesando' }),
+  /** Ya acreditada → 200 */
+  completada: ok(200, {
+    ...ORDEN_RECARGA,
+    estado: 'completada',
+    hashTx:
+      '0x5c504ed432cb51138bcf09aa5e8a410dd4a1e204ef84bfed1be16dfba1b22060',
+  }),
+  /** GET de una orden vencida → 200 */
+  expirada: ok(200, { ...ORDEN_RECARGA, estado: 'expirada' }),
+  /** POST .../confirmar de una orden vencida → 410 */
+  ordenExpirada: ok(410, {
+    codigo: 'ORDEN_EXPIRADA',
+    mensaje: 'billetera.recarga.orden_expirada',
+  }),
+  fueraDeRango: ok(400, {
+    codigo: 'MONTO_FUERA_DE_RANGO',
+    mensaje: 'billetera.recarga.monto_fuera_de_rango',
+  }),
+  firmaInvalida: ok(401, {
+    codigo: 'FIRMA_DISPOSITIVO_INVALIDA',
+    mensaje: 'La firma del dispositivo no es válida.',
+  }),
+};
+
+// Contrato de `backend/src/viajes/dto/viaje.dto.ts` (HU-17), con los `codigo` que devuelve `viajes.service.ts`.
+export const viajeReal = {
+  /** GET /viajes/limites → 200 */
+  limites: ok(200, { precioMinimo: 1, precioMaximo: 20 }),
+  /** POST /viajes → 201 */
+  publicado: ok(201, {
+    id: '3f6b1c2e-9d4a-4e7b-8a10-2c5d7e9f1b34',
+    estado: 'publicado',
+    cuposDisponibles: 3,
+  }),
+  cuposExceden: ok(400, {
+    codigo: 'CUPOS_EXCEDEN_CAPACIDAD',
+    mensaje: 'viajes.publicar.cupos_exceden_capacidad',
+    maximo: 2,
+  }),
+  precioFuera: ok(400, {
+    codigo: 'PRECIO_FUERA_DE_RANGO',
+    mensaje: 'viajes.publicar.precio_invalido',
+    minimo: 1,
+    maximo: 15,
+  }),
+  horarioInvalido: ok(400, {
+    codigo: 'HORARIO_INVALIDO',
+    mensaje: 'viajes.publicar.horario_invalido',
+    minimoMinutos: 15,
+    maximoDias: 7,
+  }),
+  solapado: ok(409, {
+    codigo: 'VIAJE_SOLAPADO',
+    mensaje: 'viajes.publicar.viaje_solapado',
+    margenHoras: 2,
+    salidaExistente: '2099-03-10T12:15:00.000Z',
+  }),
+  sinVehiculo: ok(403, {
+    codigo: 'CONDUCTOR_SIN_VEHICULO',
+    mensaje: 'viajes.publicar.requisito_incompleto',
+  }),
+  firmaInvalida: ok(401, {
+    codigo: 'FIRMA_DISPOSITIVO_INVALIDA',
+    mensaje: 'La firma del dispositivo no es válida.',
+  }),
+  /** GET /viajes/buscar → 200 */
+  encontrados: ok(200, [
+    {
+      id: '3f6b1c2e-9d4a-4e7b-8a10-2c5d7e9f1b34',
+      origenNombre: 'Av. Busch',
+      distanciaKm: 0.35,
+      destinoNombre: 'UAGRM, Módulos',
+      fechaHoraSalida: '2099-03-10T12:20:00.000Z',
+      cuposDisponibles: 2,
+      precioPorAsiento: 10,
+      conductor: {
+        nombre: 'Carlos',
+        verificado: true,
+        calificacionPromedio: null,
+        esNuevo: true,
+        miembroDesde: '2026-10-20T14:00:00.000Z',
+      },
+      vehiculo: {
+        placa: '3021 KLM',
+        marca: 'Suzuki',
+        modelo: 'Swift',
+        color: 'rojo',
+      },
+    },
+  ]),
+  /** GET /viajes/{id} → 200 */
+  detalle: ok(200, {
+    id: '3f6b1c2e-9d4a-4e7b-8a10-2c5d7e9f1b34',
+    origen: { nombre: 'Av. Busch', lat: -17.78, lng: -63.18 },
+    destino: { nombre: 'UAGRM, Módulos', lat: -17.775, lng: -63.195 },
+    fechaHoraSalida: '2099-03-10T12:20:00.000Z',
+    conductor: { nombre: 'Carlos' },
+    vehiculo: {
+      placa: '3021 KLM',
+      marca: 'Suzuki',
+      modelo: 'Swift',
+      color: 'rojo',
+    },
+    cuposTotales: 3,
+    cuposDisponibles: 2,
+    precioPorAsiento: 10,
+    estado: 'publicado',
+  }),
+  coordenadasInvalidas: ok(400, {
+    codigo: 'COORDENADAS_INVALIDAS',
+    mensaje: 'comun.errores.coordenadas_invalidas',
+  }),
+  noAutorizado: ok(403, {
+    codigo: 'NO_AUTORIZADO',
+    mensaje: 'comun.errores.no_autorizado',
+  }),
+  noEncontrado: ok(404, {
+    codigo: 'VIAJE_NO_ENCONTRADO',
+    mensaje: 'viajes.detalle.no_encontrado',
+  }),
+};
+
+// HU-19: capturadas de un backend propio (PostgreSQL local, cadena simulada, 12/11/2026) con un conductor, un pasajero
+// verificado con billetera y un viaje de 10,50 URC. Cambian los identificadores y las fechas (a 2099, como el resto);
+// los mensajes de error son los del backend. El bloqueo real contra EscrowUniRide se probó aparte, en Hardhat local.
+const RESERVA_ID = '0a48bcec-9aa1-4dbf-a192-be3d560e148a';
+const VIAJE_RESERVADO = '3f6b1c2e-9d4a-4e7b-8a10-2c5d7e9f1b34';
+const HASH_BLOQUEO =
+  '0x7b53e2bc15b2bed8801d58623c0ca41b75d81c07caa8a1316f9eb9b71eb809d8';
+const HASH_LIBERACION =
+  '0x3f1c9a07d2e84b6c5a90e1f7b3d26c8e4a15f9b0c7d3e2a6f8b1c4d9e0a7f2b5';
+const viajeDeReserva = {
+  id: VIAJE_RESERVADO,
+  origenNombre: 'Av. Busch',
+  destinoNombre: 'UAGRM, Módulos',
+  fechaHoraSalida: '2099-03-10T12:20:00.000Z',
+  conductor: 'Carlos',
+};
+const reservaDetalle = (
+  estado: string,
+  viaje: string,
+  hashTx: string | null,
+  pago: object | null = null,
+) => ({
+  reservaId: RESERVA_ID,
+  estado,
+  monto: '10.50',
+  creadoEn: '2099-03-10T09:00:00.000Z',
+  viaje: { ...viajeDeReserva, estado: viaje },
+  hashTx,
+  exploradorUrl: null,
+  pago,
+});
+// HU-24: forma de `pago` en GET /reservas/{id} (backend `reservas.service.ts`, 14/11/2026); Hardhat sin explorador.
+const pagoReserva = (estado: string, hashTx: string | null) => ({
+  estado,
+  monto: '10.50',
+  hashTx,
+  exploradorUrl: null,
+});
+
+export const reservaReal = {
+  reservaId: RESERVA_ID,
+  viajeId: VIAJE_RESERVADO,
+  hashTx: HASH_BLOQUEO,
+  /** POST /viajes/{id}/reservas → 201 */
+  creada: ok(201, {
+    reservaId: RESERVA_ID,
+    estado: 'pendiente',
+    monto: '10.50',
+    viajeId: VIAJE_RESERVADO,
+  }),
+  /** La misma clave otra vez → 200 con la reserva original. */
+  repetida: ok(200, {
+    reservaId: RESERVA_ID,
+    estado: 'confirmada',
+    monto: '10.50',
+    viajeId: VIAJE_RESERVADO,
+  }),
+  saldoInsuficiente: ok(409, {
+    codigo: 'SALDO_INSUFICIENTE',
+    mensaje:
+      'Tu saldo disponible no alcanza para este pasaje. Recarga para reservarlo.',
+    faltante: '5.50',
+  }),
+  sinAsientos: ok(409, {
+    codigo: 'SIN_ASIENTOS',
+    mensaje: 'Ya no quedan asientos en este viaje.',
+  }),
+  viajePropio: ok(409, {
+    codigo: 'VIAJE_PROPIO',
+    mensaje: 'No puedes reservar tu propio viaje.',
+  }),
+  yaReservado: ok(409, {
+    codigo: 'YA_RESERVADO',
+    mensaje: 'Ya tienes una reserva en este viaje.',
+  }),
+  noDisponible: ok(409, {
+    codigo: 'VIAJE_NO_DISPONIBLE',
+    mensaje: 'Este viaje ya no admite reservas.',
+  }),
+  /** HU-25 CA-5: el servidor no dice el motivo. */
+  parBloqueado: ok(409, {
+    codigo: 'PAR_BLOQUEADO',
+    mensaje: 'No puedes reservar este viaje por ahora.',
+  }),
+  /** HU-25 CA-6: solo la fecha de fin. */
+  bloqueoPreventivo: ok(403, {
+    codigo: 'BLOQUEO_PREVENTIVO',
+    mensaje: 'Tu cuenta tiene un bloqueo preventivo.',
+    hasta: new Date(2030, 0, 15, 8, 30).toISOString(),
+  }),
+  /** GET /reservas/{id} */
+  pendiente: ok(200, reservaDetalle('pendiente', 'publicado', null)),
+  confirmada: ok(200, reservaDetalle('confirmada', 'reservado', HASH_BLOQUEO)),
+  abordada: ok(200, reservaDetalle('abordada', 'en_curso', HASH_BLOQUEO)),
+  fallida: ok(200, reservaDetalle('fallida', 'publicado', null)),
+  /** HU-24: bajada verificada, la liberación todavía en la cola. */
+  verificada: ok(
+    200,
+    reservaDetalle(
+      'verificada',
+      'en_curso',
+      HASH_BLOQUEO,
+      pagoReserva('pendiente', null),
+    ),
+  ),
+  /** HU-23: la bajada no pasó la evaluación del trayecto; el pasaje sigue en garantía. */
+  noVerificada: ok(
+    200,
+    reservaDetalle('verificacion_fallida', 'en_curso', HASH_BLOQUEO),
+  ),
+  /** HU-24: liberación confirmada en la red. */
+  pagada: ok(
+    200,
+    reservaDetalle(
+      'pagada',
+      'pagado',
+      HASH_BLOQUEO,
+      pagoReserva('confirmado', HASH_LIBERACION),
+    ),
+  ),
+  hashLiberacion: HASH_LIBERACION,
+  /** GET /reservas/mias → 200 */
+  mias: ok(200, {
+    reservas: [
+      {
+        reservaId: RESERVA_ID,
+        estado: 'confirmada',
+        monto: '10.50',
+        creadoEn: '2099-03-10T09:00:00.000Z',
+        viaje: { ...viajeDeReserva, estado: 'reservado' },
+      },
+    ],
+  }),
+  /** GET /viajes/mis-viajes → 200 */
+  misViajes: ok(200, [
+    {
+      id: VIAJE_RESERVADO,
+      origenNombre: 'Av. Busch',
+      destinoNombre: 'UAGRM, Módulos',
+      fechaHoraSalida: '2099-03-10T12:20:00.000Z',
+      cuposDisponibles: 2,
+      precioPorAsiento: 10.5,
+      estado: 'reservado',
+    },
+  ]),
+  /** GET /viajes/{id}/pasajeros → 200 */
+  pasajeros: ok(200, [
+    { reservaId: RESERVA_ID, nombre: 'Prueba', estado: 'confirmada' },
+  ]),
+  noEncontrada: ok(404, {
+    codigo: 'RESERVA_NO_ENCONTRADA',
+    mensaje: 'No se encontró lo que buscas.',
+  }),
+};
+
+const NONCE_ENCUENTRO = 'q7Vb2m9XkLp4Rt8Zc1Nw6Hs3Jd5Fg0Ya2Ue7Io4Pl9K';
+const LLAVE_TRAYECTO_ID = '6d2f8a41-3c9e-4b7a-9e15-8f0c2a7d4b63';
+const pasajeroDe = (estado: string) => [
+  { reservaId: RESERVA_ID, nombre: 'Prueba', estado },
+];
+const desafio = (nonce: string, estado = 'confirmada') =>
+  ok(201, {
+    nonce,
+    venceEn: '2099-03-10T12:00:30.000Z',
+    qrTexto: `uniride://encuentro/${nonce}`,
+    qrImagenBase64: 'iVBORw0KGgo=',
+    pasajeros: pasajeroDe(estado),
+  });
+
+/** HU-22: respuestas del backend de presencia, con las formas de Swagger y de su prueba real. */
+export const presenciaReal = {
+  nonce: NONCE_ENCUENTRO,
+  llaveTrayectoId: LLAVE_TRAYECTO_ID,
+  /** POST /viajes/{id}/llave-trayecto → 201 */
+  llave: ok(201, { llaveTrayectoId: LLAVE_TRAYECTO_ID }),
+  /** POST /viajes/{id}/desafios → 201 */
+  desafio: desafio(NONCE_ENCUENTRO),
+  otroDesafio: desafio('Z'.repeat(43)),
+  desafioAbordado: desafio('Y'.repeat(43), 'abordada'),
+  /** GET /viajes/{id}/desafios/{nonce} → 200 */
+  vigente: ok(200, { vigente: true, pasajeros: pasajeroDe('confirmada') }),
+  gastado: ok(200, { vigente: false, pasajeros: pasajeroDe('confirmada') }),
+  gastadoAbordado: ok(200, {
+    vigente: false,
+    pasajeros: pasajeroDe('abordada'),
+  }),
+  /** POST /reservas/{id}/abordaje → 200 */
+  /** HU-23: el abordaje devuelve la llave con la que el pasajero firma sus posiciones (prueba real del 14/11). */
+  abordada: ok(200, {
+    estado: 'abordada',
+    yaVerificado: false,
+    llaveTrayectoId: LLAVE_TRAYECTO_ID,
+  }),
+  yaAbordada: ok(200, { estado: 'abordada', yaVerificado: true }),
+  fueraDeVentana: ok(409, {
+    codigo: 'FUERA_DE_VENTANA',
+    mensaje: 'Fuera del horario de abordaje.',
+    desde: '2099-03-10T11:50:00.000Z',
+    hasta: '2099-03-10T12:35:00.000Z',
+  }),
+  firmaTrayecto: ok(401, {
+    codigo: 'FIRMA_TRAYECTO_INVALIDA',
+    mensaje:
+      'No pudimos comprobar que la petición viene de tu teléfono vinculado.',
+  }),
+  codigoInvalido: ok(409, {
+    codigo: 'CODIGO_INVALIDO',
+    mensaje:
+      'Ese código ya no sirve. Escanea el que muestra ahora el conductor.',
+  }),
+  distancia: ok(422, {
+    codigo: 'DISTANCIA',
+    mensaje: 'Estás demasiado lejos del conductor para confirmar el abordaje.',
+    distanciaM: 61,
+  }),
+  simulada: ok(422, {
+    codigo: 'UBICACION_SIMULADA',
+    mensaje: 'No pudimos confirmar tu ubicación.',
+  }),
+  noIntegro: ok(422, {
+    codigo: 'DISPOSITIVO_NO_INTEGRO',
+    mensaje: 'Este teléfono no puede verificar viajes.',
+  }),
+  sinReserva: ok(409, {
+    codigo: 'SIN_RESERVA',
+    mensaje: 'No tienes una reserva en este viaje.',
+  }),
+};
+
+/** HU-23: seguimiento y bajada, con las formas de la prueba real de la API (14/11). */
+export const trayectoReal = {
+  /** POST /viajes/{id}/posiciones y /reservas/{id}/posiciones → 202 */
+  aceptadas: ok(202, { aceptados: 20, ignorados: 0 }),
+  /** Tras la bajada del pasajero. */
+  noAbordada: ok(409, {
+    codigo: 'RESERVA_NO_ABORDADA',
+    mensaje: 'Esta reserva no está a bordo.',
+  }),
+  /** Lote que el `ValidationPipe` rechaza (forma de `VALIDACION_FALLIDA` del backend). */
+  loteInvalido: ok(400, {
+    codigo: 'VALIDACION_FALLIDA',
+    mensaje: 'Los datos enviados no son válidos.',
+  }),
+  /** Conductor sin nadie a bordo. */
+  noEnCurso: ok(409, {
+    codigo: 'VIAJE_NO_EN_CURSO',
+    mensaje: 'Este viaje no está en curso.',
+  }),
+  /** POST /reservas/{id}/bajada → 200 */
+  verificada: ok(200, {
+    estado: 'verificada',
+    motivo: null,
+    yaVerificado: false,
+  }),
+  saltoImposible: ok(200, {
+    estado: 'verificacion_fallida',
+    motivo: 'salto_imposible',
+    yaVerificado: false,
+  }),
+  datosInsuficientes: ok(200, {
+    estado: 'verificacion_fallida',
+    motivo: 'datos_insuficientes',
+    yaVerificado: false,
+  }),
+};
+
 /** `fetch` falso que responde según "MÉTODO /ruta"; lo que no está en `rutas` falla como una caída de red. */
 export function simularFetch(
   rutas: Record<string, RespuestaSimulada | RespuestaSimulada[]>,
@@ -379,11 +1525,13 @@ export function simularFetch(
     if (!cola?.length) throw new TypeError('Network request failed');
     // La última respuesta se repite, como un servidor que responde igual.
     const { estado, cuerpo } = cola.length > 1 ? cola.shift()! : cola[0];
-    return {
+    const respuesta = {
       ok: estado >= 200 && estado < 300,
       status: estado,
       json: async () => cuerpo,
+      clone: () => respuesta,
     };
+    return respuesta;
   });
   globalThis.fetch = falso as unknown as typeof fetch;
   return { llamadas, falso };

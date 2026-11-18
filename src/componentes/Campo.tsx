@@ -1,21 +1,30 @@
-import { useState } from 'react';
+import { Ref, useEffect, useState } from 'react';
+import Animated, {
+  interpolateColor,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import {
-  StyleSheet,
   Text,
   TextInput,
+  type TextInputInstance,
   TextInputProps,
   View,
 } from 'react-native';
 import { t } from '@/i18n';
-import { colores, espacio, radio, tamano, tipografia } from '@/tema/tokens';
+import { espacio, radio, tamano, tipografia } from '@/tema/tokens';
 import { BotonIcono } from './Boton';
 import { Icono } from './Icono';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
 
 interface Props extends TextInputProps {
   /** La etiqueta siempre es visible; nunca se reemplaza por el placeholder. */
   etiqueta: string;
   ayuda?: string;
   error?: string;
+  /** Para llevar el foco a este campo cuando el formulario falla (DESIGN_SYSTEM §9.2). */
+  refEntrada?: Ref<TextInputInstance>;
 }
 
 /** Campo de texto (8.4). Con `secureTextEntry` agrega el botón Mostrar/Ocultar contraseña. */
@@ -26,23 +35,42 @@ export function Campo({
   secureTextEntry,
   onFocus,
   onBlur,
+  refEntrada,
   ...resto
 }: Props) {
+  const colores = useColores();
+  const estilos = useEstilos();
   const [foco, setFoco] = useState(false);
   const [ver, setVer] = useState(false);
+  // 0 = reposo, 1 = foco: el borde y el fondo cambian con una transición, no de golpe.
+  const progreso = useSharedValue(0);
+  useEffect(() => {
+    progreso.set(withTiming(foco ? 1 : 0, { duration: 180 }));
+  }, [foco, progreso]);
+  const animada = useAnimatedStyle(() => ({
+    borderColor: interpolateColor(
+      progreso.value,
+      [0, 1],
+      ['transparent', colores.primario],
+    ),
+    backgroundColor: interpolateColor(
+      progreso.value,
+      [0, 1],
+      [colores.fondoSutil, colores.superficie],
+    ),
+  }));
   return (
     <View style={estilos.campo}>
       <Text style={estilos.etiqueta}>{etiqueta}</Text>
-      <View
-        style={[
-          estilos.caja,
-          foco && estilos.conFoco,
-          error ? estilos.conError : null,
-        ]}
+      <Animated.View
+        style={[estilos.caja, animada, error ? estilos.conError : null]}
       >
         <TextInput
+          ref={refEntrada}
           accessibilityLabel={etiqueta}
           placeholderTextColor={colores.textoPlaceholder}
+          // «Siguiente» deja el teclado abierto y pasa al campo que sigue en lugar de cerrarlo.
+          submitBehavior={resto.returnKeyType === 'next' ? 'submit' : undefined}
           {...resto}
           secureTextEntry={secureTextEntry && !ver}
           onFocus={(e) => {
@@ -66,7 +94,7 @@ export function Campo({
             alPresionar={() => setVer(!ver)}
           />
         )}
-      </View>
+      </Animated.View>
       {(error || ayuda) && (
         <View style={estilos.fila}>
           {error && (
@@ -84,22 +112,21 @@ export function Campo({
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   campo: { gap: espacio(2) },
   etiqueta: { ...tipografia.etiqueta, color: colores.texto },
-  // El borde activo de 2 se compensa con el margen para que el texto no se mueva.
+  // Campo relleno: sin contorno en reposo; el borde de 2 aparece con el foco sin mover el texto.
   caja: {
     minHeight: tamano.altoControl,
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: radio.m,
-    borderWidth: 1,
-    borderColor: colores.bordeCampo,
-    backgroundColor: colores.superficie,
-    padding: 1,
+    borderWidth: 2,
   },
-  conFoco: { borderWidth: 2, borderColor: colores.primario, padding: 0 },
-  conError: { borderWidth: 2, borderColor: colores.peligro, padding: 0 },
+  conError: {
+    borderColor: colores.peligro,
+    backgroundColor: colores.peligroSuave,
+  },
   entrada: {
     flex: 1,
     minHeight: tamano.altoControl - 4,
@@ -110,4 +137,4 @@ const estilos = StyleSheet.create({
   fila: { flexDirection: 'row', gap: espacio(1), alignItems: 'flex-start' },
   ayuda: { ...tipografia.secundario, color: colores.textoSecundario, flex: 1 },
   error: { ...tipografia.secundario, color: colores.peligro, flex: 1 },
-});
+}));

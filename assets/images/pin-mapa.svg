@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 56" width="40" height="56">
+  <!-- Pin de UniRide: primario y primarioPresionado de tokens.ts. La punta queda en el borde inferior. -->
+  <path d="M20 55 C20 55 2 34 2 20 A18 18 0 0 1 38 20 C38 34 20 55 20 55 Z" fill="#3447CC" stroke="#2A39A6" stroke-width="1.5" stroke-linejoin="round"/>
+  <circle cx="20" cy="20" r="7" fill="#FFFFFF"/>
+</svg>

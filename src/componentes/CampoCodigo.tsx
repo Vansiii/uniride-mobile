@@ -1,7 +1,8 @@
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { t } from '@/i18n';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import { espacio, radio, tipografia } from '@/tema/tokens';
 import { Icono } from './Icono';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
 
 const LONGITUD = 6;
 
@@ -25,6 +26,8 @@ export function CampoCodigo({
   error,
   deshabilitado,
 }: Props) {
+  const colores = useColores();
+  const estilos = useEstilos();
   const cambiar = (texto: string) => {
     const digitos = texto.replace(/\D/g, '').slice(0, LONGITUD);
     alCambiar(digitos);
@@ -75,7 +78,7 @@ export function CampoCodigo({
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   campo: { gap: espacio(2) },
   celdas: { flexDirection: 'row', justifyContent: 'center', gap: espacio(2) },
   celda: {
@@ -113,4 +116,4 @@ const estilos = StyleSheet.create({
     justifyContent: 'center',
   },
   error: { ...tipografia.secundario, color: colores.peligro },
-});
+}));

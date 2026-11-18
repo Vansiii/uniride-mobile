@@ -1,4 +1,6 @@
 import * as AlmacenSeguro from 'expo-secure-store';
+import { cabecerasFirma, cabecerasFirmaTrayecto } from '@/dispositivo/firma';
+import type { DialogoFirma, RolTrayecto } from '@/dispositivo/keystore';
 
 const BASE = process.env.EXPO_PUBLIC_API_URL ?? 'http://10.0.2.2:3000/api/v1';
 const CLAVE_REFRESCO = 'uniride.refresco';
@@ -41,11 +43,14 @@ export interface Usuario {
 // El token de acceso vive solo en memoria; el de refresco, en el almacenamiento seguro del sistema.
 let tokenAcceso: string | null = null;
 let renovando: Promise<boolean> | null = null;
+// Dispositivo de la cuenta con sesión; se olvida al cerrarla para no firmar con el de otra persona.
+let dispositivoId: string | null = null;
 
 async function enviar(
   ruta: string,
   metodo: string,
   cuerpo?: unknown,
+  cabeceras: Record<string, string> = {},
 ): Promise<Response> {
   // Un formulario multipart lleva su propio Content-Type, con el límite entre partes.
   const formulario = cuerpo instanceof FormData;
@@ -55,6 +60,7 @@ async function enviar(
       headers: {
         ...(formulario ? {} : { 'Content-Type': 'application/json' }),
         ...(tokenAcceso ? { Authorization: `Bearer ${tokenAcceso}` } : {}),
+        ...cabeceras,
       },
       body:
         cuerpo === undefined
@@ -214,6 +220,8 @@ export async function cerrarSesion(): Promise<void> {
     });
   } finally {
     tokenAcceso = null;
+    dispositivoId = null;
+    viajesEncontrados.clear();
     await AlmacenSeguro.deleteItemAsync(CLAVE_REFRESCO);
   }
 }
@@ -241,6 +249,7 @@ export async function cambiarOrganizacionActiva(
     { organizacionId },
   );
   tokenAcceso = r.tokenAcceso;
+  viajesEncontrados.clear();
 }
 
 /** Lo que ve el dueño de su vehículo: nunca trae la foto ni su clave (D-20). */
@@ -302,3 +311,726 @@ export async function consultarMiVehiculo(): Promise<Vehiculo | null> {
     throw error;
   }
 }
+
+export interface MiDispositivo {
+  id: string;
+  modelo: string;
+  vinculadoEn: string;
+  activo: boolean;
+}
+
+/** Valor de un solo uso con el que la app pide el token de Play Integrity. */
+export const pedirDesafioAtestacion = () =>
+  solicitar<{ desafio: string; expiraEn: string }>(
+    '/dispositivos/desafio-atestacion',
+    'POST',
+  );
+
+/** Desafío para volver a vincular o pasar la cuenta a otro teléfono (HU-10); `sesionLivenessId` si pide identidad. */
+export const pedirDesafioRevinculacion = () =>
+  solicitar<{
+    desafio: string;
+    expiraEn: string;
+    requiereIdentidad: boolean;
+    sesionLivenessId?: string;
+  }>('/dispositivos/revinculacion', 'POST');
+
+/** El servidor valida la atestación y guarda solo la llave PÚBLICA; la privada nunca sale del Keystore. */
+export async function vincularDispositivo(datos: {
+  desafio: string;
+  tokenIntegridad: string;
+  llavePublicaPem: string;
+  modelo: string;
+}): Promise<{ id: string; estado: 'vinculado' }> {
+  const r = await solicitar<{ id: string; estado: 'vinculado' }>(
+    '/dispositivos/vincular',
+    'POST',
+    datos,
+  );
+  dispositivoId = r.id;
+  return r;
+}
+
+/** Reemplaza el teléfono activo por este (HU-10): el anterior queda inactivo y su llave deja de valer. */
+export async function revincularDispositivo(datos: {
+  desafio: string;
+  tokenIntegridad: string;
+  llavePublicaPem: string;
+  modelo: string;
+  sesionLivenessId?: string;
+}): Promise<{ id: string; estado: 'vinculado' }> {
+  const r = await solicitar<{ id: string; estado: 'vinculado' }>(
+    '/dispositivos/revincular',
+    'POST',
+    datos,
+  );
+  dispositivoId = r.id;
+  return r;
+}
+
+/** `null` si todavía no vinculó un teléfono (404). */
+export async function consultarMiDispositivo(): Promise<MiDispositivo | null> {
+  try {
+    const d = await solicitar<MiDispositivo>(
+      '/dispositivos/mi-dispositivo',
+      'GET',
+    );
+    dispositivoId = d.id;
+    return d;
+  } catch (error) {
+    if (error instanceof ErrorApi && error.estado === 404) return null;
+    throw error;
+  }
+}
+
+/** Lo que una acción sensible (HU-29) agrega a la firma: el texto del diálogo y el aviso de que ya se firmó. */
+export interface OpcionesFirma {
+  dialogo?: DialogoFirma;
+  alFirmar?: () => void;
+  /** `X-Nonce` elegido antes de armar el cuerpo, cuando este lo cita (token de integridad, HU-22 RN-5). */
+  nonce?: string;
+}
+
+/**
+ * Petición sensible (billetera, publicar viaje, reservar, handshakes): lleva la firma del dispositivo (A-08).
+ * Una huella por petición: si solo venció la sesión, el servidor la rechaza antes de mirar la firma y gastar su
+ * nonce, así que la misma firma vale al reenviarla. Otro 401 es de la firma y va tal cual a la pantalla.
+ */
+export async function solicitarFirmado<T>(
+  ruta: string,
+  metodo: string,
+  cuerpo?: unknown,
+  opciones: OpcionesFirma = {},
+): Promise<T> {
+  const id = dispositivoId ?? (await consultarMiDispositivo())?.id;
+  if (!id) throw new ErrorApi(0, 'DISPOSITIVO_NO_VINCULADO');
+  const url = new URL(`${BASE}${ruta}`);
+  const texto = cuerpo === undefined ? '' : JSON.stringify(cuerpo);
+  const firma = await cabecerasFirma(
+    id,
+    metodo,
+    url.pathname + url.search,
+    texto,
+    opciones.dialogo,
+    opciones.alFirmar,
+    opciones.nonce,
+  );
+  return enviarFirmado<T>(ruta, metodo, cuerpo, firma);
+}
+
+/** Envía con la firma ya hecha; si solo venció la sesión, renueva y reenvía la misma firma (su nonce no se gastó). */
+async function enviarFirmado<T>(
+  ruta: string,
+  metodo: string,
+  cuerpo: unknown,
+  firma: Record<string, string>,
+): Promise<T> {
+  let respuesta = await enviar(ruta, metodo, cuerpo, firma);
+  if (
+    respuesta.status === 401 &&
+    tokenAcceso &&
+    (
+      await respuesta
+        .clone()
+        .json()
+        .catch(() => ({}))
+    ).codigo === 'NO_AUTENTICADO' &&
+    (await renovarSesion())
+  )
+    respuesta = await enviar(ruta, metodo, cuerpo, firma);
+  return leer<T>(respuesta);
+}
+
+/** Petición firmada con la llave de trayecto (D-22): sin huella, para renovar el código del abordaje. */
+async function solicitarFirmadoTrayecto<T>(
+  rol: RolTrayecto,
+  llaveTrayectoId: string,
+  ruta: string,
+  metodo: string,
+  cuerpo: unknown,
+): Promise<T> {
+  const url = new URL(`${BASE}${ruta}`);
+  const firma = await cabecerasFirmaTrayecto(
+    rol,
+    llaveTrayectoId,
+    metodo,
+    url.pathname + url.search,
+    JSON.stringify(cuerpo),
+  );
+  return enviarFirmado<T>(ruta, metodo, cuerpo, firma);
+}
+
+export type EstadoIdentidad =
+  | 'no_verificada'
+  | 'en_revision'
+  | 'verificada'
+  | 'rechazada'
+  | 'bloqueada_temporal';
+
+/** Único dato de identidad que sale de la API: nunca la foto, el documento ni su hash (HU-08 CA-8). */
+export interface EstadoVerificacion {
+  estado: EstadoIdentidad;
+  verificadoEn: string | null;
+  bloqueadoHasta: string | null;
+}
+
+/** Carnet tomado en vivo; solo existe en memoria hasta el envío (dato sensible). */
+export interface FotoCarnet {
+  uri: string;
+  tipo: string;
+  /** En web, el archivo mismo: allí un `uri` no se puede enviar como parte del formulario. */
+  archivo?: Blob;
+}
+
+export const consultarEstadoIdentidad = () =>
+  solicitar<EstadoVerificacion>('/identidad/estado', 'GET');
+
+/** Abre la sesión de Face Liveness que la app ejecutará antes de enviar la verificación. */
+export const crearSesionLiveness = () =>
+  solicitar<{ sesionId: string }>('/identidad/liveness-sesion', 'POST');
+
+export function verificarIdentidad(datos: {
+  numeroDocumento: string;
+  aceptaConsentimiento: boolean;
+  sesionId: string;
+  fotoCarnet: FotoCarnet;
+}): Promise<{ estado: EstadoIdentidad; verificadoEn: string }> {
+  const formulario = new FormData();
+  formulario.append('numeroDocumento', datos.numeroDocumento);
+  formulario.append('aceptaConsentimiento', String(datos.aceptaConsentimiento));
+  formulario.append('sesionId', datos.sesionId);
+  formulario.append(
+    'fotoCarnet',
+    datos.fotoCarnet.archivo ??
+      ({
+        uri: datos.fotoCarnet.uri,
+        name: 'carnet',
+        type: datos.fotoCarnet.tipo,
+      } as unknown as Blob),
+  );
+  return solicitar('/identidad/verificar', 'POST', formulario);
+}
+
+/** Billetera de la persona (HU-12): el saldo es texto tal cual lo envía la API; nunca se convierte a número. */
+export interface Billetera {
+  id: string;
+  direccion: string;
+  saldoUrc: string;
+  /** `null` fuera de Polygon Amoy (nodo local): no hay enlace que mostrar. */
+  exploradorUrl: string | null;
+}
+
+/** Lectura firmada: pide la huella. `null` si todavía no tiene billetera (404). */
+export async function consultarMiBilletera(): Promise<Billetera | null> {
+  try {
+    return await solicitarFirmado<Billetera>('/billetera/mia', 'GET');
+  } catch (error) {
+    if (error instanceof ErrorApi && error.codigo === 'BILLETERA_NO_ENCONTRADA')
+      return null;
+    throw error;
+  }
+}
+
+/** Reintento de la creación automática; idempotente: si ya existía devuelve la misma billetera. */
+export const crearBilletera = (opciones?: OpcionesFirma) =>
+  solicitarFirmado<Billetera>('/billetera', 'POST', undefined, opciones);
+
+/** Desglose de la billetera (HU-14): montos como texto de la API, nunca `Number`. Lectura con token, sin firma ni huella. */
+export interface Saldo {
+  saldoTotal: string;
+  saldoDisponible: string;
+  saldoBloqueadoEscrow: string;
+  moneda: 'URC';
+  /** `false`: el nodo no respondió y el saldo es el contable (último sincronizado). */
+  enLinea: boolean;
+}
+
+export const consultarSaldo = () => solicitar<Saldo>('/billetera/saldo', 'GET');
+
+export type TipoMovimiento =
+  | 'recarga'
+  | 'bloqueo_reserva'
+  | 'liberacion_viaje'
+  | 'reembolso_reserva'
+  | 'compensacion_cancelacion';
+
+export interface Movimiento {
+  id: string;
+  tipo: TipoMovimiento;
+  monto: string;
+  estado: 'pendiente' | 'confirmado' | 'fallido';
+  /** `null` mientras está pendiente. */
+  hashTx: string | null;
+  /** `null` si está pendiente o fuera de Polygon Amoy (nodo local): no hay enlace que mostrar. */
+  exploradorUrl: string | null;
+  creadoEn: string;
+}
+
+export interface PaginaMovimientos {
+  items: Movimiento[];
+  total: number;
+  pagina: number;
+  paginas: number;
+}
+
+/** Del más reciente al más antiguo; sin firma: refrescar o paginar nunca pide la huella. */
+export const consultarMovimientos = (
+  pagina: number,
+  tipos: TipoMovimiento[] = [],
+  limite = 20,
+) =>
+  solicitar<PaginaMovimientos>(
+    `/billetera/movimientos?pagina=${pagina}&limite=${limite}${tipos.length ? `&tipo=${tipos.join(',')}` : ''}`,
+    'GET',
+  );
+
+/** Orden de recarga (HU-13): el monto es texto de la API; `procesando` ya no vence y se acredita sola. */
+export interface OrdenRecarga {
+  ordenId: string;
+  monto: string;
+  estado: 'pendiente' | 'procesando' | 'completada' | 'expirada';
+  expiraEn: string;
+  hashTx: string | null;
+}
+
+export interface OrdenRecargaCreada extends OrdenRecarga {
+  qrTexto: string;
+  /** PNG en Base64, sin prefijo `data:`. */
+  qrImagenBase64: string;
+}
+
+export const crearRecarga = (monto: number) =>
+  solicitar<OrdenRecargaCreada>('/billetera/recargas', 'POST', { monto });
+
+/** Pide la huella (CA-4). Idempotente: repetirla responde el estado actual y nunca acuña de nuevo (CA-3). */
+export const confirmarRecarga = (id: string, opciones?: OpcionesFirma) =>
+  solicitarFirmado<OrdenRecarga>(
+    `/billetera/recargas/${id}/confirmar`,
+    'POST',
+    undefined,
+    opciones,
+  );
+
+/** Sin firma: consultar el estado nunca pide la huella. */
+export const consultarRecarga = (id: string) =>
+  solicitar<OrdenRecarga>(`/billetera/recargas/${id}`, 'GET');
+
+/** Precio por asiento de la organización activa (HU-17), en URC. Solo para avisar: decide `POST /viajes`. */
+export interface LimitesViaje {
+  precioMinimo: number;
+  precioMaximo: number;
+}
+
+export const consultarLimitesViaje = () =>
+  solicitar<LimitesViaje>('/viajes/limites', 'GET');
+
+export interface DatosViaje {
+  origenNombre: string;
+  origenLat: number;
+  origenLng: number;
+  destinoNombre: string;
+  destinoLat: number;
+  destinoLng: number;
+  /** ISO 8601 con zona. */
+  fechaHoraSalida: string;
+  cuposTotales: number;
+  precioPorAsiento: number;
+}
+
+/** Vehículo y conductor públicos (RN-4 de HU-18): nombre de pila, sin documentos. */
+export interface VehiculoPublico {
+  placa: string;
+  marca: string;
+  modelo: string;
+  color: string;
+}
+
+export interface ViajeEncontrado {
+  id: string;
+  origenNombre: string;
+  distanciaKm: number;
+  destinoNombre: string;
+  fechaHoraSalida: string;
+  cuposDisponibles: number;
+  precioPorAsiento: number;
+  conductor: {
+    nombre: string;
+    verificado: boolean;
+    calificacionPromedio: number | null;
+    /** HU-21: cantidad de calificaciones recibidas; el promedio sale desde 3. */
+    calificaciones: number;
+    esNuevo: boolean;
+    miembroDesde: string;
+  };
+  vehiculo: VehiculoPublico;
+}
+
+export interface DetalleViaje {
+  id: string;
+  origen: { nombre: string; lat: number; lng: number };
+  destino: { nombre: string; lat: number; lng: number };
+  fechaHoraSalida: string;
+  conductor: { nombre: string };
+  vehiculo: VehiculoPublico;
+  cuposTotales: number;
+  cuposDisponibles: number;
+  precioPorAsiento: number;
+  estado: string;
+}
+
+/** Lo último encontrado: el detalle no trae distancia ni insignias. En memoria y no por la ruta: un enlace no puede inventar una insignia. */
+export const viajesEncontrados = new Map<string, ViajeEncontrado>();
+
+/** Estados de la reserva (HU-19 RN-10, HU-20 D-23). */
+export type EstadoReserva =
+  | 'pendiente'
+  | 'confirmada'
+  | 'abordada'
+  | 'verificada'
+  | 'pagada'
+  | 'fallida'
+  | 'verificacion_fallida'
+  | 'cancelada'
+  | 'expirada';
+
+/** Estados en los que la reserva sigue viva para el pasajero. */
+export const RESERVA_ACTIVA: EstadoReserva[] = [
+  'pendiente',
+  'confirmada',
+  'abordada',
+];
+
+export interface CancelacionVistaPrevia {
+  cancelable: boolean;
+  porcentajePasajero: number;
+  montoPasajero: string;
+  montoConductor: string;
+  motivo?: string;
+}
+
+export interface ReembolsoDetalle {
+  estado: Movimiento['estado'];
+  montoPasajero: string;
+  montoConductor: string;
+  hashTx: string | null;
+  exploradorUrl: string | null;
+}
+
+export interface ReservaCanceladaResultado {
+  estado: 'cancelada';
+  reembolso: ReembolsoDetalle;
+}
+
+export interface ViajeCanceladoResultado {
+  estado: 'cancelado';
+  reservasCanceladas: number;
+}
+
+export interface ReservaCreada {
+  reservaId: string;
+  estado: EstadoReserva;
+  /** URC con 2 decimales, como texto de la API. */
+  monto: string;
+  viajeId: string;
+}
+
+export interface Reserva {
+  reservaId: string;
+  estado: EstadoReserva;
+  monto: string;
+  creadoEn: string;
+  viaje: {
+    id: string;
+    origenNombre: string;
+    destinoNombre: string;
+    fechaHoraSalida: string;
+    estado: string;
+    /** Nombre de pila. */
+    conductor: string;
+  };
+}
+
+export interface ReservaDetalle extends Reserva {
+  /** Transacción del bloqueo en garantía; `null` mientras está pendiente. */
+  hashTx: string | null;
+  exploradorUrl: string | null;
+  /** HU-24: el pago al conductor; `null` hasta que la reserva queda verificada. Lo ven el pasajero y el conductor. */
+  pago: {
+    estado: Movimiento['estado'];
+    monto: string;
+    hashTx: string | null;
+    exploradorUrl: string | null;
+  } | null;
+  /** HU-20: vista previa de cancelación si la reserva es del pasajero. */
+  cancelacion?: CancelacionVistaPrevia | null;
+  /** HU-20: datos del reembolso si fue cancelada, expirada o verificación fallida. */
+  reembolso?: ReembolsoDetalle | null;
+}
+
+export interface PasajeroViaje {
+  reservaId: string;
+  nombre: string;
+  estado: EstadoReserva;
+}
+
+export interface MiViaje {
+  id: string;
+  origenNombre: string;
+  destinoNombre: string;
+  fechaHoraSalida: string;
+  cuposDisponibles: number;
+  precioPorAsiento: number;
+  estado: string;
+}
+
+/**
+ * Pide la huella (HU-29). El monto, el conductor y el estado los fija el servidor: solo viaja la clave de idempotencia,
+ * así un reintento tras perder la respuesta devuelve la misma reserva (CA-4).
+ */
+export const reservarAsiento = (
+  viajeId: string,
+  claveIdempotencia: string,
+  opciones?: OpcionesFirma,
+) =>
+  solicitarFirmado<ReservaCreada>(
+    `/viajes/${encodeURIComponent(viajeId)}/reservas`,
+    'POST',
+    { claveIdempotencia },
+    opciones,
+  );
+
+/** Sin firma: consultar nunca pide la huella. */
+export const consultarReserva = (id: string) =>
+  solicitar<ReservaDetalle>(`/reservas/${encodeURIComponent(id)}`, 'GET');
+
+/** HU-21: estado de la calificación de una reserva para quien la consulta. */
+export interface EstadoCalificacion {
+  puedoCalificar: boolean;
+  /** Fin del plazo de 7 días desde el pago; `null` si la reserva no está pagada. */
+  plazoHasta: string | null;
+  destinatario: string;
+  /** Calificación ciega: solo si ya calificaste o venció el plazo. */
+  recibida?: { estrellas: number; comentario: string | null };
+}
+
+export const consultarCalificacion = (reservaId: string) =>
+  solicitar<EstadoCalificacion>(
+    `/reservas/${encodeURIComponent(reservaId)}/calificaciones`,
+    'GET',
+  );
+
+/** HU-21: no mueve dinero, así que basta la sesión (sin firma ni huella). */
+export const calificarReserva = (
+  reservaId: string,
+  estrellas: number,
+  comentario?: string,
+) =>
+  solicitar<{ id: string }>(
+    `/reservas/${encodeURIComponent(reservaId)}/calificaciones`,
+    'POST',
+    { estrellas, ...(comentario?.trim() && { comentario: comentario.trim() }) },
+  );
+
+/** HU-20: Cancelación de reserva por el pasajero con huella biométrica (HU-29). */
+export const cancelarReserva = (
+  reservaId: string,
+  porcentajeEsperado: number,
+  opciones?: OpcionesFirma,
+) =>
+  solicitarFirmado<ReservaCanceladaResultado>(
+    `/reservas/${encodeURIComponent(reservaId)}/cancelar`,
+    'POST',
+    { porcentajeEsperado },
+    opciones,
+  );
+
+/** HU-20: Cancelación de viaje por el conductor con huella biométrica (HU-29). */
+export const cancelarViaje = (viajeId: string, opciones?: OpcionesFirma) =>
+  solicitarFirmado<ViajeCanceladoResultado>(
+    `/viajes/${encodeURIComponent(viajeId)}/cancelar`,
+    'POST',
+    {},
+    opciones,
+  );
+
+export const consultarMisReservas = () =>
+  solicitar<{ reservas: Reserva[] }>('/reservas/mias', 'GET').then(
+    (r) => r.reservas,
+  );
+
+/** HU-28: Distancia del conductor al punto de encuentro para el pasajero de una reserva confirmada. */
+export interface DistanciaConductor {
+  disponible: boolean;
+  distanciaM: number | null;
+  enPuntoDeEncuentro: boolean;
+  haceSegundos: number | null;
+}
+
+export const consultarDistanciaConductor = (reservaId: string) =>
+  solicitar<DistanciaConductor>(
+    `/reservas/${encodeURIComponent(reservaId)}/conductor`,
+    'GET',
+  );
+
+export const consultarMisViajes = () =>
+  solicitar<MiViaje[]>('/viajes/mis-viajes', 'GET');
+
+/** Solo el conductor del viaje: nombre de pila y estado de cada pasajero. */
+export const consultarPasajerosDelViaje = (viajeId: string) =>
+  solicitar<PasajeroViaje[]>(
+    `/viajes/${encodeURIComponent(viajeId)}/pasajeros`,
+    'GET',
+  );
+
+/** Con token y membresía aprobada, sin firma: buscar no pide huella (RN-6 de HU-18). */
+export async function buscarViajes(consulta: {
+  origenLat: string;
+  origenLng: string;
+  horaSalida: string;
+  destino?: string;
+}): Promise<ViajeEncontrado[]> {
+  const params = new URLSearchParams();
+  params.set('origenLat', consulta.origenLat);
+  params.set('origenLng', consulta.origenLng);
+  params.set('horaSalida', consulta.horaSalida);
+  if (consulta.destino) params.set('destino', consulta.destino);
+  const viajes = await solicitar<ViajeEncontrado[]>(
+    `/viajes/buscar?${params.toString()}`,
+    'GET',
+  );
+  viajesEncontrados.clear();
+  viajes.forEach((v) => viajesEncontrados.set(v.id, v));
+  return viajes;
+}
+
+export const consultarViaje = (id: string) =>
+  solicitar<DetalleViaje>(`/viajes/${encodeURIComponent(id)}`, 'GET');
+
+/** Pide la huella (CA-7); se publica en la organización activa, que el cliente no envía (A-13). */
+export const publicarViaje = (datos: DatosViaje, opciones?: OpcionesFirma) =>
+  solicitarFirmado<{ id: string; estado: string; cuposDisponibles: number }>(
+    '/viajes',
+    'POST',
+    datos,
+    opciones,
+  );
+
+/** Posición del GPS para el encuentro (HU-22 RN-4); el servidor decide si sirve. */
+export interface PosicionEncuentro {
+  lat: number;
+  lng: number;
+  precisionM: number;
+  tomadaEn: number;
+  simulada: boolean;
+}
+
+export interface Desafio {
+  nonce: string;
+  venceEn: string;
+  qrTexto: string;
+  qrImagenBase64: string;
+  pasajeros: PasajeroViaje[];
+}
+
+/** Conductor: registra la llave de trayecto del viaje con huella e integridad (HU-22 CA-1). */
+export const registrarLlaveTrayecto = (
+  viajeId: string,
+  cuerpo: { llavePublicaPem: string; tokenIntegridad: string },
+  opciones: OpcionesFirma,
+) =>
+  solicitarFirmado<{ llaveTrayectoId: string }>(
+    `/viajes/${encodeURIComponent(viajeId)}/llave-trayecto`,
+    'POST',
+    cuerpo,
+    opciones,
+  );
+
+/** Conductor: código nuevo de 30 s, firmado con la llave de trayecto, sin huella (RN-1, RN-6). */
+export const pedirDesafio = (
+  llaveTrayectoId: string,
+  viajeId: string,
+  posicion: PosicionEncuentro,
+  tipo: TipoEncuentro = 'abordaje',
+) =>
+  solicitarFirmadoTrayecto<Desafio>(
+    'conductor',
+    llaveTrayectoId,
+    `/viajes/${encodeURIComponent(viajeId)}/desafios`,
+    'POST',
+    { tipo, posicion },
+  );
+
+/** HU-23: el encuentro del abordaje se repite al bajar (RN-7). */
+export type TipoEncuentro = 'abordaje' | 'bajada';
+
+/** HU-23: posiciones del viaje, firmadas con la llave de trayecto del rol y sin huella (CA-1). */
+export const enviarPosiciones = (
+  rol: RolTrayecto,
+  llaveTrayectoId: string,
+  ruta: string,
+  puntos: PosicionEncuentro[],
+) =>
+  solicitarFirmadoTrayecto<{ aceptados: number; ignorados: number }>(
+    rol,
+    llaveTrayectoId,
+    ruta,
+    'POST',
+    { puntos },
+  );
+
+export type MotivoTrayecto =
+  | 'ubicacion_simulada'
+  | 'salto_imposible'
+  | 'datos_insuficientes'
+  | 'trayectos_separados';
+
+/** Pasajero: el código de bajada, como el abordaje pero sin llave nueva; el servidor evalúa los trayectos (CA-3, CA-4). */
+export const bajar = (
+  reservaId: string,
+  cuerpo: {
+    nonce: string;
+    posicion: PosicionEncuentro;
+    tokenIntegridad: string;
+  },
+  opciones: OpcionesFirma,
+) =>
+  solicitarFirmado<{
+    estado: 'verificada' | 'verificacion_fallida';
+    motivo: MotivoTrayecto | null;
+    yaVerificado: boolean;
+  }>(
+    `/reservas/${encodeURIComponent(reservaId)}/bajada`,
+    'POST',
+    cuerpo,
+    opciones,
+  );
+
+/** Conductor, sin firma: si su código sigue sin usar y sus pasajeros (sondeo de 3 s, RN-1). */
+export const consultarDesafio = (viajeId: string, nonce: string) =>
+  solicitar<{ vigente: boolean; pasajeros: PasajeroViaje[] }>(
+    `/viajes/${encodeURIComponent(viajeId)}/desafios/${encodeURIComponent(nonce)}`,
+    'GET',
+  );
+
+/** Pasajero: el código escaneado, su posición, integridad y su llave de trayecto, con huella (CA-2). */
+export const abordar = (
+  reservaId: string,
+  cuerpo: {
+    nonce: string;
+    posicion: PosicionEncuentro;
+    tokenIntegridad: string;
+    llavePublicaTrayectoPem: string;
+  },
+  opciones: OpcionesFirma,
+) =>
+  solicitarFirmado<{
+    estado: 'abordada';
+    yaVerificado: boolean;
+    /** HU-23: con ella firma sus posiciones; falta si la reserva ya había pasado el abordaje. */
+    llaveTrayectoId?: string;
+  }>(
+    `/reservas/${encodeURIComponent(reservaId)}/abordaje`,
+    'POST',
+    cuerpo,
+    opciones,
+  );

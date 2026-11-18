@@ -5,7 +5,7 @@ import {
   waitFor,
 } from '@testing-library/react-native';
 import * as SelectorImagen from 'expo-image-picker';
-import Inicio from '@/app/index';
+import Perfil from '@/app/(pestanas)/perfil';
 import VehiculoPantalla from '@/app/vehiculo';
 import { ProveedorSesion } from '@/contexto/sesion';
 import {
@@ -17,6 +17,10 @@ import {
 const mockRouter = { push: jest.fn(), back: jest.fn() };
 let mockRefresco: string | null = 'refresco-de-prueba';
 
+// Inicio monta el formulario de búsqueda, que tiene sus propias pruebas.
+jest.mock('@/componentes/FormularioBusqueda', () => ({
+  FormularioBusqueda: () => null,
+}));
 jest.mock('expo-router', () => {
   const { Text: Texto } = jest.requireActual('react-native');
   return {
@@ -563,9 +567,9 @@ describe('Mi vehículo', () => {
     expect(mockRouter.back).toHaveBeenCalled();
   });
 
-  it('el inicio ofrece entrar a Mi vehículo', async () => {
+  it('el perfil ofrece entrar a Mi vehículo', async () => {
     simularFetch(CON_SESION);
-    await abrir(<Inicio />);
+    await abrir(<Perfil />);
     await fireEvent.press(
       await screen.findByRole('button', { name: 'Mi vehículo' }),
     );

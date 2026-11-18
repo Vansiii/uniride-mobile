@@ -1,22 +1,17 @@
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text } from 'react-native';
 import { ErrorApi, registrar } from '@/api/cliente';
 import { useSesion } from '@/contexto/sesion';
+import { Entra } from '@/componentes/Animado';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { Campo } from '@/componentes/Campo';
 import { Casilla } from '@/componentes/Casilla';
 import { BandaMarca, ZonaAccion } from '@/componentes/Estructura';
 import { Aviso } from '@/componentes/Mensajes';
 import { formatearHora, t } from '@/i18n';
-import { colores, espacio, tipografia } from '@/tema/tokens';
+import { espacio, radio, sombraElevada, tipografia } from '@/tema/tokens';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
 
 type Campos = 'nombre' | 'correo' | 'contrasena' | 'consentimiento';
 type Errores = Partial<Record<Campos, string>>;
@@ -67,6 +62,8 @@ function fallaDe(error: unknown): Falla {
 }
 
 export default function Registro() {
+  const colores = useColores();
+  const estilos = useEstilos();
   const { usuario } = useSesion();
   const [nombre, setNombre] = useState('');
   const [correo, setCorreo] = useState('');
@@ -146,7 +143,7 @@ export default function Registro() {
             {t('autenticacion.registro.subtitulo')}
           </Text>
         </BandaMarca>
-        <View style={estilos.contenido}>
+        <Entra indice={1} style={estilos.contenido}>
           {falla && (
             <Aviso tono={falla.codigoVigente ? 'info' : 'peligro'}>
               {falla.texto}
@@ -210,7 +207,7 @@ export default function Registro() {
             }}
             error={errores.consentimiento}
           />
-        </View>
+        </Entra>
       </ScrollView>
       <ZonaAccion>
         <Boton
@@ -233,9 +230,9 @@ export default function Registro() {
   );
 }
 
-const estilos = StyleSheet.create({
-  raiz: { flex: 1, backgroundColor: colores.fondo },
-  desplazable: { flexGrow: 1 },
+const useEstilos = crearEstilos((colores) => ({
+  raiz: { flex: 1, backgroundColor: colores.fondoSutil },
+  desplazable: { flexGrow: 1, paddingBottom: espacio(4) },
   titulo: { ...tipografia.pantalla, color: colores.sobreMarca },
   subtitulo: {
     ...tipografia.cuerpo,
@@ -243,8 +240,12 @@ const estilos = StyleSheet.create({
     maxWidth: 300,
   },
   contenido: {
-    padding: espacio(4),
-    paddingTop: espacio(5),
+    marginTop: -espacio(7),
+    marginHorizontal: espacio(4),
+    padding: espacio(5),
     gap: espacio(4),
+    borderRadius: radio.xl,
+    backgroundColor: colores.superficie,
+    ...sombraElevada,
   },
-});
+}));

@@ -6,7 +6,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -19,13 +18,22 @@ import {
   Vehiculo,
 } from '@/api/cliente';
 import { useSesion } from '@/contexto/sesion';
+import { Entra, Esqueleto } from '@/componentes/Animado';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { Campo } from '@/componentes/Campo';
 import { Casilla } from '@/componentes/Casilla';
 import { ZonaAccion } from '@/componentes/Estructura';
 import { Aviso } from '@/componentes/Mensajes';
 import { t } from '@/i18n';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import {
+  degradadoSaldo,
+  espacio,
+  radio,
+  sombraTarjeta,
+  tipografia,
+} from '@/tema/tokens';
+import { crearEstilos } from '@/tema/useEstilos';
+import { BarraEstado } from '@/componentes/BarraEstado';
 
 type Campos =
   | 'placa'
@@ -92,6 +100,7 @@ function fallaDe(error: unknown): Falla {
 
 /** Registrar vehículo (HU-11): un vehículo por persona; ya registrado, se muestra sin la foto (CA-7). */
 export default function VehiculoPantalla() {
+  const estilos = useEstilos();
   const { cargando, usuario } = useSesion();
   const { top } = useSafeAreaInsets();
   const [consultando, setConsultando] = useState(true);
@@ -250,6 +259,7 @@ export default function VehiculoPantalla() {
       style={estilos.raiz}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      <BarraEstado />
       <View style={[estilos.encabezado, { paddingTop: top }]}>
         <BotonIcono
           icono="arrow_back"
@@ -269,7 +279,13 @@ export default function VehiculoPantalla() {
         )}
         {falla && <Aviso tono="peligro">{falla.texto}</Aviso>}
         {consultando ? (
-          <Text style={estilos.texto}>{t('comun.estados.cargando')}</Text>
+          <View
+            accessibilityLabel={t('comun.estados.cargando')}
+            style={estilos.contenido}
+          >
+            <Esqueleto alto={120} redondeo={radio.xl} />
+            <Esqueleto alto={150} redondeo={radio.l} />
+          </View>
         ) : sinConsulta ? (
           <Boton
             variante="secundario"
@@ -280,35 +296,38 @@ export default function VehiculoPantalla() {
           />
         ) : vehiculo ? (
           <>
-            <View style={estilos.tarjeta}>
+            <Entra style={estilos.tarjeta}>
               <Dato
+                destacado
                 etiqueta={t('vehiculos.registro.placa')}
                 valor={vehiculo.placa}
               />
-              <Dato
-                etiqueta={t('vehiculos.registro.marca')}
-                valor={vehiculo.marca}
-              />
-              <Dato
-                etiqueta={t('vehiculos.registro.modelo')}
-                valor={vehiculo.modelo}
-              />
-              <Dato
-                etiqueta={t('vehiculos.registro.color')}
-                valor={vehiculo.color}
-              />
-              <Dato
-                etiqueta={t('vehiculos.registro.capacidad')}
-                valor={
-                  vehiculo.capacidad === 1
-                    ? t('vehiculos.registro.asiento')
-                    : t('vehiculos.registro.asientos').replace(
-                        '{cantidad}',
-                        String(vehiculo.capacidad),
-                      )
-                }
-              />
-            </View>
+              <View style={estilos.rejilla}>
+                <Dato
+                  etiqueta={t('vehiculos.registro.marca')}
+                  valor={vehiculo.marca}
+                />
+                <Dato
+                  etiqueta={t('vehiculos.registro.modelo')}
+                  valor={vehiculo.modelo}
+                />
+                <Dato
+                  etiqueta={t('vehiculos.registro.color')}
+                  valor={vehiculo.color}
+                />
+                <Dato
+                  etiqueta={t('vehiculos.registro.capacidad')}
+                  valor={
+                    vehiculo.capacidad === 1
+                      ? t('vehiculos.registro.asiento')
+                      : t('vehiculos.registro.asientos').replace(
+                          '{cantidad}',
+                          String(vehiculo.capacidad),
+                        )
+                  }
+                />
+              </View>
+            </Entra>
             <Text style={estilos.texto}>
               {t('vehiculos.registro.privacidad')}
             </Text>
@@ -443,25 +462,43 @@ export default function VehiculoPantalla() {
   );
 }
 
-function Dato({ etiqueta, valor }: { etiqueta: string; valor: string }) {
+function Dato({
+  etiqueta,
+  valor,
+  destacado,
+}: {
+  etiqueta: string;
+  valor: string;
+  destacado?: boolean;
+}) {
+  const estilos = useEstilos();
   return (
-    <View style={estilos.dato}>
-      <Text style={estilos.etiqueta}>{etiqueta}</Text>
-      <Text style={estilos.valor}>{valor}</Text>
+    <View style={destacado ? estilos.datoDestacado : estilos.dato}>
+      <Text style={destacado ? estilos.etiquetaPlaca : estilos.etiqueta}>
+        {etiqueta}
+      </Text>
+      <Text style={destacado ? estilos.placa : estilos.valor}>{valor}</Text>
     </View>
   );
 }
 
-const estilos = StyleSheet.create({
-  raiz: { flex: 1, backgroundColor: colores.fondo },
+const useEstilos = crearEstilos((colores) => ({
+  raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   encabezado: {
     minHeight: 56,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: espacio(1),
     paddingHorizontal: espacio(2),
   },
-  tituloBarra: { ...tipografia.titulo, color: colores.texto },
+  tituloBarra: {
+    ...tipografia.pantalla,
+    width: '100%',
+    paddingHorizontal: espacio(2),
+    paddingBottom: espacio(2),
+    color: colores.texto,
+  },
   contenido: {
     flexGrow: 1,
     gap: espacio(4),
@@ -476,9 +513,30 @@ const estilos = StyleSheet.create({
     borderWidth: 1,
     borderColor: colores.borde,
     backgroundColor: colores.superficie,
+    ...sombraTarjeta,
   },
-  dato: { gap: 2 },
+  rejilla: { flexDirection: 'row', flexWrap: 'wrap', rowGap: espacio(4) },
+  dato: { gap: 2, width: '50%' },
+  // Placa: banda de marca con la matrícula en grande, como en la carrocería.
+  datoDestacado: {
+    gap: espacio(1),
+    padding: espacio(4),
+    borderRadius: radio.m,
+    backgroundColor: colores.primario,
+    experimental_backgroundImage: degradadoSaldo,
+  },
+  placa: {
+    ...tipografia.titulo,
+    fontSize: 26,
+    lineHeight: 32,
+    letterSpacing: 4,
+    color: colores.sobreMarca,
+  },
   etiqueta: { ...tipografia.etiqueta, color: colores.textoSecundario },
+  etiquetaPlaca: {
+    ...tipografia.etiqueta,
+    color: colores.sobreMarcaSecundario,
+  },
   valor: { ...tipografia.cuerpo, color: colores.texto },
   foto: { gap: espacio(2) },
   etiquetaFoto: { ...tipografia.etiqueta, color: colores.texto },
@@ -489,4 +547,4 @@ const estilos = StyleSheet.create({
     backgroundColor: colores.fondoSutil,
   },
   errorFoto: { ...tipografia.secundario, color: colores.peligro },
-});
+}));

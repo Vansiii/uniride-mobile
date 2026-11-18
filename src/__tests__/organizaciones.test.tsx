@@ -7,7 +7,8 @@ import {
 import AgregarOrganizacion from '@/app/agregar-organizacion';
 import Codigo from '@/app/codigo';
 import EstadoMembresia from '@/app/estado-membresia';
-import Inicio from '@/app/index';
+import Inicio from '@/app/(pestanas)/index';
+import Perfil from '@/app/(pestanas)/perfil';
 import Organizaciones from '@/app/organizaciones';
 import { ProveedorSesion } from '@/contexto/sesion';
 import {
@@ -24,6 +25,10 @@ const mockRouter = {
 let mockParams: Record<string, string> = {};
 let mockRefresco: string | null = 'refresco-de-prueba';
 
+// Inicio monta el formulario de búsqueda, que tiene sus propias pruebas.
+jest.mock('@/componentes/FormularioBusqueda', () => ({
+  FormularioBusqueda: () => null,
+}));
 jest.mock('expo-router', () => {
   const { Text: Texto } = jest.requireActual('react-native');
   return {
@@ -477,10 +482,21 @@ describe('Entradas a las pantallas de organizaciones', () => {
   it('el inicio muestra la organización activa y lleva a Mis organizaciones', async () => {
     simularFetch({ ...CON_SESION, 'GET /yo': o.yoVarias });
     await abrir(<Inicio />);
-    expect(await screen.findByText('Organización activa')).toBeTruthy();
-    expect(screen.getByText('P7MOB A')).toBeTruthy();
     await fireEvent.press(
-      screen.getByRole('button', { name: 'Mis organizaciones' }),
+      await screen.findByRole('button', {
+        name: 'Organización activa: P7MOB A',
+      }),
+    );
+    expect(mockRouter.push).toHaveBeenCalledWith('/organizaciones');
+  });
+
+  it('el perfil muestra la organización activa y lleva a Mis organizaciones', async () => {
+    simularFetch({ ...CON_SESION, 'GET /yo': o.yoVarias });
+    await abrir(<Perfil />);
+    await fireEvent.press(
+      await screen.findByRole('button', {
+        name: 'Mis organizaciones. P7MOB A',
+      }),
     );
     expect(mockRouter.push).toHaveBeenCalledWith('/organizaciones');
   });

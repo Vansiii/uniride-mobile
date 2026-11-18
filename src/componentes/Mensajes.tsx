@@ -1,15 +1,19 @@
 import type { ComponentProps, ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import { Text, View } from 'react-native';
+import type { Paleta } from '@/tema/paletas';
+import { espacio, radio, tipografia } from '@/tema/tokens';
 import { Icono } from './Icono';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
 
 type Tono = 'info' | 'exito' | 'aviso' | 'peligro';
 type NombreIcono = ComponentProps<typeof Icono>['nombre'];
 
-const tonos: Record<
+const tonos = (
+  colores: Paleta,
+): Record<
   Tono,
   { fondo: string; texto: string; icono: string; simbolo: NombreIcono }
-> = {
+> => ({
   info: {
     fondo: colores.primarioSuave,
     texto: colores.primarioTexto,
@@ -34,7 +38,7 @@ const tonos: Record<
     icono: colores.peligro,
     simbolo: 'error',
   },
-};
+});
 
 /** Mensaje persistente en contexto (8.6). */
 export function Aviso({
@@ -46,7 +50,9 @@ export function Aviso({
   titulo?: string;
   children: ReactNode;
 }) {
-  const c = tonos[tono];
+  const colores = useColores();
+  const estilos = useEstilos();
+  const c = tonos(colores)[tono];
   return (
     <View
       accessibilityRole={
@@ -66,35 +72,74 @@ export function Aviso({
 }
 
 /** Estados con tono, ícono y texto (8.3, 4.1.2). Un estado nuevo se agrega solo aquí. */
-const estados: Record<string, [Tono, NombreIcono]> = {
+const estados: Record<string, [Tono | 'neutro', NombreIcono]> = {
   'membresia.pendiente': ['aviso', 'hourglass_top'],
   'membresia.aprobada': ['exito', 'check_circle'],
   'membresia.rechazada': ['peligro', 'cancel'],
   // La organización con la que se ven los viajes (HU-07).
   'membresia.activa': ['info', 'radio_button_checked'],
+  // Movimiento confirmado: sin etiqueta, es el caso normal (4.1.2).
+  'movimiento.pendiente': ['neutro', 'hourglass_top'],
+  'movimiento.fallido': ['peligro', 'error'],
+  // Estados de la reserva (HU-19 RN-10): cada uno con tono, ícono y texto.
+  'reserva.pendiente': ['neutro', 'hourglass_top'],
+  'reserva.confirmada': ['exito', 'check_circle'],
+  'reserva.abordada': ['info', 'directions_car'],
+  'reserva.verificada': ['exito', 'verified'],
+  'reserva.pagada': ['exito', 'payments'],
+  'reserva.fallida': ['peligro', 'error'],
+  'reserva.verificacion_fallida': ['peligro', 'error'],
+  'reserva.cancelada': ['peligro', 'cancel'],
+  'reserva.expirada': ['neutro', 'timer_off'],
+  'viaje.publicado': ['info', 'campaign'],
+  // Estados del viaje que se ven en «Mis viajes» (D-23).
+  'viaje.reservado': ['exito', 'check_circle'],
+  'viaje.en_curso': ['info', 'directions_car'],
+  'viaje.pagado': ['exito', 'payments'],
+  'viaje.cancelado': ['peligro', 'cancel'],
+  'viaje.expirado': ['neutro', 'timer_off'],
+  'viaje.verificado': ['exito', 'verified'],
+  // `new_releases` se dibuja igual que `verified`: «Nuevo» parecía otra verificación.
+  'viaje.nuevo': ['info', 'auto_awesome'],
+  'viaje.distancia': ['neutro', 'directions_walk'],
 };
+
+/** Tono neutro de la tabla 4.1.2: fondo sutil, texto secundario y borde. */
+const neutro = (colores: Paleta) => ({
+  fondo: colores.fondoSutil,
+  texto: colores.textoSecundario,
+  icono: colores.textoSecundario,
+});
 
 export function EtiquetaEstado({
   dominio,
   estado,
   texto,
 }: {
-  dominio: 'membresia';
+  dominio: 'membresia' | 'movimiento' | 'viaje' | 'reserva';
   estado: string;
   /** Texto visible ya traducido. */
   texto: string;
 }) {
+  const colores = useColores();
+  const estilos = useEstilos();
   const [tono, simbolo] = estados[`${dominio}.${estado}`] ?? ['info', 'info'];
-  const c = tonos[tono];
+  const c = tono === 'neutro' ? neutro(colores) : tonos(colores)[tono];
   return (
-    <View style={[estilos.etiqueta, { backgroundColor: c.fondo }]}>
+    <View
+      style={[
+        estilos.etiqueta,
+        { backgroundColor: c.fondo },
+        tono === 'neutro' && estilos.bordeNeutro,
+      ]}
+    >
       <Icono nombre={simbolo} color={c.texto} tamano={16} />
       <Text style={[estilos.textoEtiqueta, { color: c.texto }]}>{texto}</Text>
     </View>
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   aviso: {
     flexDirection: 'row',
     gap: espacio(3),
@@ -115,5 +160,6 @@ const estilos = StyleSheet.create({
     paddingHorizontal: espacio(2),
     borderRadius: radio.completo,
   },
+  bordeNeutro: { borderWidth: 1, borderColor: colores.borde },
   textoEtiqueta: { ...tipografia.pequeno },
-});
+}));

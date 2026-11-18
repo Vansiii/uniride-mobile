@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "uniride",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"
     },
@@ -36,13 +36,37 @@
       ],
       "expo-secure-store",
       [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "UniRide usa tu ubicación para buscar viajes que salgan cerca de ti.",
+          "locationAlwaysAndWhenInUsePermission": "UniRide comparte tu ubicación cada 15 s durante el viaje, también con la pantalla apagada, para verificar que viajaron juntos.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "cameraPermission": "UniRide usa la cámara para tomar la foto de tu vehículo.",
           "photosPermission": "UniRide usa tus fotos para que elijas la foto de tu vehículo.",
           "microphonePermission": false
         }
-      ]
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "UniRide usa la cámara para leer el código de abordaje del conductor.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "UniRide usa el micrófono para escuchar tus comandos de voz."
+        }
+      ],
+      "@maplibre/maplibre-react-native"
     ],
     "experiments": {
       "typedRoutes": true,

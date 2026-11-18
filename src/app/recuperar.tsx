@@ -4,7 +4,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -22,7 +21,9 @@ import { ZonaAccion } from '@/componentes/Estructura';
 import { Ilustracion } from '@/componentes/Ilustracion';
 import { Aviso } from '@/componentes/Mensajes';
 import { formatearHora, t } from '@/i18n';
-import { colores, espacio, tipografia } from '@/tema/tokens';
+import { espacio, tipografia } from '@/tema/tokens';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
+import { BarraEstado } from '@/componentes/BarraEstado';
 
 type Paso = 'correo' | 'nueva' | 'listo';
 
@@ -47,6 +48,8 @@ const esContrasenaSegura = (contrasena: string) =>
  * el correo tenga cuenta (CA-2, RN-4): la respuesta del servidor es la misma en ambos casos.
  */
 export default function Recuperar() {
+  const colores = useColores();
+  const estilos = useEstilos();
   const { usuario } = useSesion();
   const { top } = useSafeAreaInsets();
   const [paso, setPaso] = useState<Paso>('correo');
@@ -216,6 +219,7 @@ export default function Recuperar() {
       style={estilos.raiz}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      <BarraEstado />
       <View style={[estilos.encabezado, { paddingTop: top }]}>
         <BotonIcono
           icono="arrow_back"
@@ -371,16 +375,23 @@ export default function Recuperar() {
   );
 }
 
-const estilos = StyleSheet.create({
-  raiz: { flex: 1, backgroundColor: colores.fondo },
+const useEstilos = crearEstilos((colores) => ({
+  raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   encabezado: {
     minHeight: 56,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: espacio(1),
     paddingHorizontal: espacio(2),
   },
-  tituloBarra: { ...tipografia.titulo, color: colores.texto },
+  tituloBarra: {
+    ...tipografia.pantalla,
+    width: '100%',
+    paddingHorizontal: espacio(2),
+    paddingBottom: espacio(2),
+    color: colores.texto,
+  },
   contenido: {
     flexGrow: 1,
     gap: espacio(4),
@@ -412,4 +423,4 @@ const estilos = StyleSheet.create({
     fontVariant: ['tabular-nums'],
     color: colores.textoDeshabilitado,
   },
-});
+}));

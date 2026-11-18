@@ -1,0 +1,20 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'com.uniride'
+version = '0.1.0'
+
+android {
+  namespace "expo.modules.llavedispositivo"
+  defaultConfig {
+    versionCode 1
+    versionName '0.1.0'
+  }
+}
+
+dependencies {
+  // La misma versión que ya trae expo-secure-store: no entra una segunda copia al APK.
+  implementation "androidx.biometric:biometric:1.1.0"
+}
