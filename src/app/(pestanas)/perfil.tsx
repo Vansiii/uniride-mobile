@@ -145,6 +145,12 @@ export default function Perfil() {
           />
           <View style={estilos.separador} />
           <FilaAjuste
+            icono="palette"
+            titulo={t('perfil.apariencia.titulo')}
+            alPresionar={() => router.push('/ajustes-apariencia' as never)}
+          />
+          <View style={estilos.separador} />
+          <FilaAjuste
             icono="help_outline"
             titulo={t('perfil.ayuda.titulo')}
             alPresionar={() => router.push('/ayuda')}
