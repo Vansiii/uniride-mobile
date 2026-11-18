@@ -12,14 +12,17 @@ import {
 import { Esqueleto } from '@/componentes/Animado';
 import { EstadoPago, PAGABLES } from '@/componentes/EstadoPago';
 import { Boton, BotonIcono } from '@/componentes/Boton';
+import { BotonVoz } from '@/componentes/BotonVoz';
 import { ZonaAccion } from '@/componentes/Estructura';
 import { Ilustracion } from '@/componentes/Ilustracion';
 import { Aviso, EtiquetaEstado } from '@/componentes/Mensajes';
+import { PanelVoz } from '@/componentes/PanelVoz';
 import { Trayecto } from '@/componentes/TarjetaViaje';
 import { AccionDeReserva } from '@/componentes/ViajeActivo';
 import { useSesion } from '@/contexto/sesion';
 import { formatearDia, formatearHoraLocal, formatearMonto } from '@/formato';
 import { con, t } from '@/i18n';
+import { useVoz } from '@/voz/useVoz';
 import {
   colores,
   espacio,
@@ -66,6 +69,7 @@ export default function ReservaPantalla() {
   const [reserva, setReserva] = useState<ReservaDetalle | null>(null);
   const [falla, setFalla] = useState<string>();
   const [demorada, setDemorada] = useState(false);
+  const voz = useVoz();
 
   const leer = useCallback(
     () =>
@@ -133,6 +137,7 @@ export default function ReservaPantalla() {
           etiqueta={t('comun.acciones.cerrar')}
           alPresionar={() => router.replace('/viajes')}
         />
+        <BotonVoz alPresionar={voz.iniciarEscucha} />
       </View>
 
       {!reserva && (
@@ -300,6 +305,16 @@ export default function ReservaPantalla() {
           </ZonaAccion>
         </>
       )}
+      <PanelVoz
+        visible={voz.estado !== 'inactivo'}
+        estado={voz.estado}
+        transcripcion={voz.transcripcion}
+        mensaje={voz.mensaje}
+        fallosSeguidos={voz.fallosSeguidos}
+        alCerrar={voz.cerrar}
+        alReintentar={voz.reintentar}
+        alUsarTeclado={voz.cerrar}
+      />
     </View>
   );
 }
@@ -310,6 +325,7 @@ const estilos = StyleSheet.create({
     minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: espacio(2),
   },
   centrado: {

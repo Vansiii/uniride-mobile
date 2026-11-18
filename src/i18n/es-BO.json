@@ -752,5 +752,40 @@
       "bajada_pasajero": "Escanear QR de bajada",
       "ver_viaje": "Ver viaje en curso"
     }
+  },
+  "voz": {
+    "boton": {
+      "etiqueta": "Hablar con UniRide"
+    },
+    "panel": {
+      "te_escucho": "Te escucho…",
+      "ejemplo": "Ejemplo: «Busca un viaje a la UAGRM a las 7»",
+      "procesando": "Procesando…",
+      "volver_intentar": "Volver a intentar"
+    },
+    "comun": {
+      "no_entendi": "No entendí. Puedes decir: busca un viaje a la UAGRM a las 7",
+      "usar_teclado": "Hazlo con el teclado",
+      "no_disponible": "La voz no está disponible ahora. Usa la búsqueda.",
+      "no_te_escuche": "No te escuché. Toca el micrófono para hablar."
+    },
+    "permiso": {
+      "microfono": "UniRide usa el micrófono para escuchar tus comandos de voz.",
+      "abrir_ajustes": "Abrir ajustes"
+    },
+    "buscar": {
+      "falta_hora": "¿A qué hora quieres salir?",
+      "falta_destino": "¿A dónde quieres ir?",
+      "sin_ubicacion": "Activa tu ubicación para buscar viajes por voz.",
+      "sin_resultados": "No encontré viajes a {destino} a esa hora.",
+      "resultados": "Encontré {n} viajes. El primero sale a las {hora} a {destino} por {precio} URC.",
+      "resultado_uno": "Encontré 1 viaje. Sale a las {hora} a {destino} por {precio} URC."
+    },
+    "reservar": {
+      "confirmar_huella": "Viaje de las {hora} a {destino}, {precio} URC. Confirma con tu huella.",
+      "saldo_insuficiente": "Te faltan {falta} URC para reservar este viaje. Recarga tu saldo.",
+      "numero_invalido": "Hay {total} viajes. ¿Cuál quieres?",
+      "sin_resultados": "Primero busca un viaje."
+    }
   }
 }

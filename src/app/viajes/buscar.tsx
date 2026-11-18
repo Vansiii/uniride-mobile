@@ -3,18 +3,23 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Speech from 'expo-speech';
 import { buscarViajes, ErrorApi, ViajeEncontrado } from '@/api/cliente';
 import { Entra, Esqueleto } from '@/componentes/Animado';
 import { Boton, BotonIcono } from '@/componentes/Boton';
+import { BotonVoz } from '@/componentes/BotonVoz';
 import { ZonaAccion } from '@/componentes/Estructura';
 import { Ilustracion } from '@/componentes/Ilustracion';
 import { Aviso, EtiquetaEstado } from '@/componentes/Mensajes';
+import { PanelVoz } from '@/componentes/PanelVoz';
 import { TarjetaViaje } from '@/componentes/TarjetaViaje';
 import { useSesion } from '@/contexto/sesion';
-import { formatearDia } from '@/formato';
+import { formatearDia, formatearHoraLocal } from '@/formato';
 import { con, t } from '@/i18n';
 import { colores, espacio, tipografia } from '@/tema/tokens';
 import { ventanaDe } from '@/viajes/salida';
+import { resultadosEnPantalla } from '@/voz/resultados';
+import { useVoz } from '@/voz/useVoz';
 
 type Vista =
   | { tipo: 'cargando' }
@@ -26,11 +31,14 @@ type Vista =
 export default function ResultadosPantalla() {
   const { cargando, usuario } = useSesion();
   const { top } = useSafeAreaInsets();
-  const { origenLat, origenLng, horaSalida } = useLocalSearchParams<{
-    origenLat: string;
-    origenLng: string;
-    horaSalida: string;
-  }>();
+  const { origenLat, origenLng, horaSalida, destino, porVoz } =
+    useLocalSearchParams<{
+      origenLat: string;
+      origenLng: string;
+      horaSalida: string;
+      destino?: string;
+      porVoz?: string;
+    }>();
 
   const salida = Date.parse(horaSalida ?? '');
   // Un enlace viejo o editado puede traer la ruta incompleta: sin esto la ventana no se puede dibujar.
@@ -42,11 +50,55 @@ export default function ResultadosPantalla() {
       ? { tipo: 'cargando' }
       : { tipo: 'falla', texto: t('comun.errores.coordenadas_invalidas') },
   );
+  const [resumenVoz, setResumenVoz] = useState<string>();
+  const voz = useVoz();
 
   const leer = useCallback(
     () =>
-      buscarViajes({ origenLat, origenLng, horaSalida })
-        .then((viajes) => setVista({ tipo: 'lista', viajes }))
+      buscarViajes({ origenLat, origenLng, horaSalida, destino })
+        .then((viajes) => {
+          setVista({ tipo: 'lista', viajes });
+          resultadosEnPantalla.establecer(
+            viajes.map((v) => ({
+              id: v.id,
+              origenNombre: v.origenNombre,
+              destinoNombre: v.destinoNombre,
+              fechaHoraSalida: v.fechaHoraSalida,
+              precioPorAsiento: v.precioPorAsiento,
+            })),
+          );
+          if (porVoz === '1') {
+            if (viajes.length === 0) {
+              const msg = con('voz.buscar.sin_resultados', {
+                destino: destino ?? '',
+              });
+              setResumenVoz(msg);
+              try {
+                Speech.stop();
+                Speech.speak(msg, { language: 'es-BO' });
+              } catch {}
+            } else {
+              const primero = viajes[0];
+              const hora = formatearHoraLocal(primero.fechaHoraSalida);
+              const precio = primero.precioPorAsiento.toFixed(2);
+              const claveMsg =
+                viajes.length === 1
+                  ? 'voz.buscar.resultado_uno'
+                  : 'voz.buscar.resultados';
+              const msg = con(claveMsg, {
+                n: viajes.length,
+                hora,
+                destino: primero.destinoNombre,
+                precio,
+              });
+              setResumenVoz(msg);
+              try {
+                Speech.stop();
+                Speech.speak(msg, { language: 'es-BO' });
+              } catch {}
+            }
+          }
+        })
         .catch((error: unknown) => {
           const codigo = error instanceof ErrorApi ? error.codigo : '';
           if (codigo === 'NO_AUTORIZADO')
@@ -62,8 +114,14 @@ export default function ResultadosPantalla() {
             ),
           });
         }),
-    [origenLat, origenLng, horaSalida],
+    [origenLat, origenLng, horaSalida, destino, porVoz],
   );
+
+  useEffect(() => {
+    return () => {
+      resultadosEnPantalla.limpiar();
+    };
+  }, []);
 
   // Al entrar por un enlace la sesión todavía se está restaurando: sin token la API respondería 401.
   const conSesion = !cargando && Boolean(usuario);
@@ -97,6 +155,7 @@ export default function ResultadosPantalla() {
         <Text style={estilos.titulo} accessibilityRole="header">
           {t('viajes.buscar.titulo_resultados')}
         </Text>
+        <BotonVoz alPresionar={voz.iniciarEscucha} />
       </View>
 
       {vista.tipo === 'cargando' && (
@@ -151,7 +210,8 @@ export default function ResultadosPantalla() {
               {t('viajes.buscar.sin_resultados')}
             </Text>
             <Text style={estilos.textoVacio}>
-              {con('viajes.buscar.sin_resultados_texto', { ventana })}
+              {resumenVoz ??
+                con('viajes.buscar.sin_resultados_texto', { ventana })}
             </Text>
           </View>
           <ZonaAccion>
@@ -169,7 +229,12 @@ export default function ResultadosPantalla() {
           data={vista.viajes}
           keyExtractor={(v) => v.id}
           contentContainerStyle={estilos.lista}
-          ListHeaderComponent={<Text style={estilos.resumen}>{ventana}</Text>}
+          ListHeaderComponent={
+            <View style={estilos.cabeceraLista}>
+              {resumenVoz && <Aviso tono="info">{resumenVoz}</Aviso>}
+              <Text style={estilos.resumen}>{ventana}</Text>
+            </View>
+          }
           renderItem={({ item, index }) => (
             <Entra indice={Math.min(index, 6)}>
               <TarjetaViaje
@@ -180,6 +245,16 @@ export default function ResultadosPantalla() {
           )}
         />
       )}
+      <PanelVoz
+        visible={voz.estado !== 'inactivo'}
+        estado={voz.estado}
+        transcripcion={voz.transcripcion}
+        mensaje={voz.mensaje}
+        fallosSeguidos={voz.fallosSeguidos}
+        alCerrar={voz.cerrar}
+        alReintentar={voz.reintentar}
+        alUsarTeclado={voz.cerrar}
+      />
     </View>
   );
 }
@@ -193,6 +268,7 @@ const estilos = StyleSheet.create({
     paddingHorizontal: espacio(1),
   },
   titulo: { ...tipografia.titulo, flex: 1, color: colores.texto },
+  cabeceraLista: { gap: espacio(2) },
   resumen: { ...tipografia.secundario, color: colores.textoSecundario },
   lista: {
     gap: espacio(3),

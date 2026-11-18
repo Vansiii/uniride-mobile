@@ -9,12 +9,15 @@ import {
 } from 'react-native';
 import { Entra, Toque } from '@/componentes/Animado';
 import { useSesion } from '@/contexto/sesion';
-import { Boton, BotonIcono } from '@/componentes/Boton';
+import { Boton } from '@/componentes/Boton';
+import { BotonVoz } from '@/componentes/BotonVoz';
 import { BandaMarca } from '@/componentes/Estructura';
 import { FormularioBusqueda } from '@/componentes/FormularioBusqueda';
 import { Icono } from '@/componentes/Icono';
+import { PanelVoz } from '@/componentes/PanelVoz';
 import { ViajeActivo } from '@/componentes/ViajeActivo';
 import { t } from '@/i18n';
+import { useVoz } from '@/voz/useVoz';
 import {
   colores,
   espacio,
@@ -52,6 +55,7 @@ function Atajo({
 
 export default function Inicio() {
   const { cargando, usuario } = useSesion();
+  const voz = useVoz();
   if (cargando) {
     return (
       <View style={estilos.cargando}>
@@ -100,13 +104,9 @@ export default function Inicio() {
                 {organizacion ?? '—'}
               </Text>
             </Toque>
-            {/* ponytail: la voz llega con HU-27; hasta entonces el botón está en su lugar, desactivado (DESIGN_SYSTEM §8). */}
-            <BotonIcono
-              icono="mic"
-              etiqueta={t('inicio.voz_pronto')}
+            <BotonVoz
               color={colores.sobreMarca}
-              deshabilitado
-              alPresionar={() => {}}
+              alPresionar={voz.iniciarEscucha}
             />
           </View>
           <Entra indice={0}>
@@ -151,6 +151,16 @@ export default function Inicio() {
           />
         </Entra>
       </ScrollView>
+      <PanelVoz
+        visible={voz.estado !== 'inactivo'}
+        estado={voz.estado}
+        transcripcion={voz.transcripcion}
+        mensaje={voz.mensaje}
+        fallosSeguidos={voz.fallosSeguidos}
+        alCerrar={voz.cerrar}
+        alReintentar={voz.reintentar}
+        alUsarTeclado={voz.cerrar}
+      />
     </View>
   );
 }

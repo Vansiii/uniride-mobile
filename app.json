@@ -60,6 +60,12 @@
           "recordAudioAndroid": false
         }
       ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "UniRide usa el micrófono para escuchar tus comandos de voz."
+        }
+      ],
       "@maplibre/maplibre-react-native"
     ],
     "experiments": {

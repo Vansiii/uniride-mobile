@@ -7,11 +7,14 @@ import {
   consultarMiVehiculo,
 } from '@/api/cliente';
 import { Entra } from '@/componentes/Animado';
+import { BotonVoz } from '@/componentes/BotonVoz';
 import { BandaMarca } from '@/componentes/Estructura';
 import { Avatar, FilaAjuste } from '@/componentes/FilaAjuste';
+import { PanelVoz } from '@/componentes/PanelVoz';
 import { useSesion } from '@/contexto/sesion';
 import { useAlEnfocar } from '@/hooks/useAlEnfocar';
 import { con, t } from '@/i18n';
+import { useVoz } from '@/voz/useVoz';
 import {
   colores,
   espacio,
@@ -29,6 +32,7 @@ const seguro = <T,>(consulta: () => Promise<T>) =>
 
 export default function Perfil() {
   const { cargando, usuario, cerrar } = useSesion();
+  const voz = useVoz();
   const [listos, setListos] = useState<{
     vehiculo: boolean;
     telefono: boolean;
@@ -82,6 +86,10 @@ export default function Perfil() {
               </Text>
               <Text style={estilos.correo}>{usuario.correo}</Text>
             </View>
+            <BotonVoz
+              color={colores.sobreMarca}
+              alPresionar={voz.iniciarEscucha}
+            />
           </View>
         </BandaMarca>
         {listos && (
@@ -148,6 +156,16 @@ export default function Perfil() {
           />
         </View>
       </ScrollView>
+      <PanelVoz
+        visible={voz.estado !== 'inactivo'}
+        estado={voz.estado}
+        transcripcion={voz.transcripcion}
+        mensaje={voz.mensaje}
+        fallosSeguidos={voz.fallosSeguidos}
+        alCerrar={voz.cerrar}
+        alReintentar={voz.reintentar}
+        alUsarTeclado={voz.cerrar}
+      />
     </View>
   );
 }
