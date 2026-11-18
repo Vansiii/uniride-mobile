@@ -31,6 +31,8 @@ import java.security.spec.ECGenParameterSpec
 private const val PROVEEDOR = "AndroidKeyStore"
 private const val ALIAS = "uniride.llave.dispositivo"
 private const val ALIAS_ALTERNO = "$ALIAS.2"
+// PB-07: llave de un solo uso que solo sirve para que el Keystore firme la atestación de hardware.
+private const val ALIAS_ATESTACION = "uniride.llave.atestacion"
 // HU-23: una por rol; quien conduce un viaje y va de pasajero en otro firma con dos llaves distintas.
 private val ROLES_TRAYECTO = setOf("conductor", "pasajero")
 private fun aliasTrayecto(rol: String): String {
@@ -75,6 +77,8 @@ class LlaveDispositivoModule : Module() {
     AsyncFunction("crearLlaveTrayecto") { rol: String -> crearLlaveTrayecto(rol) }
 
     AsyncFunction("firmarTrayecto") { rol: String, antes: String, despues: String -> firmarTrayecto(rol, antes, despues) }
+
+    AsyncFunction("atestar") { desafio: String -> atestar(desafio) }
 
     // Hermes no trae `crypto.getRandomValues`.
     Function("nonceAleatorio") {
@@ -125,6 +129,37 @@ class LlaveDispositivoModule : Module() {
     }
     val cuerpo = Base64.encodeToString(par.public.encoded, Base64.NO_WRAP).chunked(64).joinToString("\n")
     return "-----BEGIN PUBLIC KEY-----\n$cuerpo\n-----END PUBLIC KEY-----\n"
+  }
+
+  /**
+   * PB-07, Key Attestation (A-03): genera una llave P-256 con el desafío del servidor como `attestationChallenge` y
+   * devuelve su cadena de certificados (DER en base64, separados por comas, hoja primero). El servidor la verifica
+   * contra la raíz de Google. La llave se borra siempre: solo sirve para atestar.
+   */
+  private fun atestar(desafio: String): String {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) throw noDisponible("Este Android no atesta el Keystore")
+    val llaves = almacen()
+    llaves.deleteEntry(ALIAS_ATESTACION)
+    try {
+      val spec = KeyGenParameterSpec.Builder(ALIAS_ATESTACION, KeyProperties.PURPOSE_SIGN)
+        .setAlgorithmParameterSpec(ECGenParameterSpec("secp256r1"))
+        .setDigests(KeyProperties.DIGEST_SHA256)
+        .setAttestationChallenge(desafio.toByteArray(Charsets.UTF_8))
+        .build()
+      KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_EC, PROVEEDOR).run {
+        initialize(spec)
+        generateKeyPair()
+      }
+      val cadena = llaves.getCertificateChain(ALIAS_ATESTACION)
+        ?: throw noDisponible("El Keystore no devolvió la cadena de atestación")
+      return cadena.joinToString(",") { Base64.encodeToString(it.encoded, Base64.NO_WRAP) }
+    } catch (error: CodedException) {
+      throw error
+    } catch (error: Exception) {
+      throw noDisponible("El Keystore no pudo atestar", error)
+    } finally {
+      llaves.deleteEntry(ALIAS_ATESTACION)
+    }
   }
 
   /** Firma `antes + hora + despues` con la llave de trayecto, sin diálogo (D-22). */

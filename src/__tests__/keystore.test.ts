@@ -45,6 +45,7 @@ describe('Keystore con módulo nativo', () => {
     confirmarLlave: jest.fn(),
     firmar: jest.fn(),
     nonceAleatorio: jest.fn(),
+    atestar: jest.fn(),
     crearLlaveTrayecto: jest.fn(),
     firmarTrayecto: jest.fn(),
   };
@@ -142,7 +143,7 @@ describe('Keystore con módulo nativo', () => {
   );
 });
 
-describe('Token de integridad (Play Integrity real queda fuera)', () => {
+describe('Token de integridad (atestación del Keystore, PB-07)', () => {
   const original = process.env.EXPO_PUBLIC_MODO_SIMULADO;
   const modo = (valor: string | undefined, dev: boolean) => {
     if (valor === undefined) delete process.env.EXPO_PUBLIC_MODO_SIMULADO;
@@ -154,6 +155,20 @@ describe('Token de integridad (Play Integrity real queda fuera)', () => {
   it('solo en desarrollo con EXPO_PUBLIC_MODO_SIMULADO=true devuelve el token simulado', async () => {
     modo('true', true);
     expect(await cargar().pedirTokenIntegridad('d')).toBe('simulado:integro');
+  });
+
+  it('CA-8: con el módulo nativo devuelve la cadena que atesta el Keystore con el desafío', async () => {
+    modo(undefined, false);
+    const atestar = jest.fn().mockResolvedValue('cert1,cert2');
+    const nativo = { atestar } as never;
+    expect(await cargar(nativo).pedirTokenIntegridad('desafio-1')).toBe(
+      'cert1,cert2',
+    );
+    expect(atestar).toHaveBeenCalledWith('desafio-1');
+    atestar.mockRejectedValue({ code: 'KEYSTORE_NO_DISPONIBLE' });
+    expect(
+      await codigoDe(cargar(nativo).pedirTokenIntegridad('desafio-1')),
+    ).toBe('KEYSTORE_NO_DISPONIBLE');
   });
 
   it.each([
