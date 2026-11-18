@@ -39,6 +39,7 @@ import {
   formatearDistancia,
   formatearHoraLocal,
   formatearMonto,
+  textoBloqueoPreventivo,
 } from '@/formato';
 import { con, t } from '@/i18n';
 import { nuevaClaveReserva } from '@/viajes/clave';
@@ -100,6 +101,14 @@ function fallaDeReserva(error: unknown): FallaReserva {
       };
     case 'CUENTA_SUSPENDIDA':
       return peligro('viajes.reservar.cuenta_suspendida');
+    // HU-25 CA-5: sin decir el motivo.
+    case 'PAR_BLOQUEADO':
+      return peligro('viajes.reservar.par_bloqueado');
+    case 'BLOQUEO_PREVENTIVO':
+      return {
+        texto: textoBloqueoPreventivo(error.datos.hasta),
+        tono: 'peligro',
+      };
     default:
       return peligro('viajes.reservar.error');
   }

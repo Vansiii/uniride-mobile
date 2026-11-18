@@ -13,6 +13,7 @@
       "cargando": "Cargando…"
     },
     "errores": {
+      "bloqueo_preventivo": "Tu cuenta tiene un bloqueo preventivo hasta el {dia} a las {hora}. Si crees que es un error, contacta al administrador de tu organización.",
       "sin_conexion": "No hay conexión. Revisa tu internet e inténtalo de nuevo.",
       "desconocido": "Algo salió mal. Inténtalo de nuevo en unos minutos.",
       "coordenadas_invalidas": "No pudimos leer ese punto de salida. Elige otro lugar.",
@@ -582,6 +583,7 @@
       "identidad_requerida": "Verifica tu identidad para reservar viajes y pagar con tu billetera.",
       "vincular_requerido": "Vincula este teléfono para reservar: cada reserva se confirma con tu huella o rostro.",
       "cuenta_suspendida": "Tu cuenta está suspendida, por eso no puedes reservar viajes. Comunícate con tu organización.",
+      "par_bloqueado": "No puedes reservar este viaje por ahora.",
       "error": "No pudimos reservar el viaje. Inténtalo de nuevo.",
       "garantia_resumen": "Pagas {precio} y queda en garantía; el conductor lo cobra solo cuando el viaje se verifique.",
       "no_disponible_boton": "No admite reservas"

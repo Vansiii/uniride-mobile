@@ -1,4 +1,4 @@
-import { t } from '@/i18n';
+import { con, t } from '@/i18n';
 
 /**
  * Monto de la API ("1234.50") a es-BO ("1.234,50"), DESIGN_SYSTEM §13.
@@ -57,3 +57,10 @@ export const formatearHoraLocal = (iso: string) => {
   const f = new Date(iso);
   return `${dos(f.getHours())}:${dos(f.getMinutes())}`;
 };
+
+/** HU-25 CA-6: «hasta el mié 24 nov a las 08:30», con el fin del bloqueo que dice el servidor. Sin motivo (RN-9). */
+export const textoBloqueoPreventivo = (hasta: unknown) =>
+  con('comun.errores.bloqueo_preventivo', {
+    dia: formatearDia(String(hasta)).toLowerCase(),
+    hora: formatearHoraLocal(String(hasta)),
+  });

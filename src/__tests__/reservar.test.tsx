@@ -263,6 +263,29 @@ describe('HU-19 · rechazos y fallas', () => {
     ).toBeTruthy();
   });
 
+  it('HU-25 CA-5: un par bloqueado recibe el rechazo sin motivo', async () => {
+    await abrir({ [RESERVAR]: rr.parBloqueado });
+    await screen.findByText('Saldo disponible después');
+    await fireEvent.press(boton(RESERVAR_BTN));
+    expect(
+      await screen.findByText('No puedes reservar este viaje por ahora.'),
+    ).toBeTruthy();
+  });
+
+  it('HU-25 CA-6: una cuenta con bloqueo preventivo ve hasta cuándo', async () => {
+    await abrir({ [RESERVAR]: rr.bloqueoPreventivo });
+    await screen.findByText('Saldo disponible después');
+    await fireEvent.press(boton(RESERVAR_BTN));
+    expect(
+      await screen.findByText(
+        'Tu cuenta tiene un bloqueo preventivo hasta el 15 de enero a las 08:30. Si crees que es un error, contacta al administrador de tu organización.'.replace(
+          '15 de enero',
+          'mar 15 ene',
+        ),
+      ),
+    ).toBeTruthy();
+  });
+
   it('sin identidad verificada lleva a verificarla', async () => {
     await abrir({ [RESERVAR]: b.identidadNoVerificada });
     await screen.findByText('Saldo disponible después');

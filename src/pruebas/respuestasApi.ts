@@ -1323,6 +1323,17 @@ export const reservaReal = {
     codigo: 'VIAJE_NO_DISPONIBLE',
     mensaje: 'Este viaje ya no admite reservas.',
   }),
+  /** HU-25 CA-5: el servidor no dice el motivo. */
+  parBloqueado: ok(409, {
+    codigo: 'PAR_BLOQUEADO',
+    mensaje: 'No puedes reservar este viaje por ahora.',
+  }),
+  /** HU-25 CA-6: solo la fecha de fin. */
+  bloqueoPreventivo: ok(403, {
+    codigo: 'BLOQUEO_PREVENTIVO',
+    mensaje: 'Tu cuenta tiene un bloqueo preventivo.',
+    hasta: new Date(2030, 0, 15, 8, 30).toISOString(),
+  }),
   /** GET /reservas/{id} */
   pendiente: ok(200, reservaDetalle('pendiente', 'publicado', null)),
   confirmada: ok(200, reservaDetalle('confirmada', 'reservado', HASH_BLOQUEO)),

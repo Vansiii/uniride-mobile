@@ -40,7 +40,12 @@ import { SelectorFecha } from '@/componentes/SelectorFecha';
 import { SelectorLugar } from '@/componentes/SelectorLugar';
 import { useSesion } from '@/contexto/sesion';
 import { fallaDeFirma, useAccionSensible } from '@/hooks/useAccionSensible';
-import { formatearDia, formatearHoraLocal, formatearMonto } from '@/formato';
+import {
+  formatearDia,
+  formatearHoraLocal,
+  formatearMonto,
+  textoBloqueoPreventivo,
+} from '@/formato';
 import { con, t } from '@/i18n';
 import { Lugar } from '@/servicios/geocoding';
 import {
@@ -489,6 +494,12 @@ function Contenido() {
       // CA-6: cambió algo desde que se abrió la pantalla; se vuelve a la lista de lo que falta.
       case 'CUENTA_SUSPENDIDA':
         return setSuspendida(true);
+      // HU-25 CA-6: sin motivo, solo hasta cuándo.
+      case 'BLOQUEO_PREVENTIVO':
+        return setFalla({
+          texto: textoBloqueoPreventivo(error.datos.hasta),
+          tono: 'peligro',
+        });
       case 'CONDUCTOR_SIN_VEHICULO':
       case 'IDENTIDAD_NO_VERIFICADA':
       case 'NO_AUTORIZADO':
