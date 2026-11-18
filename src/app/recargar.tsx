@@ -32,7 +32,7 @@ import { ConfirmacionBiometrica } from '@/componentes/ConfirmacionBiometrica';
 import { Aviso, EtiquetaEstado } from '@/componentes/Mensajes';
 import { useSesion } from '@/contexto/sesion';
 import { fallaDeFirma, useAccionSensible } from '@/hooks/useAccionSensible';
-import { formatearMonto } from '@/formato';
+import { formatearMonto, textoBloqueoPreventivo } from '@/formato';
 import { con, t } from '@/i18n';
 import {
   colores,
@@ -103,6 +103,11 @@ function fallaDe(error: unknown): Falla {
       };
     case 'CUENTA_SUSPENDIDA':
       return peligro('billetera.recarga.cuenta_suspendida');
+    case 'BLOQUEO_PREVENTIVO':
+      return {
+        texto: textoBloqueoPreventivo(error.datos.hasta),
+        tono: 'peligro',
+      };
     default:
       return peligro('billetera.recarga.error');
   }
