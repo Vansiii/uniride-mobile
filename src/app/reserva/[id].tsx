@@ -301,6 +301,19 @@ export default function ReservaPantalla() {
             {/* HU-22: cada pasajero hace su abordaje (RN-7); la ventana la decide el servidor. */}
             {/* HU-23: a bordo, el seguimiento y la bajada. */}
             {reserva && <AccionDeReserva reserva={reserva} anchoCompleto />}
+            {/* HU-21: una reserva pagada se califica una vez, dentro de los 7 días. */}
+            {estado === 'pagada' && (
+              <Boton
+                anchoCompleto
+                icono="check_circle"
+                etiqueta={con('calificaciones.boton', {
+                  nombre: reserva.viaje.conductor,
+                })}
+                alPresionar={() =>
+                  router.push(`/calificar/${reserva.reservaId}` as never)
+                }
+              />
+            )}
             {/* HU-20: cancelar reserva confirmada */}
             {estado === 'confirmada' &&
               reserva.cancelacion?.cancelable !== false && (

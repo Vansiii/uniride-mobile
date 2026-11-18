@@ -564,7 +564,8 @@
       "de_total": "{libres} de {total}",
       "garantia": "Al reservar, el pasaje queda en garantía y solo se paga a {conductor} cuando el viaje se verifica.",
       "reservar_pronto": "Reservar · disponible pronto",
-      "subtitulo": "¿A dónde vas hoy?"
+      "subtitulo": "¿A dónde vas hoy?",
+      "promedio": "{promedio} · {cantidad} calificaciones"
     },
     "reservar": {
       "boton": "Reservar y pagar {precio}",
@@ -813,5 +814,23 @@
     "ayuda": {
       "texto": "Puedes pedirme: buscar un viaje, reservar, tu saldo, dónde está tu conductor, cómo va tu viaje o cancelar tu viaje."
     }
+  },
+  "calificaciones": {
+    "titulo": "Calificar a {nombre}",
+    "estrellas": "Estrellas",
+    "estrella_uno": "1 estrella",
+    "estrellas_n": "{n} estrellas",
+    "comentario": "Comentario (opcional)",
+    "comentario_ayuda": "{n} de 140 caracteres. Solo lo verá la persona calificada.",
+    "enviar": "Enviar",
+    "enviando": "Enviando…",
+    "gracias": "Gracias por calificar",
+    "ya_calificada": "Ya calificaste este viaje.",
+    "plazo_vencido": "Ya pasó el plazo para calificar.",
+    "no_pagada": "Solo puedes calificar un viaje ya pagado.",
+    "error": "No pudimos enviar tu calificación. Intenta otra vez.",
+    "recibida": "{nombre} te calificó con {n} de 5",
+    "boton": "Calificar a {nombre}",
+    "elige": "Elige de 1 a 5 estrellas."
   }
 }
