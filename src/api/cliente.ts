@@ -548,7 +548,11 @@ export interface Saldo {
 export const consultarSaldo = () => solicitar<Saldo>('/billetera/saldo', 'GET');
 
 export type TipoMovimiento =
-  'recarga' | 'bloqueo_reserva' | 'liberacion_viaje' | 'reembolso_reserva';
+  | 'recarga'
+  | 'bloqueo_reserva'
+  | 'liberacion_viaje'
+  | 'reembolso_reserva'
+  | 'compensacion_cancelacion';
 
 export interface Movimiento {
   id: string;
@@ -675,7 +679,7 @@ export interface DetalleViaje {
 /** Lo último encontrado: el detalle no trae distancia ni insignias. En memoria y no por la ruta: un enlace no puede inventar una insignia. */
 export const viajesEncontrados = new Map<string, ViajeEncontrado>();
 
-/** Estados de la reserva (HU-19 RN-10). */
+/** Estados de la reserva (HU-19 RN-10, HU-20 D-23). */
 export type EstadoReserva =
   | 'pendiente'
   | 'confirmada'
@@ -683,7 +687,9 @@ export type EstadoReserva =
   | 'verificada'
   | 'pagada'
   | 'fallida'
-  | 'verificacion_fallida';
+  | 'verificacion_fallida'
+  | 'cancelada'
+  | 'expirada';
 
 /** Estados en los que la reserva sigue viva para el pasajero. */
 export const RESERVA_ACTIVA: EstadoReserva[] = [
@@ -691,6 +697,32 @@ export const RESERVA_ACTIVA: EstadoReserva[] = [
   'confirmada',
   'abordada',
 ];
+
+export interface CancelacionVistaPrevia {
+  cancelable: boolean;
+  porcentajePasajero: number;
+  montoPasajero: string;
+  montoConductor: string;
+  motivo?: string;
+}
+
+export interface ReembolsoDetalle {
+  estado: Movimiento['estado'];
+  montoPasajero: string;
+  montoConductor: string;
+  hashTx: string | null;
+  exploradorUrl: string | null;
+}
+
+export interface ReservaCanceladaResultado {
+  estado: 'cancelada';
+  reembolso: ReembolsoDetalle;
+}
+
+export interface ViajeCanceladoResultado {
+  estado: 'cancelado';
+  reservasCanceladas: number;
+}
 
 export interface ReservaCreada {
   reservaId: string;
@@ -727,6 +759,10 @@ export interface ReservaDetalle extends Reserva {
     hashTx: string | null;
     exploradorUrl: string | null;
   } | null;
+  /** HU-20: vista previa de cancelación si la reserva es del pasajero. */
+  cancelacion?: CancelacionVistaPrevia | null;
+  /** HU-20: datos del reembolso si fue cancelada, expirada o verificación fallida. */
+  reembolso?: ReembolsoDetalle | null;
 }
 
 export interface PasajeroViaje {
@@ -764,6 +800,28 @@ export const reservarAsiento = (
 /** Sin firma: consultar nunca pide la huella. */
 export const consultarReserva = (id: string) =>
   solicitar<ReservaDetalle>(`/reservas/${encodeURIComponent(id)}`, 'GET');
+
+/** HU-20: Cancelación de reserva por el pasajero con huella biométrica (HU-29). */
+export const cancelarReserva = (
+  reservaId: string,
+  porcentajeEsperado: number,
+  opciones?: OpcionesFirma,
+) =>
+  solicitarFirmado<ReservaCanceladaResultado>(
+    `/reservas/${encodeURIComponent(reservaId)}/cancelar`,
+    'POST',
+    { porcentajeEsperado },
+    opciones,
+  );
+
+/** HU-20: Cancelación de viaje por el conductor con huella biométrica (HU-29). */
+export const cancelarViaje = (viajeId: string, opciones?: OpcionesFirma) =>
+  solicitarFirmado<ViajeCanceladoResultado>(
+    `/viajes/${encodeURIComponent(viajeId)}/cancelar`,
+    'POST',
+    {},
+    opciones,
+  );
 
 export const consultarMisReservas = () =>
   solicitar<{ reservas: Reserva[] }>('/reservas/mias', 'GET').then(

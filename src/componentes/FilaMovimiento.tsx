@@ -14,6 +14,7 @@ const icono: Record<TipoMovimiento, ComponentProps<typeof Icono>['nombre']> = {
   bloqueo_reserva: 'lock',
   liberacion_viaje: 'south_west',
   reembolso_reserva: 'undo',
+  compensacion_cancelacion: 'south_west',
 };
 
 /**

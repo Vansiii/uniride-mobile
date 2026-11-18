@@ -41,6 +41,14 @@ const TEXTOS: Partial<Record<EstadoReserva, [string, string]>> = {
     'reservas.resultado.fallida_titulo',
     'reservas.resultado.fallida_texto',
   ],
+  cancelada: [
+    'reservas.resultado.cancelada_titulo',
+    'reservas.resultado.cancelada_texto',
+  ],
+  expirada: [
+    'reservas.resultado.expirada_titulo',
+    'reservas.resultado.expirada_texto',
+  ],
 };
 
 // ponytail: intervalo fijo mientras la reserva está pendiente; la cola del backend reintenta con espera creciente.
@@ -223,6 +231,20 @@ export default function ReservaPantalla() {
             {PAGABLES.has(reserva.estado) && (
               <EstadoPago reservaId={id} rol="pasajero" alLeer={setReserva} />
             )}
+            {reserva.reembolso && (
+              <Aviso
+                tono={
+                  reserva.reembolso.estado === 'confirmado' ? 'exito' : 'info'
+                }
+              >
+                {t(
+                  reserva.reembolso.estado === 'confirmado'
+                    ? 'reservas.resultado.reembolso_confirmado'
+                    : 'reservas.resultado.reembolso_en_camino',
+                )}
+                {` (${reserva.reembolso.montoPasajero} URC)`}
+              </Aviso>
+            )}
             {reserva.exploradorUrl && (
               <Boton
                 variante="texto"
@@ -248,6 +270,21 @@ export default function ReservaPantalla() {
             {/* HU-22: cada pasajero hace su abordaje (RN-7); la ventana la decide el servidor. */}
             {/* HU-23: a bordo, el seguimiento y la bajada. */}
             {reserva && <AccionDeReserva reserva={reserva} anchoCompleto />}
+            {/* HU-20: cancelar reserva confirmada */}
+            {estado === 'confirmada' &&
+              reserva.cancelacion?.cancelable !== false && (
+                <Boton
+                  anchoCompleto
+                  variante="secundario"
+                  icono="cancel"
+                  etiqueta={t('reservas.cancelar.boton_confirmar')}
+                  alPresionar={() =>
+                    router.push(
+                      `/cancelar?reservaId=${reserva.reservaId}` as never,
+                    )
+                  }
+                />
+              )}
             <Boton
               anchoCompleto
               variante={
