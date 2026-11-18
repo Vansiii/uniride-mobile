@@ -49,11 +49,14 @@ export function Trayecto({
   );
 }
 
-/** D-17: sin reseñas se dice «Nuevo», nunca estrellas vacías. */
+/** D-17: con menos de 3 calificaciones se dice «Nuevo», nunca estrellas vacías; desde 3, el promedio con su cantidad (HU-21). */
 export function InsigniasConductor({
   conductor,
 }: {
-  conductor: Pick<ViajeEncontrado['conductor'], 'verificado' | 'esNuevo'>;
+  conductor: Pick<
+    ViajeEncontrado['conductor'],
+    'verificado' | 'esNuevo' | 'calificacionPromedio' | 'calificaciones'
+  >;
 }) {
   return (
     <View style={estilos.insignias}>
@@ -63,6 +66,16 @@ export function InsigniasConductor({
           estado="verificado"
           texto={t('viajes.buscar.verificado')}
         />
+      )}
+      {conductor.calificacionPromedio !== null && (
+        <Text style={estilos.promedio}>
+          {`★ ${con('viajes.buscar.promedio', {
+            promedio: conductor.calificacionPromedio
+              .toFixed(1)
+              .replace('.', ','),
+            cantidad: conductor.calificaciones,
+          })}`}
+        </Text>
       )}
       {conductor.esNuevo && (
         <EtiquetaEstado
@@ -224,7 +237,13 @@ const estilos = StyleSheet.create({
   cuposUltimo: { backgroundColor: colores.avisoSuave },
   textoCupos: { ...tipografia.pequeno, color: colores.textoSecundario },
   textoCuposUltimo: { color: colores.avisoTexto },
-  insignias: { flexDirection: 'row', flexWrap: 'wrap', gap: espacio(1) },
+  insignias: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: espacio(1),
+  },
+  promedio: { ...tipografia.secundario, color: colores.texto },
   avatar: {
     width: 36,
     height: 36,

@@ -657,6 +657,8 @@ export interface ViajeEncontrado {
     nombre: string;
     verificado: boolean;
     calificacionPromedio: number | null;
+    /** HU-21: cantidad de calificaciones recibidas; el promedio sale desde 3. */
+    calificaciones: number;
     esNuevo: boolean;
     miembroDesde: string;
   };
@@ -800,6 +802,34 @@ export const reservarAsiento = (
 /** Sin firma: consultar nunca pide la huella. */
 export const consultarReserva = (id: string) =>
   solicitar<ReservaDetalle>(`/reservas/${encodeURIComponent(id)}`, 'GET');
+
+/** HU-21: estado de la calificación de una reserva para quien la consulta. */
+export interface EstadoCalificacion {
+  puedoCalificar: boolean;
+  /** Fin del plazo de 7 días desde el pago; `null` si la reserva no está pagada. */
+  plazoHasta: string | null;
+  destinatario: string;
+  /** Calificación ciega: solo si ya calificaste o venció el plazo. */
+  recibida?: { estrellas: number; comentario: string | null };
+}
+
+export const consultarCalificacion = (reservaId: string) =>
+  solicitar<EstadoCalificacion>(
+    `/reservas/${encodeURIComponent(reservaId)}/calificaciones`,
+    'GET',
+  );
+
+/** HU-21: no mueve dinero, así que basta la sesión (sin firma ni huella). */
+export const calificarReserva = (
+  reservaId: string,
+  estrellas: number,
+  comentario?: string,
+) =>
+  solicitar<{ id: string }>(
+    `/reservas/${encodeURIComponent(reservaId)}/calificaciones`,
+    'POST',
+    { estrellas, ...(comentario?.trim() && { comentario: comentario.trim() }) },
+  );
 
 /** HU-20: Cancelación de reserva por el pasajero con huella biométrica (HU-29). */
 export const cancelarReserva = (
