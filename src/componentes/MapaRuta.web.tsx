@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { abrirHttps } from '@/enlaces';
 import { t } from '@/i18n';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import { espacio, radio, tipografia } from '@/tema/tokens';
+import { crearEstilos } from '@/tema/useEstilos';
 
 const ALTO = 112;
 const TAM_TESELA = 256;
@@ -49,6 +50,7 @@ export function Teselas({
   ancho: number;
   alto: number;
 }) {
+  const estilos = useEstilos();
   const teselas: { x: number; y: number }[] = [];
   const total = 2 ** zoom;
   if (ancho)
@@ -87,6 +89,7 @@ export function Teselas({
 
 /** Atribución obligatoria de OpenStreetMap. */
 export function AtribucionMapa() {
+  const estilos = useEstilos();
   return (
     <Text
       accessibilityRole="link"
@@ -128,6 +131,7 @@ export function MapaRuta({
   alto?: number;
   redondeo?: number;
 }) {
+  const estilos = useEstilos();
   const [ancho, setAncho] = useState(0);
   const zoom = ancho ? zoomParaVer(origen, destino, ancho) : 0;
   const po = aPixel(origen, zoom);
@@ -176,7 +180,7 @@ export function MapaRuta({
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   mapa: {
     height: ALTO,
     overflow: 'hidden',
@@ -203,4 +207,4 @@ const estilos = StyleSheet.create({
     color: colores.texto,
     backgroundColor: colores.superficie,
   },
-});
+}));

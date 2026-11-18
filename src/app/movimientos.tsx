@@ -1,13 +1,6 @@
 import { Redirect, router, useFocusEffect } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, FlatList, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   consultarMovimientos,
@@ -25,7 +18,9 @@ import { Aviso } from '@/componentes/Mensajes';
 import { useSesion } from '@/contexto/sesion';
 import { claveDia, formatearDia, formatearMonto } from '@/formato';
 import { t } from '@/i18n';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import { espacio, radio, tipografia } from '@/tema/tokens';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
+import { BarraEstado } from '@/componentes/BarraEstado';
 
 type Filtro = 'todos' | 'recargas' | 'pagos' | 'reembolsos';
 
@@ -92,6 +87,8 @@ export default function MovimientosPantalla() {
 }
 
 function Contenido() {
+  const colores = useColores();
+  const estilos = useEstilos();
   const { cargando, usuario } = useSesion();
   const { top, bottom } = useSafeAreaInsets();
   const [filtro, setFiltro] = useState<Filtro>('todos');
@@ -286,7 +283,7 @@ function Contenido() {
   return (
     <View style={estilos.raiz}>
       {/* La pestaña Billetera deja la barra de estado clara (zona de marca): aquí el fondo es blanco. */}
-      <StatusBar style="dark" />
+      <BarraEstado />
       <View style={[estilos.barra, { paddingTop: top }]}>
         <BotonIcono
           icono="arrow_back"
@@ -391,7 +388,7 @@ function Contenido() {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   barra: {
     minHeight: 56,
@@ -460,4 +457,4 @@ const estilos = StyleSheet.create({
     gap: espacio(2),
   },
   bloque: { gap: espacio(3) },
-});
+}));

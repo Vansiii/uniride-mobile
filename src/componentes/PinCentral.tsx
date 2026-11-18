@@ -7,6 +7,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { resorte } from '@/tema/tokens';
+import { crearEstilos } from '@/tema/useEstilos';
 
 // El dibujo mide 40 × 56: la punta queda en el borde inferior de la caja.
 export const ANCHO_PIN = 44;
@@ -18,6 +19,7 @@ const ELEVACION = 16;
  * resorte al soltarlo; su sombra se encoge y se oscurece al despegarse. La punta marca el centro del contenedor.
  */
 export function PinCentral({ moviendo }: { moviendo: boolean }) {
+  const estilos = useEstilos();
   const elevado = useSharedValue(0);
   useEffect(() => {
     elevado.set(withSpring(moviendo ? 1 : 0, resorte));
@@ -49,7 +51,7 @@ export function PinCentral({ moviendo }: { moviendo: boolean }) {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   centro: {
     ...StyleSheet.absoluteFill,
     alignItems: 'center',
@@ -64,4 +66,4 @@ const estilos = StyleSheet.create({
     borderRadius: 9,
     backgroundColor: '#0F1729',
   },
-});
+}));

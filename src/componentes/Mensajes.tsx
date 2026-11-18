@@ -1,15 +1,19 @@
 import type { ComponentProps, ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import { Text, View } from 'react-native';
+import type { Paleta } from '@/tema/paletas';
+import { espacio, radio, tipografia } from '@/tema/tokens';
 import { Icono } from './Icono';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
 
 type Tono = 'info' | 'exito' | 'aviso' | 'peligro';
 type NombreIcono = ComponentProps<typeof Icono>['nombre'];
 
-const tonos: Record<
+const tonos = (
+  colores: Paleta,
+): Record<
   Tono,
   { fondo: string; texto: string; icono: string; simbolo: NombreIcono }
-> = {
+> => ({
   info: {
     fondo: colores.primarioSuave,
     texto: colores.primarioTexto,
@@ -34,7 +38,7 @@ const tonos: Record<
     icono: colores.peligro,
     simbolo: 'error',
   },
-};
+});
 
 /** Mensaje persistente en contexto (8.6). */
 export function Aviso({
@@ -46,7 +50,9 @@ export function Aviso({
   titulo?: string;
   children: ReactNode;
 }) {
-  const c = tonos[tono];
+  const colores = useColores();
+  const estilos = useEstilos();
+  const c = tonos(colores)[tono];
   return (
     <View
       accessibilityRole={
@@ -99,11 +105,11 @@ const estados: Record<string, [Tono | 'neutro', NombreIcono]> = {
 };
 
 /** Tono neutro de la tabla 4.1.2: fondo sutil, texto secundario y borde. */
-const neutro = {
+const neutro = (colores: Paleta) => ({
   fondo: colores.fondoSutil,
   texto: colores.textoSecundario,
   icono: colores.textoSecundario,
-};
+});
 
 export function EtiquetaEstado({
   dominio,
@@ -115,8 +121,10 @@ export function EtiquetaEstado({
   /** Texto visible ya traducido. */
   texto: string;
 }) {
+  const colores = useColores();
+  const estilos = useEstilos();
   const [tono, simbolo] = estados[`${dominio}.${estado}`] ?? ['info', 'info'];
-  const c = tono === 'neutro' ? neutro : tonos[tono];
+  const c = tono === 'neutro' ? neutro(colores) : tonos(colores)[tono];
   return (
     <View
       style={[
@@ -131,7 +139,7 @@ export function EtiquetaEstado({
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   aviso: {
     flexDirection: 'row',
     gap: espacio(3),
@@ -154,4 +162,4 @@ const estilos = StyleSheet.create({
   },
   bordeNeutro: { borderWidth: 1, borderColor: colores.borde },
   textoEtiqueta: { ...tipografia.pequeno },
-});
+}));

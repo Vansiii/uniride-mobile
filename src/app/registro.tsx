@@ -1,12 +1,6 @@
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text } from 'react-native';
 import { ErrorApi, registrar } from '@/api/cliente';
 import { useSesion } from '@/contexto/sesion';
 import { Entra } from '@/componentes/Animado';
@@ -16,13 +10,8 @@ import { Casilla } from '@/componentes/Casilla';
 import { BandaMarca, ZonaAccion } from '@/componentes/Estructura';
 import { Aviso } from '@/componentes/Mensajes';
 import { formatearHora, t } from '@/i18n';
-import {
-  colores,
-  espacio,
-  radio,
-  sombraElevada,
-  tipografia,
-} from '@/tema/tokens';
+import { espacio, radio, sombraElevada, tipografia } from '@/tema/tokens';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
 
 type Campos = 'nombre' | 'correo' | 'contrasena' | 'consentimiento';
 type Errores = Partial<Record<Campos, string>>;
@@ -73,6 +62,8 @@ function fallaDe(error: unknown): Falla {
 }
 
 export default function Registro() {
+  const colores = useColores();
+  const estilos = useEstilos();
   const { usuario } = useSesion();
   const [nombre, setNombre] = useState('');
   const [correo, setCorreo] = useState('');
@@ -239,7 +230,7 @@ export default function Registro() {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   desplazable: { flexGrow: 1, paddingBottom: espacio(4) },
   titulo: { ...tipografia.pantalla, color: colores.sobreMarca },
@@ -257,4 +248,4 @@ const estilos = StyleSheet.create({
     backgroundColor: colores.superficie,
     ...sombraElevada,
   },
-});
+}));

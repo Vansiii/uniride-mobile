@@ -9,7 +9,6 @@ import {
   Pressable,
   ScrollView,
   type ScrollViewInstance,
-  StyleSheet,
   Text,
   type TextInputInstance,
   View,
@@ -49,7 +48,6 @@ import {
 import { con, t } from '@/i18n';
 import { Lugar } from '@/servicios/geocoding';
 import {
-  colores,
   espacio,
   radio,
   tipografia,
@@ -63,6 +61,7 @@ import {
   medianoche,
   salidaPorOmision,
 } from '@/viajes/salida';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
 
 const MINUTO_MS = 60_000;
 const DIA_MS = 24 * 60 * MINUTO_MS;
@@ -156,6 +155,8 @@ export default function PublicarPantalla() {
 }
 
 function Contenido() {
+  const colores = useColores();
+  const estilos = useEstilos();
   const { cargando, usuario } = useSesion();
   const { top } = useSafeAreaInsets();
   const [requisitos, setRequisitos] = useState<Requisitos | null>(null);
@@ -798,7 +799,7 @@ function Contenido() {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { flex: 1, backgroundColor: colores.fondo },
   raizSutil: { flex: 1, backgroundColor: colores.fondoSutil },
   centrado: {
@@ -916,4 +917,4 @@ const estilos = StyleSheet.create({
     justifyContent: 'space-between',
     gap: espacio(2),
   },
-});
+}));

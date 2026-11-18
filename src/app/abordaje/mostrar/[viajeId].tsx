@@ -1,7 +1,6 @@
-import { StatusBar } from 'expo-status-bar';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   consultarDesafio,
@@ -27,7 +26,7 @@ import {
 import { useAccionSensible } from '@/hooks/useAccionSensible';
 import { con, t } from '@/i18n';
 import { posicionParaEncuentro } from '@/servicios/ubicacion';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import { espacio, radio, tipografia } from '@/tema/tokens';
 import {
   type FallaAbordaje,
   fallaDeAbordaje,
@@ -38,12 +37,15 @@ import {
   yaAbordo,
 } from '@/viajes/abordaje';
 import { iniciarSeguimiento, llaveDelSeguimiento } from '@/viajes/seguimiento';
+import { crearEstilos } from '@/tema/useEstilos';
+import { BarraEstado } from '@/componentes/BarraEstado';
 
 /**
  * «Mostrar código» del conductor (HU-22 CA-1, DESIGN_SYSTEM §10.4): una huella al entrar registra la llave de
  * trayecto; desde ahí el QR se renueva solo, firmado con esa llave y la posición del momento, sin pedir otra huella.
  */
 export default function MostrarCodigoPantalla() {
+  const estilos = useEstilos();
   const { cargando, usuario } = useSesion();
   const { top } = useSafeAreaInsets();
   const { viajeId, tipo: tipoParam } = useLocalSearchParams<{
@@ -212,7 +214,7 @@ export default function MostrarCodigoPantalla() {
 
   return (
     <View style={estilos.raiz}>
-      <StatusBar style="dark" />
+      <BarraEstado />
       <View style={[estilos.barra, { paddingTop: top + espacio(2) }]}>
         <BotonIcono
           icono="close"
@@ -350,7 +352,7 @@ export default function MostrarCodigoPantalla() {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { flex: 1, backgroundColor: colores.superficie },
   barra: {
     flexDirection: 'row',
@@ -389,4 +391,4 @@ const estilos = StyleSheet.create({
   subtitulo: { ...tipografia.subtitulo, color: colores.texto },
   enfasis: { ...tipografia.cuerpoEnfasis, color: colores.texto },
   secundario: { ...tipografia.secundario, color: colores.textoSecundario },
-});
+}));

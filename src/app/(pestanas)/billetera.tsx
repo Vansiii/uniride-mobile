@@ -2,7 +2,7 @@ import * as Portapapeles from 'expo-clipboard';
 import { Redirect, router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ComponentProps } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import {
   Billetera,
   consultarEstadoIdentidad,
@@ -33,7 +33,6 @@ import { formatearMonto } from '@/formato';
 import { t } from '@/i18n';
 import { useVoz } from '@/voz/useVoz';
 import {
-  colores,
   espacio,
   radio,
   degradadoBoton,
@@ -41,6 +40,7 @@ import {
   sombraElevada,
   sombraTarjeta,
 } from '@/tema/tokens';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
 
 type Vista =
   | { tipo: 'cargando' }
@@ -129,6 +129,8 @@ const SALDO_NUEVO: Saldo = {
 };
 
 function Contenido() {
+  const colores = useColores();
+  const estilos = useEstilos();
   const { cargando, usuario } = useSesion();
   const [vista, setVista] = useState<Vista>({ tipo: 'cargando' });
   const [copia, setCopia] = useState<'ok' | 'fallo' | null>(null);
@@ -544,6 +546,8 @@ function Baldosa({
   alPresionar: () => void;
   destacada?: boolean;
 }) {
+  const colores = useColores();
+  const estilos = useEstilos();
   const color = destacada ? colores.sobrePrimario : colores.primario;
   return (
     <Toque
@@ -562,7 +566,7 @@ function Baldosa({
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   baldosa: {
     flex: 1,
     minHeight: 96,
@@ -658,4 +662,4 @@ const estilos = StyleSheet.create({
   secundario: { ...tipografia.secundario, color: colores.textoSecundario },
   direccion: { ...tipografia.cuerpoEnfasis, color: colores.texto },
   enlace: { ...tipografia.cuerpoEnfasis, color: colores.primario },
-});
+}));

@@ -2,7 +2,6 @@ import { Ref, useRef, useState } from 'react';
 import {
   Keyboard,
   Pressable,
-  StyleSheet,
   Text,
   type TextInputInstance,
   View,
@@ -19,7 +18,8 @@ import {
   Lugar,
   nombreDePunto,
 } from '@/servicios/geocoding';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import { espacio, radio, tipografia } from '@/tema/tokens';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
 
 const MINIMO_BUSQUEDA = 3;
 
@@ -45,6 +45,8 @@ export function SelectorLugar({
   conMapa = false,
   soloMapa = false,
 }: Props) {
+  const colores = useColores();
+  const estilos = useEstilos();
   const [enMapa, setEnMapa] = useState(false);
   const [texto, setTexto] = useState('');
   const [resultados, setResultados] = useState<Lugar[] | null>(null);
@@ -230,7 +232,7 @@ export function SelectorLugar({
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { gap: espacio(2), alignItems: 'stretch' },
   fila: {
     minHeight: 48,
@@ -276,4 +278,4 @@ const estilos = StyleSheet.create({
   textos: { flex: 1, gap: 2 },
   nombre: { ...tipografia.cuerpoEnfasis, color: colores.texto },
   detalle: { ...tipografia.secundario, color: colores.textoSecundario },
-});
+}));

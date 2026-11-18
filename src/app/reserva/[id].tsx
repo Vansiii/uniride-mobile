@@ -1,7 +1,6 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
-import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   consultarDistanciaConductor,
@@ -26,13 +25,9 @@ import { formatearDia, formatearHoraLocal, formatearMonto } from '@/formato';
 import { con, t } from '@/i18n';
 import { formatoDistanciaMetros } from '@/voz/respuestas';
 import { useVoz } from '@/voz/useVoz';
-import {
-  colores,
-  espacio,
-  radio,
-  sombraTarjeta,
-  tipografia,
-} from '@/tema/tokens';
+import { espacio, radio, sombraTarjeta, tipografia } from '@/tema/tokens';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
+import { BarraEstado } from '@/componentes/BarraEstado';
 
 const TEXTOS: Partial<Record<EstadoReserva, [string, string]>> = {
   pendiente: [
@@ -66,6 +61,8 @@ const AVISO_DEMORA_MS = 30_000;
  * «No se completó». Solo el servidor dice el estado; la app lo pregunta cada pocos segundos mientras esté pendiente.
  */
 export default function ReservaPantalla() {
+  const colores = useColores();
+  const estilos = useEstilos();
   const { cargando, usuario } = useSesion();
   const { top } = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -142,7 +139,7 @@ export default function ReservaPantalla() {
 
   return (
     <View style={estilos.raiz}>
-      <StatusBar style="dark" />
+      <BarraEstado />
       <View style={[estilos.barra, { paddingTop: top }]}>
         <BotonIcono
           icono="close"
@@ -358,7 +355,7 @@ export default function ReservaPantalla() {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   barra: {
     minHeight: 56,
@@ -411,4 +408,4 @@ const estilos = StyleSheet.create({
   subtitulo: { ...tipografia.subtitulo, color: colores.texto },
   enfasis: { ...tipografia.cuerpoEnfasis, color: colores.texto },
   secundario: { ...tipografia.secundario, color: colores.textoSecundario },
-});
+}));

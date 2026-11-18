@@ -1,14 +1,9 @@
 import { useEffect, useState } from 'react';
 import type { ComponentProps } from 'react';
-import {
-  AccessibilityInfo,
-  Animated,
-  Easing,
-  StyleSheet,
-  View,
-} from 'react-native';
-import { colores, duracion, radio } from '@/tema/tokens';
+import { AccessibilityInfo, Animated, Easing, View } from 'react-native';
+import { duracion, radio } from '@/tema/tokens';
 import { Icono } from './Icono';
+import { crearEstilos } from '@/tema/useEstilos';
 
 interface Props {
   icono: ComponentProps<typeof Icono>['nombre'];
@@ -22,6 +17,7 @@ interface Props {
  * que entra con `entradaResultado` (escala 0,6 → 1). Decorativa.
  */
 export function Ilustracion({ icono, color }: Props) {
+  const estilos = useEstilos();
   const [escala] = useState(() => new Animated.Value(0.6));
   useEffect(() => {
     let vigente = true;
@@ -73,7 +69,7 @@ export function Ilustracion({ icono, color }: Props) {
 }
 
 // Coordenadas sobre la caja de 176 × 160 de la escena web (marca/ y Estados.tsx de web/).
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   escena: { width: 176, height: 160, alignSelf: 'center' },
   fondo: {
     position: 'absolute',
@@ -136,4 +132,4 @@ const estilos = StyleSheet.create({
     backgroundColor: colores.superficie,
     elevation: 3,
   },
-});
+}));

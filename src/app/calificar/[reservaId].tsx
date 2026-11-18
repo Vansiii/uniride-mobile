@@ -1,7 +1,6 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   calificarReserva,
@@ -16,7 +15,9 @@ import { ZonaAccion } from '@/componentes/Estructura';
 import { Aviso } from '@/componentes/Mensajes';
 import { useSesion } from '@/contexto/sesion';
 import { con, t } from '@/i18n';
-import { colores, espacio, radio, tamano, tipografia } from '@/tema/tokens';
+import { espacio, radio, tamano, tipografia } from '@/tema/tokens';
+import { crearEstilos } from '@/tema/useEstilos';
+import { BarraEstado } from '@/componentes/BarraEstado';
 
 const ESTRELLAS = [1, 2, 3, 4, 5];
 const MAXIMO_COMENTARIO = 140;
@@ -38,6 +39,7 @@ const TEXTO_ERROR: Record<string, string> = {
 
 /** HU-21: estrellas de 1 a 5 y comentario opcional. No mueve dinero: basta la sesión. */
 export default function CalificarPantalla() {
+  const estilos = useEstilos();
   const { cargando: cargandoSesion, usuario } = useSesion();
   const { top } = useSafeAreaInsets();
   const { reservaId } = useLocalSearchParams<{ reservaId: string }>();
@@ -88,7 +90,7 @@ export default function CalificarPantalla() {
   const nombre = estado?.destinatario ?? '';
   return (
     <View style={estilos.raiz}>
-      <StatusBar style="dark" />
+      <BarraEstado />
       <View style={[estilos.barra, { paddingTop: top }]}>
         <BotonIcono
           icono="close"
@@ -213,7 +215,7 @@ export default function CalificarPantalla() {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   barra: {
     minHeight: 56,
@@ -243,4 +245,4 @@ const estilos = StyleSheet.create({
   glifo: { fontSize: 36, color: colores.textoPlaceholder },
   glifoActivo: { color: colores.primario },
   campo: { alignSelf: 'stretch' },
-});
+}));

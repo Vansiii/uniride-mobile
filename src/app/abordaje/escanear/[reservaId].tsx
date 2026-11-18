@@ -1,6 +1,5 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
-import { StatusBar } from 'expo-status-bar';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -35,7 +34,7 @@ import {
 import { useAccionSensible } from '@/hooks/useAccionSensible';
 import { con, t } from '@/i18n';
 import { posicionParaEncuentro } from '@/servicios/ubicacion';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import { espacio, radio, tipografia } from '@/tema/tokens';
 import {
   type FallaAbordaje,
   fallaDeAbordaje,
@@ -48,6 +47,8 @@ import {
   enviarCola,
   iniciarSeguimiento,
 } from '@/viajes/seguimiento';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
+import { BarraEstado } from '@/componentes/BarraEstado';
 
 type Paso =
   | { tipo: 'escanear' }
@@ -63,6 +64,8 @@ type Paso =
  * de trayecto; el servidor decide y la pantalla solo muestra su respuesta.
  */
 export default function EscanearCodigoPantalla() {
+  const colores = useColores();
+  const estilos = useEstilos();
   const { cargando, usuario } = useSesion();
   const { top } = useSafeAreaInsets();
   const { reservaId, tipo: tipoParam } = useLocalSearchParams<{
@@ -216,7 +219,7 @@ export default function EscanearCodigoPantalla() {
 
   return (
     <View style={estilos.raiz}>
-      <StatusBar style="dark" />
+      <BarraEstado />
       <View style={[estilos.barra, { paddingTop: top + espacio(2) }]}>
         <BotonIcono
           icono="close"
@@ -357,7 +360,7 @@ const textoMotivo = (motivo: MotivoTrayecto | null) =>
       : 'presencia.trayecto.verificacion_fallida',
   );
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { flex: 1, backgroundColor: colores.superficie },
   barra: {
     flexDirection: 'row',
@@ -395,4 +398,4 @@ const estilos = StyleSheet.create({
     color: colores.textoSecundario,
     textAlign: 'center',
   },
-});
+}));

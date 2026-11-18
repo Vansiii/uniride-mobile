@@ -1,7 +1,6 @@
 import type { ComponentProps } from 'react';
-import { ActivityIndicator, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, Text } from 'react-native';
 import {
-  colores,
   degradadoBoton,
   espacio,
   radio,
@@ -10,6 +9,8 @@ import {
 } from '@/tema/tokens';
 import { Toque } from './Animado';
 import { Icono } from './Icono';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
+import type { Paleta } from '@/tema/paletas';
 
 type NombreIcono = ComponentProps<typeof Icono>['nombre'];
 
@@ -27,12 +28,13 @@ interface Props {
   deshabilitado?: boolean;
 }
 
-const colorTexto = {
-  primario: colores.sobrePrimario,
-  secundario: colores.primarioTexto,
-  texto: colores.primario,
-  suave: colores.primarioTexto,
-} as const;
+const colorTexto = (colores: Paleta) =>
+  ({
+    primario: colores.sobrePrimario,
+    secundario: colores.primarioTexto,
+    texto: colores.primario,
+    suave: colores.primarioTexto,
+  }) as const;
 
 export function Boton({
   etiqueta,
@@ -43,9 +45,11 @@ export function Boton({
   anchoCompleto = false,
   deshabilitado = false,
 }: Props) {
+  const colores = useColores();
+  const estilos = useEstilos();
   const color = deshabilitado
     ? colores.textoDeshabilitado
-    : colorTexto[variante];
+    : colorTexto(colores)[variante];
   return (
     <Toque
       accessibilityRole="button"
@@ -79,7 +83,7 @@ export function BotonIcono({
   icono,
   etiqueta,
   alPresionar,
-  color = colores.textoSecundario,
+  color,
   deshabilitado = false,
 }: {
   icono: NombreIcono;
@@ -89,6 +93,8 @@ export function BotonIcono({
   color?: string;
   deshabilitado?: boolean;
 }) {
+  const colores = useColores();
+  const estilos = useEstilos();
   return (
     <Toque
       accessibilityRole="button"
@@ -99,12 +105,12 @@ export function BotonIcono({
       escala={0.86}
       style={[estilos.icono, deshabilitado && { opacity: 0.5 }]}
     >
-      <Icono nombre={icono} color={color} />
+      <Icono nombre={icono} color={color ?? colores.textoSecundario} />
     </Toque>
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   base: {
     minHeight: tamano.altoControl,
     paddingHorizontal: espacio(6),
@@ -151,4 +157,4 @@ const estilos = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-});
+}));

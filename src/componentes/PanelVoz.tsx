@@ -3,16 +3,16 @@ import {
   Linking,
   Modal,
   Pressable,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import { espacio, radio, tipografia } from '@/tema/tokens';
 import { t } from '@/i18n';
 import type { EstadoVoz } from '../voz/useVoz';
 import { Boton, BotonIcono } from './Boton';
 import { Icono } from './Icono';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
 
 interface Props {
   visible: boolean;
@@ -39,6 +39,8 @@ export function PanelVoz({
   alReintentar,
   alUsarTeclado,
 }: Props) {
+  const colores = useColores();
+  const estilos = useEstilos();
   const { bottom } = useSafeAreaInsets();
 
   if (!visible && estado === 'inactivo') return null;
@@ -210,7 +212,7 @@ export function PanelVoz({
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   telon: {
     flex: 1,
     backgroundColor: 'rgba(15, 23, 41, 0.45)',
@@ -281,4 +283,4 @@ const estilos = StyleSheet.create({
     gap: espacio(3),
     marginTop: espacio(2),
   },
-});
+}));

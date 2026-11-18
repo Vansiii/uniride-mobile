@@ -1,6 +1,6 @@
 import { Redirect, router } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   consultarMisReservas,
@@ -20,7 +20,8 @@ import { useSesion } from '@/contexto/sesion';
 import { useAlEnfocar } from '@/hooks/useAlEnfocar';
 import { t } from '@/i18n';
 import { useVoz } from '@/voz/useVoz';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import { espacio, radio, tipografia } from '@/tema/tokens';
+import { crearEstilos } from '@/tema/useEstilos';
 
 /** «Mis viajes» (HU-19 CA-14): lo que reservé como pasajero y lo que ofrezco como conductor. */
 export default function MisViajesPantalla() {
@@ -30,6 +31,7 @@ export default function MisViajesPantalla() {
 }
 
 function Contenido() {
+  const estilos = useEstilos();
   const { cargando, usuario } = useSesion();
   const { top } = useSafeAreaInsets();
   const [reservas, setReservas] = useState<Reserva[]>();
@@ -161,7 +163,7 @@ function Contenido() {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   contenido: { gap: espacio(4), padding: espacio(4), paddingBottom: 120 },
   filaEncabezado: {
@@ -174,4 +176,4 @@ const estilos = StyleSheet.create({
   seccion: { gap: espacio(3) },
   vacio: { gap: espacio(3), alignItems: 'stretch' },
   secundario: { ...tipografia.secundario, color: colores.textoSecundario },
-});
+}));

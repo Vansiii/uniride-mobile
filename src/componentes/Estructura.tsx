@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import type { ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   Easing,
@@ -11,7 +11,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useEffect } from 'react';
-import { colores, degradadoMarca, espacio, radio } from '@/tema/tokens';
+import { degradadoMarca, espacio, radio } from '@/tema/tokens';
+import { crearEstilos } from '@/tema/useEstilos';
 
 /** Esfera lima que flota despacio: da vida a la cabecera sin competir con el contenido. */
 function Orbe({
@@ -50,6 +51,7 @@ function Orbe({
  * redondeadas y la U de la marca de fondo. La acción primaria nunca va dentro.
  */
 export function BandaMarca({ children }: { children: ReactNode }) {
+  const estilos = useEstilos();
   const { top } = useSafeAreaInsets();
   return (
     <View style={[estilos.banda, { paddingTop: top + espacio(6) }]}>
@@ -75,6 +77,7 @@ export function ZonaAccion({
   /** Sobre la barra de pestañas, que ya deja el margen del sistema. */
   enPestanas?: boolean;
 }) {
+  const estilos = useEstilos();
   const { bottom } = useSafeAreaInsets();
   return (
     <View
@@ -90,7 +93,7 @@ export function ZonaAccion({
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   banda: {
     overflow: 'hidden',
     gap: espacio(3),
@@ -143,4 +146,4 @@ const estilos = StyleSheet.create({
     borderTopColor: colores.borde,
     backgroundColor: colores.fondo,
   },
-});
+}));

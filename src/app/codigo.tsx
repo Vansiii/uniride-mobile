@@ -1,7 +1,6 @@
-import { StatusBar } from 'expo-status-bar';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ErrorApi, PropositoCodigo, reenviarCodigo } from '@/api/cliente';
 import { useSesion } from '@/contexto/sesion';
@@ -10,7 +9,9 @@ import { CampoCodigo } from '@/componentes/CampoCodigo';
 import { Ilustracion } from '@/componentes/Ilustracion';
 import { Aviso } from '@/componentes/Mensajes';
 import { formatearHora, t } from '@/i18n';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import { espacio, radio, tipografia } from '@/tema/tokens';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
+import { BarraEstado } from '@/componentes/BarraEstado';
 
 interface Mensaje {
   tono: 'info' | 'aviso' | 'peligro';
@@ -33,6 +34,8 @@ const fallasDeOrganizacion: Record<string, string> = {
 
 /** Pantalla compartida: confirma el correo del registro (HU-05) o el de otra organización (HU-07). */
 export default function Codigo() {
+  const colores = useColores();
+  const estilos = useEstilos();
   const { cargando, usuario, confirmarCodigo, confirmarOrganizacion } =
     useSesion();
   const { top } = useSafeAreaInsets();
@@ -169,7 +172,7 @@ export default function Codigo() {
 
   return (
     <View style={estilos.raiz}>
-      <StatusBar style="dark" />
+      <BarraEstado />
       <View style={[estilos.encabezado, { paddingTop: top }]}>
         <BotonIcono
           icono="arrow_back"
@@ -240,7 +243,7 @@ export default function Codigo() {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   encabezado: {
     minHeight: 56,
@@ -288,4 +291,4 @@ const estilos = StyleSheet.create({
     fontVariant: ['tabular-nums'],
     color: colores.textoDeshabilitado,
   },
-});
+}));

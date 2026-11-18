@@ -68,6 +68,24 @@
           "subtitulo": "Usa tu huella o rostro para continuar."
         }
       }
+    },
+    "apariencia": {
+      "titulo": "Apariencia",
+      "tema": "Tema",
+      "automatico": "Automático",
+      "claro": "Claro",
+      "oscuro": "Oscuro",
+      "texto": "Tamaño de texto",
+      "normal": "Normal",
+      "grande": "Grande",
+      "muy_grande": "Muy grande",
+      "contraste": "Alto contraste",
+      "contraste_ayuda": "Texto y bordes más marcados para leer mejor.",
+      "opcion_tema": "Tema {opcion}",
+      "opcion_texto": "Texto {opcion}",
+      "seleccionada": "seleccionado",
+      "no_guardada": "No pudimos guardar tu elección; se aplica solo en esta sesión.",
+      "ayuda": "Se guarda solo en este teléfono."
     }
   },
   "autenticacion": {
@@ -158,6 +176,9 @@
     },
     "ayuda": {
       "titulo": "Comandos de voz y ayuda"
+    },
+    "apariencia": {
+      "titulo": "Apariencia"
     }
   },
   "inicio": {

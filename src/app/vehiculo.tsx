@@ -1,4 +1,3 @@
-import { StatusBar } from 'expo-status-bar';
 import { Image } from 'expo-image';
 import * as SelectorImagen from 'expo-image-picker';
 import { Redirect, router } from 'expo-router';
@@ -7,7 +6,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -28,13 +26,14 @@ import { ZonaAccion } from '@/componentes/Estructura';
 import { Aviso } from '@/componentes/Mensajes';
 import { t } from '@/i18n';
 import {
-  colores,
   degradadoSaldo,
   espacio,
   radio,
   sombraTarjeta,
   tipografia,
 } from '@/tema/tokens';
+import { crearEstilos } from '@/tema/useEstilos';
+import { BarraEstado } from '@/componentes/BarraEstado';
 
 type Campos =
   | 'placa'
@@ -101,6 +100,7 @@ function fallaDe(error: unknown): Falla {
 
 /** Registrar vehículo (HU-11): un vehículo por persona; ya registrado, se muestra sin la foto (CA-7). */
 export default function VehiculoPantalla() {
+  const estilos = useEstilos();
   const { cargando, usuario } = useSesion();
   const { top } = useSafeAreaInsets();
   const [consultando, setConsultando] = useState(true);
@@ -259,7 +259,7 @@ export default function VehiculoPantalla() {
       style={estilos.raiz}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <StatusBar style="dark" />
+      <BarraEstado />
       <View style={[estilos.encabezado, { paddingTop: top }]}>
         <BotonIcono
           icono="arrow_back"
@@ -471,6 +471,7 @@ function Dato({
   valor: string;
   destacado?: boolean;
 }) {
+  const estilos = useEstilos();
   return (
     <View style={destacado ? estilos.datoDestacado : estilos.dato}>
       <Text style={destacado ? estilos.etiquetaPlaca : estilos.etiqueta}>
@@ -481,7 +482,7 @@ function Dato({
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   encabezado: {
     minHeight: 56,
@@ -546,4 +547,4 @@ const estilos = StyleSheet.create({
     backgroundColor: colores.fondoSutil,
   },
   errorFoto: { ...tipografia.secundario, color: colores.peligro },
-});
+}));

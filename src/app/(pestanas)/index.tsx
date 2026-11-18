@@ -1,12 +1,6 @@
 import { Redirect, router } from 'expo-router';
 import type { ComponentProps } from 'react';
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { Entra, Toque } from '@/componentes/Animado';
 import { useSesion } from '@/contexto/sesion';
 import { Boton } from '@/componentes/Boton';
@@ -18,13 +12,8 @@ import { PanelVoz } from '@/componentes/PanelVoz';
 import { ViajeActivo } from '@/componentes/ViajeActivo';
 import { t } from '@/i18n';
 import { useVoz } from '@/voz/useVoz';
-import {
-  colores,
-  espacio,
-  radio,
-  sombraTarjeta,
-  tipografia,
-} from '@/tema/tokens';
+import { espacio, radio, sombraTarjeta, tipografia } from '@/tema/tokens';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
 
 /** Atajo cuadrado: ícono en círculo y rótulo corto. */
 function Atajo({
@@ -36,6 +25,8 @@ function Atajo({
   etiqueta: string;
   alPresionar: () => void;
 }) {
+  const colores = useColores();
+  const estilos = useEstilos();
   return (
     <Toque
       accessibilityRole="button"
@@ -54,6 +45,8 @@ function Atajo({
 }
 
 export default function Inicio() {
+  const colores = useColores();
+  const estilos = useEstilos();
   const { cargando, usuario } = useSesion();
   const voz = useVoz();
   if (cargando) {
@@ -165,7 +158,7 @@ export default function Inicio() {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   atajos: {
     flexDirection: 'row',
     gap: espacio(3),
@@ -245,4 +238,4 @@ const estilos = StyleSheet.create({
     flexShrink: 1,
     color: colores.sobreMarca,
   },
-});
+}));

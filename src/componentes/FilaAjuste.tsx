@@ -1,8 +1,9 @@
 import type { ComponentProps } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { colores, espacio, radio, tipografia } from '@/tema/tokens';
+import { Text, View } from 'react-native';
+import { espacio, radio, tipografia } from '@/tema/tokens';
 import { Toque } from './Animado';
 import { Icono } from './Icono';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
 
 type NombreIcono = ComponentProps<typeof Icono>['nombre'];
 
@@ -14,6 +15,8 @@ export function Avatar({
   nombre: string;
   grande?: boolean;
 }) {
+  const colores = useColores();
+  const estilos = useEstilos();
   const lado = grande ? 56 : 36;
   const partes = nombre.trim().split(/\s+/);
   const iniciales =
@@ -60,6 +63,8 @@ export function FilaAjuste({
   /** Etiqueta de situación a la derecha (p. ej. «Verificada» / «Pendiente»). */
   estado?: { texto: string; listo: boolean };
 }) {
+  const colores = useColores();
+  const estilos = useEstilos();
   return (
     <Toque
       escala={0.98}
@@ -120,7 +125,7 @@ export function FilaAjuste({
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   avatar: { alignItems: 'center', justifyContent: 'center' },
   fila: {
     minHeight: 64,
@@ -145,4 +150,4 @@ const estilos = StyleSheet.create({
   textos: { flex: 1, gap: 2 },
   titulo: { ...tipografia.cuerpoEnfasis, color: colores.texto },
   detalle: { ...tipografia.secundario, color: colores.textoSecundario },
-});
+}));

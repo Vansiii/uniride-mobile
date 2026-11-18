@@ -1,17 +1,12 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import type { Reserva } from '@/api/cliente';
 import { formatearDia, formatearHoraLocal, formatearMonto } from '@/formato';
 import { con, t } from '@/i18n';
-import {
-  colores,
-  espacio,
-  radio,
-  sombraTarjeta,
-  tipografia,
-} from '@/tema/tokens';
+import { espacio, radio, sombraTarjeta, tipografia } from '@/tema/tokens';
 import { Toque } from './Animado';
 import { EtiquetaEstado } from './Mensajes';
 import { Trayecto } from './TarjetaViaje';
+import { crearEstilos } from '@/tema/useEstilos';
 
 /** Una reserva del pasajero: día y hora, estado, trayecto, conductor y lo que está en garantía (HU-19 CA-14). */
 export function TarjetaReserva({
@@ -21,6 +16,7 @@ export function TarjetaReserva({
   reserva: Reserva;
   alPresionar: () => void;
 }) {
+  const estilos = useEstilos();
   const dia = formatearDia(reserva.viaje.fechaHoraSalida);
   const hora = formatearHoraLocal(reserva.viaje.fechaHoraSalida);
   const monto = formatearMonto(reserva.monto);
@@ -65,7 +61,7 @@ export function TarjetaReserva({
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   tarjeta: {
     gap: espacio(3),
     padding: espacio(4),
@@ -85,4 +81,4 @@ const estilos = StyleSheet.create({
   hora: { ...tipografia.subtitulo, color: colores.texto },
   enfasis: { ...tipografia.cuerpoEnfasis, color: colores.texto },
   secundario: { ...tipografia.secundario, color: colores.textoSecundario },
-});
+}));

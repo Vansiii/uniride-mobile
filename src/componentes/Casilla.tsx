@@ -1,6 +1,7 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colores, espacio, radio, tamano, tipografia } from '@/tema/tokens';
+import { Pressable, Text, View } from 'react-native';
+import { espacio, radio, tamano, tipografia } from '@/tema/tokens';
 import { Icono } from './Icono';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
 
 interface Props {
   /** Texto ya traducido con t(). */
@@ -12,6 +13,8 @@ interface Props {
 
 /** Casilla de consentimiento u opción sí/no (8.9). Área táctil de 48 aunque el cuadro mida 24. */
 export function Casilla({ etiqueta, marcada, alCambiar, error }: Props) {
+  const colores = useColores();
+  const estilos = useEstilos();
   return (
     <View style={estilos.contenedor}>
       <Pressable
@@ -46,7 +49,7 @@ export function Casilla({ etiqueta, marcada, alCambiar, error }: Props) {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   contenedor: { gap: espacio(1) },
   fila: {
     minHeight: tamano.tactilMinimo,
@@ -77,4 +80,4 @@ const estilos = StyleSheet.create({
     paddingLeft: espacio(9),
   },
   error: { ...tipografia.secundario, color: colores.peligro, flex: 1 },
-});
+}));

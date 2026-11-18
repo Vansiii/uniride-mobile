@@ -1,6 +1,6 @@
 import { Redirect, router } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import {
   consultarEstadoIdentidad,
   consultarMiDispositivo,
@@ -15,13 +15,8 @@ import { useSesion } from '@/contexto/sesion';
 import { useAlEnfocar } from '@/hooks/useAlEnfocar';
 import { con, t } from '@/i18n';
 import { useVoz } from '@/voz/useVoz';
-import {
-  colores,
-  espacio,
-  radio,
-  sombraTarjeta,
-  tipografia,
-} from '@/tema/tokens';
+import { espacio, radio, sombraTarjeta, tipografia } from '@/tema/tokens';
+import { crearEstilos, useColores } from '@/tema/useEstilos';
 
 /** Perfil (DESIGN_SYSTEM §6.1): la cuenta, la organización activa y los accesos a vehículo, teléfono e identidad. */
 /** Una consulta que falla (sin red, sin sesión) cuenta como «no listo»: nunca rompe el perfil. */
@@ -31,6 +26,8 @@ const seguro = <T,>(consulta: () => Promise<T>) =>
     .catch(() => null);
 
 export default function Perfil() {
+  const colores = useColores();
+  const estilos = useEstilos();
   const { cargando, usuario, cerrar } = useSesion();
   const voz = useVoz();
   const [listos, setListos] = useState<{
@@ -148,6 +145,12 @@ export default function Perfil() {
           />
           <View style={estilos.separador} />
           <FilaAjuste
+            icono="palette"
+            titulo={t('perfil.apariencia.titulo')}
+            alPresionar={() => router.push('/ajustes-apariencia' as never)}
+          />
+          <View style={estilos.separador} />
+          <FilaAjuste
             icono="help_outline"
             titulo={t('perfil.ayuda.titulo')}
             alPresionar={() => router.push('/ayuda')}
@@ -176,7 +179,7 @@ export default function Perfil() {
   );
 }
 
-const estilos = StyleSheet.create({
+const useEstilos = crearEstilos((colores) => ({
   raiz: { flex: 1, backgroundColor: colores.fondoSutil },
   desplazable: { flexGrow: 1, gap: espacio(4), paddingBottom: espacio(6) },
   persona: { flexDirection: 'row', alignItems: 'center', gap: espacio(4) },
@@ -215,4 +218,4 @@ const estilos = StyleSheet.create({
     marginLeft: espacio(4) + 40 + espacio(3),
     backgroundColor: colores.borde,
   },
-});
+}));
