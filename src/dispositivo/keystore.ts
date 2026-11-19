@@ -35,6 +35,7 @@ interface ModuloLlave {
     textos: { titulo: string; subtitulo: string; cancelar: string },
   ): Promise<FirmaConMarca>;
   nonceAleatorio(): string;
+  atestar(desafio: string): Promise<string>;
   crearLlaveTrayecto(rol: RolTrayecto): Promise<string>;
   firmarTrayecto(
     rol: RolTrayecto,
@@ -180,13 +181,17 @@ export function nonceAleatorio(): string {
 }
 
 /**
- * Pide a Play Integrity un token cuyo nonce es `desafio`.
- * ponytail: Play Integrity real todavía no está conectado. Solo con `EXPO_PUBLIC_MODO_SIMULADO=true` en desarrollo se
- * devuelve el token que acepta el backend simulado (`MODO_EMULADOR_DEV`). En una build de producción nunca se simula:
- * sin token real no se puede vincular, y eso es lo correcto (la app no decide).
+ * Atestación de hardware (PB-07, A-03): el Keystore genera una llave con `desafio` como reto y devuelve su cadena de
+ * certificados, que el servidor verifica contra la raíz de Google. No usa servicios de Google ni cuenta de pago.
+ * ponytail: solo con `EXPO_PUBLIC_MODO_SIMULADO=true` en desarrollo se devuelve el token que acepta el backend
+ * simulado (`MODO_EMULADOR_DEV`). En una build de producción nunca se simula (la app no decide).
  */
-export async function pedirTokenIntegridad(_desafio: string): Promise<string> {
+export async function pedirTokenIntegridad(desafio: string): Promise<string> {
   if (__DEV__ && process.env.EXPO_PUBLIC_MODO_SIMULADO === 'true')
     return 'simulado:integro';
-  throw new ErrorKeystore('KEYSTORE_NO_DISPONIBLE');
+  try {
+    return await modulo().atestar(desafio);
+  } catch (error) {
+    throw traducirFalla(error);
+  }
 }
