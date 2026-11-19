@@ -49,14 +49,14 @@
         {
           "cameraPermission": "UniRide usa la cámara para tomar la foto de tu vehículo.",
           "photosPermission": "UniRide usa tus fotos para que elijas la foto de tu vehículo.",
-          "microphonePermission": false
+          "microphonePermission": "UniRide usa el micrófono para escuchar tus comandos de voz."
         }
       ],
       [
         "expo-camera",
         {
           "cameraPermission": "UniRide usa la cámara para leer el código de abordaje del conductor.",
-          "microphonePermission": false,
+          "microphonePermission": "UniRide usa el micrófono para escuchar tus comandos de voz.",
           "recordAudioAndroid": false
         }
       ],

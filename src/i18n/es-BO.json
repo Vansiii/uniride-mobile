@@ -798,6 +798,8 @@
     },
     "permiso": {
       "microfono": "UniRide usa el micrófono para escuchar tus comandos de voz.",
+      "permitir": "Permitir micrófono",
+      "bloqueado": "El micrófono está desactivado para UniRide. Actívalo en Ajustes para usar la voz.",
       "abrir_ajustes": "Abrir ajustes"
     },
     "buscar": {

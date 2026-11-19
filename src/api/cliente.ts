@@ -269,6 +269,24 @@ export interface FotoVehiculo {
   tipo: string;
   /** En web, el archivo mismo: allí un `uri` no se puede enviar como parte del formulario. */
   archivo?: Blob;
+  /** En el teléfono, el contenido en base64 que entrega el selector (`base64: true`). */
+  base64?: string | null;
+}
+
+/**
+ * Parte de archivo de un formulario multipart. El `fetch` global de Expo (expo/fetch) no acepta las partes
+ * `{ uri, name, type }` de React Native: lanzaba un error que la app mostraba como «sin conexión». Sí acepta
+ * un objeto con `bytes()`, así que en el teléfono el archivo viaja con su contenido; en web, el `Blob`.
+ */
+function parteArchivo(foto: FotoVehiculo, nombre: string): Blob {
+  if (foto.archivo) return foto.archivo;
+  const base64 = foto.base64 ?? '';
+  return {
+    name: nombre,
+    type: foto.tipo,
+    bytes: () =>
+      Promise.resolve(Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))),
+  } as unknown as Blob;
 }
 
 export interface DatosVehiculo {
@@ -290,15 +308,7 @@ export function registrarVehiculo(datos: DatosVehiculo): Promise<Vehiculo> {
   formulario.append('color', datos.color);
   formulario.append('capacidad', String(datos.capacidad));
   formulario.append('aceptaUsoFoto', String(datos.aceptaUsoFoto));
-  formulario.append(
-    'foto',
-    datos.foto.archivo ??
-      ({
-        uri: datos.foto.uri,
-        name: 'foto',
-        type: datos.foto.tipo,
-      } as unknown as Blob),
-  );
+  formulario.append('foto', parteArchivo(datos.foto, 'foto'));
   return solicitar<Vehiculo>('/vehiculos', 'POST', formulario);
 }
 
@@ -475,12 +485,7 @@ export interface EstadoVerificacion {
 }
 
 /** Carnet tomado en vivo; solo existe en memoria hasta el envío (dato sensible). */
-export interface FotoCarnet {
-  uri: string;
-  tipo: string;
-  /** En web, el archivo mismo: allí un `uri` no se puede enviar como parte del formulario. */
-  archivo?: Blob;
-}
+export type FotoCarnet = FotoVehiculo;
 
 export const consultarEstadoIdentidad = () =>
   solicitar<EstadoVerificacion>('/identidad/estado', 'GET');
@@ -499,15 +504,7 @@ export function verificarIdentidad(datos: {
   formulario.append('numeroDocumento', datos.numeroDocumento);
   formulario.append('aceptaConsentimiento', String(datos.aceptaConsentimiento));
   formulario.append('sesionId', datos.sesionId);
-  formulario.append(
-    'fotoCarnet',
-    datos.fotoCarnet.archivo ??
-      ({
-        uri: datos.fotoCarnet.uri,
-        name: 'carnet',
-        type: datos.fotoCarnet.tipo,
-      } as unknown as Blob),
-  );
+  formulario.append('fotoCarnet', parteArchivo(datos.fotoCarnet, 'carnet'));
   return solicitar('/identidad/verificar', 'POST', formulario);
 }
 

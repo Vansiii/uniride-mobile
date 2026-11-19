@@ -48,22 +48,25 @@ export function Campo({
     progreso.set(withTiming(foco ? 1 : 0, { duration: 180 }));
   }, [foco, progreso]);
   const animada = useAnimatedStyle(() => ({
-    borderColor: interpolateColor(
-      progreso.value,
-      [0, 1],
-      ['transparent', colores.primario],
-    ),
-    backgroundColor: interpolateColor(
-      progreso.value,
-      [0, 1],
-      [colores.fondoSutil, colores.superficie],
-    ),
+    // El estilo animado manda sobre el estático: el color de error se decide aquí.
+    borderColor: error
+      ? colores.peligro
+      : interpolateColor(
+          progreso.value,
+          [0, 1],
+          [colores.bordeCampo, colores.primario],
+        ),
   }));
   return (
     <View style={estilos.campo}>
       <Text style={estilos.etiqueta}>{etiqueta}</Text>
       <Animated.View
-        style={[estilos.caja, animada, error ? estilos.conError : null]}
+        style={[
+          estilos.caja,
+          animada,
+          foco || error ? estilos.grueso : null,
+          error ? estilos.conError : null,
+        ]}
       >
         <TextInput
           ref={refEntrada}
@@ -115,14 +118,18 @@ export function Campo({
 const useEstilos = crearEstilos((colores) => ({
   campo: { gap: espacio(2) },
   etiqueta: { ...tipografia.etiqueta, color: colores.texto },
-  // Campo relleno: sin contorno en reposo; el borde de 2 aparece con el foco sin mover el texto.
+  // §8.4: borde 1 `bordeCampo` sobre `superficie` (visible también sobre `fondoSutil`); con foco o error,
+  // borde 2. El relleno compensa el grosor para que el texto no se mueva.
   caja: {
     minHeight: tamano.altoControl,
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: radio.m,
-    borderWidth: 2,
+    borderWidth: 1,
+    padding: 1,
+    backgroundColor: colores.superficie,
   },
+  grueso: { borderWidth: 2, padding: 0 },
   conError: {
     borderColor: colores.peligro,
     backgroundColor: colores.peligroSuave,

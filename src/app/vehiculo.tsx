@@ -172,7 +172,11 @@ export default function VehiculoPantalla() {
         origen === 'camara'
           ? SelectorImagen.launchCameraAsync
           : SelectorImagen.launchImageLibraryAsync;
-      const resultado = await abrir({ mediaTypes: ['images'], quality: 0.7 });
+      const resultado = await abrir({
+        mediaTypes: ['images'],
+        quality: 0.7,
+        base64: true,
+      });
       if (resultado.canceled) return;
       const elegida = resultado.assets[0];
       if (elegida.fileSize && elegida.fileSize > MAXIMO_FOTO_BYTES) {
@@ -185,6 +189,7 @@ export default function VehiculoPantalla() {
         uri: elegida.uri,
         tipo: elegida.mimeType ?? 'image/jpeg',
         archivo: elegida.file,
+        base64: elegida.base64,
       });
     } catch {
       setFalla({ texto: t('comun.errores.desconocido') });

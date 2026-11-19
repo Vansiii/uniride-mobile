@@ -157,7 +157,7 @@ export function PanelVoz({
             </View>
           )}
 
-          {estado === 'sin_permiso' && (
+          {(estado === 'sin_permiso' || estado === 'permiso_bloqueado') && (
             <View style={estilos.contenido}>
               <View
                 style={[
@@ -171,11 +171,21 @@ export function PanelVoz({
                 {mensaje || t('voz.permiso.microfono')}
               </Text>
               <View style={estilos.acciones}>
-                <Boton
-                  etiqueta={t('voz.permiso.abrir_ajustes')}
-                  alPresionar={abrirAjustes}
-                  variante="primario"
-                />
+                {/* Mientras Android pueda mostrar el diálogo, se vuelve a pedir el permiso aquí mismo. */}
+                {estado === 'sin_permiso' ? (
+                  <Boton
+                    icono="mic"
+                    etiqueta={t('voz.permiso.permitir')}
+                    alPresionar={alReintentar}
+                    variante="primario"
+                  />
+                ) : (
+                  <Boton
+                    etiqueta={t('voz.permiso.abrir_ajustes')}
+                    alPresionar={abrirAjustes}
+                    variante="primario"
+                  />
+                )}
               </View>
             </View>
           )}
