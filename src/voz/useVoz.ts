@@ -25,6 +25,7 @@ export type EstadoVoz =
   | 'respuesta'
   | 'no_entendi'
   | 'sin_permiso'
+  | 'permiso_bloqueado'
   | 'no_disponible';
 
 const SILENCIO_MS = 5000;
@@ -313,8 +314,12 @@ export function useVoz(opciones: UseVozOpciones = {}) {
         const resPermiso =
           await ExpoSpeechRecognitionModule.requestPermissionsAsync();
         if (!resPermiso.granted) {
-          setEstado('sin_permiso');
-          setMensaje(t('voz.permiso.microfono'));
+          // Solo si Android ya no muestra el diálogo («No volver a preguntar») hay que ir a Ajustes.
+          const bloqueado = resPermiso.canAskAgain === false;
+          setEstado(bloqueado ? 'permiso_bloqueado' : 'sin_permiso');
+          setMensaje(
+            t(bloqueado ? 'voz.permiso.bloqueado' : 'voz.permiso.microfono'),
+          );
           return;
         }
       }

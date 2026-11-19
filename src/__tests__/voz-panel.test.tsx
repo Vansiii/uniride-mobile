@@ -97,21 +97,41 @@ describe('HU-27 CA-1, CA-11, CA-13 · BotonVoz y PanelVoz', () => {
     expect(alUsarTeclado).toHaveBeenCalledTimes(1);
   });
 
-  it('CA-11: estado "sin_permiso" ofrece abrir ajustes', async () => {
+  it('CA-11: estado "sin_permiso" vuelve a pedir el permiso, sin mandar a Ajustes', async () => {
+    const spyOpenSettings = jest
+      .spyOn(Linking, 'openSettings')
+      .mockImplementation(jest.fn());
+    const alReintentar = jest.fn();
+    const { getByText, queryByText } = await render(
+      <PanelVoz
+        visible
+        estado="sin_permiso"
+        alCerrar={jest.fn()}
+        alReintentar={alReintentar}
+      />,
+    );
+    expect(
+      getByText('UniRide usa el micrófono para escuchar tus comandos de voz.'),
+    ).toBeTruthy();
+    expect(queryByText('Abrir ajustes')).toBeNull();
+    fireEvent.press(getByText('Permitir micrófono'));
+    expect(alReintentar).toHaveBeenCalledTimes(1);
+    expect(spyOpenSettings).not.toHaveBeenCalled();
+    spyOpenSettings.mockRestore();
+  });
+
+  it('CA-11: permiso bloqueado en Android ofrece abrir ajustes', async () => {
     const spyOpenSettings = jest
       .spyOn(Linking, 'openSettings')
       .mockImplementation(jest.fn());
     const { getByText } = await render(
       <PanelVoz
         visible
-        estado="sin_permiso"
+        estado="permiso_bloqueado"
         alCerrar={jest.fn()}
         alReintentar={jest.fn()}
       />,
     );
-    expect(
-      getByText('UniRide usa el micrófono para escuchar tus comandos de voz.'),
-    ).toBeTruthy();
     const botonAjustes = getByText('Abrir ajustes');
     fireEvent.press(botonAjustes);
     expect(spyOpenSettings).toHaveBeenCalled();

@@ -165,6 +165,7 @@ export default function IdentidadPantalla() {
       const resultado = await SelectorImagen.launchCameraAsync({
         mediaTypes: ['images'],
         quality: 0.8,
+        base64: true,
       });
       if (resultado.canceled) return;
       const foto = resultado.assets[0];
@@ -177,6 +178,7 @@ export default function IdentidadPantalla() {
         uri: foto.uri,
         tipo: foto.mimeType ?? 'image/jpeg',
         archivo: foto.file,
+        base64: foto.base64,
       });
     } catch {
       setFalla({ texto: t('comun.errores.desconocido') });

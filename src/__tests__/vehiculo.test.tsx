@@ -57,10 +57,18 @@ const CON_SESION = {
 const SIN_VEHICULO = { ...CON_SESION, 'GET /vehiculos/mio': v.sinVehiculo };
 const UN_MB = 1024 * 1024;
 
+// Inicio de un JPEG (FF D8 FF E0 00 10), como lo entrega el selector con `base64: true`.
+const BASE64_FOTO = '/9j/4AAQ';
 const fotoElegida = (extra: Record<string, unknown> = {}) => ({
   canceled: false,
   assets: [
-    { uri: URI_FOTO, mimeType: 'image/jpeg', fileSize: 2 * UN_MB, ...extra },
+    {
+      uri: URI_FOTO,
+      mimeType: 'image/jpeg',
+      fileSize: 2 * UN_MB,
+      base64: BASE64_FOTO,
+      ...extra,
+    },
   ],
 });
 
@@ -145,8 +153,15 @@ describe('Registrar vehículo', () => {
       color: 'Blanco',
       capacidad: '4',
       aceptaUsoFoto: 'true',
-      foto: { archivo: true, uri: URI_FOTO, type: 'image/jpeg' },
+      foto: { archivo: true, name: 'foto', type: 'image/jpeg' },
     });
+    // expo/fetch (el fetch global de Expo) rechaza las partes `{ uri }` de React Native y la app lo mostraba
+    // como «sin conexión»: la foto viaja con sus bytes.
+    const parte = (envio[0].cuerpo as { foto: Record<string, unknown> }).foto;
+    expect(parte).not.toHaveProperty('uri');
+    expect([...(await (parte.bytes as () => Promise<Uint8Array>)())]).toEqual([
+      0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10,
+    ]);
     // Ni el dueño ni el cuerpo llevan datos que identifiquen a la persona: la sesión va en el token.
     expect(Object.keys(envio[0].cuerpo as object).sort()).toEqual([
       'aceptaUsoFoto',
