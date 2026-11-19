@@ -5,6 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   consultarDistanciaConductor,
   consultarReserva,
+  consultarViaje,
+  type DetalleViaje,
   type DistanciaConductor,
   ErrorApi,
   EstadoReserva,
@@ -16,9 +18,10 @@ import { Boton, BotonIcono } from '@/componentes/Boton';
 import { BotonVoz } from '@/componentes/BotonVoz';
 import { ZonaAccion } from '@/componentes/Estructura';
 import { Ilustracion } from '@/componentes/Ilustracion';
+import { MapaRuta } from '@/componentes/MapaRuta';
 import { Aviso, EtiquetaEstado } from '@/componentes/Mensajes';
 import { PanelVoz } from '@/componentes/PanelVoz';
-import { Trayecto } from '@/componentes/TarjetaViaje';
+import { nombreVehiculo, Trayecto } from '@/componentes/TarjetaViaje';
 import { AccionDeReserva } from '@/componentes/ViajeActivo';
 import { useSesion } from '@/contexto/sesion';
 import { formatearDia, formatearHoraLocal, formatearMonto } from '@/formato';
@@ -55,6 +58,8 @@ const TEXTOS: Partial<Record<EstadoReserva, [string, string]>> = {
 // ponytail: intervalo fijo mientras la reserva está pendiente; la cola del backend reintenta con espera creciente.
 const CONSULTA_MS = 3000;
 const AVISO_DEMORA_MS = 30_000;
+// El servidor acepta la posición del conductor hasta 60 s: cada 15 s basta para verlo acercarse.
+const CONDUCTOR_MS = 15_000;
 
 /**
  * Resultado y estado de la reserva (HU-19): Pendiente mientras el pasaje se registra en garantía, Confirmada o
@@ -69,6 +74,8 @@ export default function ReservaPantalla() {
   const [reserva, setReserva] = useState<ReservaDetalle | null>(null);
   const [distanciaConductor, setDistanciaConductor] =
     useState<DistanciaConductor | null>(null);
+  // Coordenadas y vehículo del viaje, para el mapa del encuentro; si no llegan, la pantalla sigue sin mapa.
+  const [viaje, setViaje] = useState<DetalleViaje | null>(null);
   const [falla, setFalla] = useState<string>();
   const [demorada, setDemorada] = useState(false);
   const voz = useVoz();
@@ -115,6 +122,32 @@ export default function ReservaPantalla() {
     const reloj = setInterval(() => void leer(), CONSULTA_MS);
     return () => clearInterval(reloj);
   }, [conSesion, pendiente, reintentable, leer]);
+
+  const viajeId = reserva?.viaje.id;
+  useEffect(() => {
+    if (!viajeId) return;
+    let vigente = true;
+    consultarViaje(viajeId)
+      .then((v) => vigente && setViaje(v))
+      .catch(() => undefined);
+    return () => {
+      vigente = false;
+    };
+  }, [viajeId]);
+
+  // Confirmada: la distancia del conductor se actualiza sola mientras se espera en el punto de encuentro.
+  const confirmada = reserva?.estado === 'confirmada';
+  useEffect(() => {
+    if (!conSesion || !confirmada) return;
+    const reloj = setInterval(
+      () =>
+        void consultarDistanciaConductor(id)
+          .then(setDistanciaConductor)
+          .catch(() => undefined),
+      CONDUCTOR_MS,
+    );
+    return () => clearInterval(reloj);
+  }, [conSesion, confirmada, id]);
 
   // "Seguimos intentando" es para cuando el nodo falla (RN-7): el camino normal no llega a verlo.
   useEffect(() => {
@@ -216,6 +249,13 @@ export default function ReservaPantalla() {
             )}
 
             <View style={estilos.tarjeta}>
+              {viaje && (
+                <MapaRuta
+                  origen={viaje.origen}
+                  destino={viaje.destino}
+                  alto={180}
+                />
+              )}
               <Text style={estilos.subtitulo}>
                 {formatearDia(reserva.viaje.fechaHoraSalida)} ·{' '}
                 {formatearHoraLocal(reserva.viaje.fechaHoraSalida)}
@@ -230,17 +270,39 @@ export default function ReservaPantalla() {
                 </Text>
                 <Text style={estilos.enfasis}>{reserva.viaje.conductor}</Text>
               </View>
+              {viaje && (
+                <View style={estilos.fila}>
+                  <Text style={estilos.secundario}>
+                    {t('reservas.resultado.vehiculo')}
+                  </Text>
+                  <Text style={estilos.enfasis}>
+                    {nombreVehiculo(viaje.vehiculo)} · {viaje.vehiculo.placa}
+                  </Text>
+                </View>
+              )}
               {reserva.estado === 'confirmada' && distanciaConductor && (
                 <View style={estilos.fila}>
                   <Text style={estilos.secundario}>
-                    Ubicación del conductor
+                    {t('reservas.resultado.ubicacion_conductor')}
                   </Text>
-                  <Text style={estilos.enfasis}>
+                  <Text
+                    style={[
+                      estilos.enfasis,
+                      distanciaConductor.enPuntoDeEncuentro && {
+                        color: colores.exitoTexto,
+                      },
+                    ]}
+                    accessibilityLiveRegion="polite"
+                  >
                     {distanciaConductor.disponible
                       ? distanciaConductor.enPuntoDeEncuentro
-                        ? 'En el punto de encuentro'
-                        : `A ${formatoDistanciaMetros(distanciaConductor.distanciaM ?? 0)}`
-                      : 'Sin ubicación reciente'}
+                        ? t('reservas.resultado.conductor_en_punto')
+                        : con('reservas.resultado.conductor_distancia', {
+                            distancia: formatoDistanciaMetros(
+                              distanciaConductor.distanciaM ?? 0,
+                            ),
+                          })
+                      : t('reservas.resultado.conductor_sin_ubicacion')}
                   </Text>
                 </View>
               )}
@@ -349,6 +411,8 @@ export default function ReservaPantalla() {
         fallosSeguidos={voz.fallosSeguidos}
         alCerrar={voz.cerrar}
         alReintentar={voz.reintentar}
+        alTerminar={voz.terminarEscucha}
+        alProbar={voz.procesarTexto}
         alUsarTeclado={voz.cerrar}
       />
     </View>

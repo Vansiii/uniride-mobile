@@ -152,6 +152,8 @@ export default function Inicio() {
         fallosSeguidos={voz.fallosSeguidos}
         alCerrar={voz.cerrar}
         alReintentar={voz.reintentar}
+        alTerminar={voz.terminarEscucha}
+        alProbar={voz.procesarTexto}
         alUsarTeclado={voz.cerrar}
       />
     </View>

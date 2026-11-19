@@ -7,6 +7,7 @@ import {
   reservaReal as rr,
   respuestasReales as r,
   simularFetch,
+  viajeReal,
 } from '@/pruebas/respuestasApi';
 
 const mockRouter = { push: jest.fn(), replace: jest.fn(), back: jest.fn() };
@@ -247,5 +248,47 @@ describe('HU-19 · resultado de la reserva', () => {
       </ProveedorSesion>,
     );
     expect(await screen.findByText('redirige:/iniciar-sesion')).toBeTruthy();
+  });
+});
+
+describe('Mapa de la reserva confirmada', () => {
+  const VIAJE = `GET /viajes/${rr.viajeId}`;
+  const CONDUCTOR = `GET /reservas/${rr.reservaId}/conductor`;
+
+  it('muestra el trayecto en el mapa y el auto con su placa para reconocerlo', async () => {
+    await abrir({ [CONSULTAR]: rr.confirmada, [VIAJE]: viajeReal.detalle });
+    expect(
+      await screen.findByText('Suzuki Swift rojo · 3021 KLM'),
+    ).toBeTruthy();
+    expect(boton('Ver el trayecto en el mapa')).toBeTruthy();
+  });
+
+  it('sin el detalle del viaje la reserva se ve igual, sin mapa', async () => {
+    await abrir({ [CONSULTAR]: rr.confirmada });
+    expect(await screen.findByText('Reserva confirmada')).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: 'Ver el trayecto en el mapa' }),
+    ).toBeNull();
+  });
+
+  it('confirmada: la distancia del conductor se actualiza sola cada 15 s', async () => {
+    const posicion = (distanciaM: number, enPuntoDeEncuentro: boolean) => ({
+      estado: 200,
+      cuerpo: {
+        disponible: true,
+        distanciaM,
+        enPuntoDeEncuentro,
+        haceSegundos: 5,
+      },
+    });
+    await abrir({
+      [CONSULTAR]: rr.confirmada,
+      [VIAJE]: viajeReal.detalle,
+      [CONDUCTOR]: [posicion(820, false), posicion(20, true)],
+    });
+    expect(await screen.findByText('Ubicación del conductor')).toBeTruthy();
+    expect(screen.queryByText('En el punto de encuentro')).toBeNull();
+    await avanzar(15_000);
+    expect(await screen.findByText('En el punto de encuentro')).toBeTruthy();
   });
 });

@@ -8,7 +8,7 @@ import {
 } from '@maplibre/maplibre-react-native';
 import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -22,8 +22,10 @@ import {
   MapaCompleto,
   type Punto,
 } from '@/componentes/MapaCompleto';
-import { t } from '@/i18n';
-import { radio } from '@/tema/tokens';
+import { Icono } from '@/componentes/Icono';
+import { con, t } from '@/i18n';
+import { resumenRuta, useRutaCalles } from '@/servicios/rutas';
+import { espacio, radio, sombraTarjeta, tipografia } from '@/tema/tokens';
 import { crearEstilos, useColores } from '@/tema/useEstilos';
 
 const ALTO = 112;
@@ -79,16 +81,24 @@ function PuntoOrigen() {
   );
 }
 
-function Puntos({ origen, destino }: { origen: Punto; destino: Punto }) {
+function Puntos({
+  origen,
+  destino,
+  coordenadas,
+  aproximada,
+}: {
+  origen: Punto;
+  destino: Punto;
+  coordenadas: [number, number][];
+  /** Sin ruta por calles: la línea va punteada para no fingir un camino que no se conoce. */
+  aproximada: boolean;
+}) {
   const colores = useColores();
   const estilos = useEstilos();
   const linea = {
     type: 'Feature' as const,
     properties: {},
-    geometry: {
-      type: 'LineString' as const,
-      coordinates: arco(origen, destino),
-    },
+    geometry: { type: 'LineString' as const, coordinates: coordenadas },
   };
   return (
     <>
@@ -97,13 +107,21 @@ function Puntos({ origen, destino }: { origen: Punto; destino: Punto }) {
           id="trayecto-borde"
           type="line"
           layout={{ 'line-cap': 'round', 'line-join': 'round' }}
-          paint={{ 'line-color': '#FFFFFF', 'line-width': 9 }}
+          paint={{
+            'line-color': colores.marcaProfundo,
+            'line-width': ['interpolate', ['linear'], ['zoom'], 10, 5, 16, 11],
+            'line-opacity': aproximada ? 0 : 0.35,
+          }}
         />
         <Layer
           id="trayecto-linea"
           type="line"
           layout={{ 'line-cap': 'round', 'line-join': 'round' }}
-          paint={{ 'line-color': colores.primario, 'line-width': 5 }}
+          paint={{
+            'line-color': colores.primario,
+            'line-width': ['interpolate', ['linear'], ['zoom'], 10, 3, 16, 7],
+            ...(aproximada && { 'line-dasharray': [1.5, 1.5] }),
+          }}
         />
       </GeoJSONSource>
       <Marker lngLat={[origen.lng, origen.lat]}>
@@ -117,6 +135,18 @@ function Puntos({ origen, destino }: { origen: Punto; destino: Punto }) {
       </Marker>
     </>
   );
+}
+
+/** Recuadro de toda la línea: una ruta por calles puede salirse del rectángulo de sus dos extremos. */
+export function limitesDe(coordenadas: [number, number][]): LngLatBounds {
+  const lngs = coordenadas.map((c) => c[0]);
+  const lats = coordenadas.map((c) => c[1]);
+  return [
+    Math.min(...lngs),
+    Math.min(...lats),
+    Math.max(...lngs),
+    Math.max(...lats),
+  ];
 }
 
 /**
@@ -135,9 +165,20 @@ export function MapaRuta({
   alto?: number;
   redondeo?: number;
 }) {
+  const colores = useColores();
   const estilos = useEstilos();
   const [completo, setCompleto] = useState(false);
-  const recuadro = limites(origen, destino);
+  const ruta = useRutaCalles(origen, destino);
+  const coordenadas = ruta?.coordenadas ?? arco(origen, destino);
+  const recuadro = ruta ? limitesDe(coordenadas) : limites(origen, destino);
+  const puntos = (
+    <Puntos
+      origen={origen}
+      destino={destino}
+      coordenadas={coordenadas}
+      aproximada={ruta === null}
+    />
+  );
 
   return (
     <View style={[estilos.mapa, { height: alto, borderRadius: redondeo }]}>
@@ -175,7 +216,7 @@ export function MapaRuta({
             maxZoom={ZOOM_MAXIMO}
             duration={0}
           />
-          <Puntos origen={origen} destino={destino} />
+          {puntos}
         </Map>
       </View>
       <Pressable
@@ -184,6 +225,23 @@ export function MapaRuta({
         onPress={() => setCompleto(true)}
         style={StyleSheet.absoluteFill}
       />
+      {ruta !== undefined && (
+        <View
+          style={[estilos.resumen, alto > 200 && estilos.resumenPortada]}
+          pointerEvents="none"
+        >
+          <Icono
+            nombre={ruta ? 'directions_car' : 'route'}
+            color={colores.primario}
+            tamano={16}
+          />
+          <Text style={estilos.resumenTexto}>
+            {ruta
+              ? con('viajes.mapa.duracion_ruta', { resumen: resumenRuta(ruta) })
+              : t('viajes.mapa.ruta_aproximada')}
+          </Text>
+        </View>
+      )}
       <AtribucionMapa />
       {completo && (
         <MapaCompleto
@@ -198,7 +256,7 @@ export function MapaRuta({
           }}
           alCerrar={() => setCompleto(false)}
         >
-          <Puntos origen={origen} destino={destino} />
+          {puntos}
         </MapaCompleto>
       )}
     </View>
@@ -234,5 +292,20 @@ const useEstilos = crearEstilos((colores) => ({
     backgroundColor: colores.primario,
   },
   pinDestino: { width: 30, height: 42 },
-  puntoDestino: { backgroundColor: colores.exito },
+  resumen: {
+    position: 'absolute',
+    top: espacio(2),
+    left: espacio(2),
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espacio(1),
+    paddingHorizontal: espacio(2),
+    paddingVertical: espacio(1),
+    borderRadius: radio.completo,
+    backgroundColor: colores.superficie,
+    ...sombraTarjeta,
+  },
+  // En la portada la cabecera flotante ocupa arriba: el resumen baja sobre la hoja.
+  resumenPortada: { top: undefined, bottom: espacio(10) },
+  resumenTexto: { ...tipografia.pequeno, color: colores.texto },
 }));

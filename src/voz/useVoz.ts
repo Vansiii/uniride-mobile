@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { router } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import * as Speech from 'expo-speech';
 import {
   ExpoSpeechRecognitionModule,
@@ -15,7 +16,7 @@ import {
   ejecutarAccionEstadoViaje,
   ejecutarAccionSaldo,
 } from './acciones';
-import { type Intencion, interpretar } from './interprete';
+import { interpretar } from './interprete';
 import { resultadosEnPantalla } from './resultados';
 
 export type EstadoVoz =
@@ -29,13 +30,10 @@ export type EstadoVoz =
   | 'no_disponible';
 
 const SILENCIO_MS = 5000;
+/** Errores del reconocedor que significan «no llegó voz», no «no te entendí». */
+const SIN_VOZ = new Set(['no-speech', 'speech-timeout']);
 
-interface UseVozOpciones {
-  onComando?: (intencion: Intencion) => void;
-  onCerrar?: () => void;
-}
-
-export function useVoz(opciones: UseVozOpciones = {}) {
+export function useVoz() {
   const [estado, setEstado] = useState<EstadoVoz>('inactivo');
   const [transcripcion, setTranscripcion] = useState('');
   const [mensaje, setMensaje] = useState('');
@@ -43,10 +41,15 @@ export function useVoz(opciones: UseVozOpciones = {}) {
 
   const timerSilencio = useRef<ReturnType<typeof setTimeout> | null>(null);
   const estadoRef = useRef<EstadoVoz>(estado);
+  // Lo último que se oyó: algunos Android cierran la escucha sin marcar un resultado final.
+  const ultimoTexto = useRef('');
+  // Cada consulta lleva un número: una respuesta que llega tras cerrar o tras otra pregunta no pisa el panel.
+  const turno = useRef(0);
 
-  useEffect(() => {
-    estadoRef.current = estado;
-  }, [estado]);
+  const cambiarEstado = useCallback((nuevo: EstadoVoz) => {
+    estadoRef.current = nuevo;
+    setEstado(nuevo);
+  }, []);
 
   const hablar = useCallback(async (texto: string) => {
     try {
@@ -74,222 +77,161 @@ export function useVoz(opciones: UseVozOpciones = {}) {
   }, [limpiarSilencio]);
 
   const cerrar = useCallback(() => {
+    turno.current++;
     detenerEscucha();
     try {
       Speech.stop();
     } catch {}
-    setEstado('inactivo');
+    cambiarEstado('inactivo');
     setTranscripcion('');
     setMensaje('');
     setFallosSeguidos(0);
-    opciones.onCerrar?.();
-  }, [detenerEscucha, opciones]);
+  }, [cambiarEstado, detenerEscucha]);
+
+  /** «No entendí» con su mensaje dicho en voz alta; tras dos seguidos el panel ofrece el teclado. */
+  const fallar = useCallback(
+    (msg: string) => {
+      setFallosSeguidos((n) => n + 1);
+      cambiarEstado('no_entendi');
+      setMensaje(msg);
+      void hablar(msg);
+    },
+    [cambiarEstado, hablar],
+  );
+
+  /** Mientras la consulta va a la API el panel dice «Procesando…»; la respuesta llega ya hablada por la acción. */
+  const responder = useCallback(
+    (accion: Promise<string>) => {
+      const mio = ++turno.current;
+      setFallosSeguidos(0);
+      cambiarEstado('procesando');
+      setMensaje('');
+      void accion.then((m) => {
+        if (mio !== turno.current) return;
+        cambiarEstado('respuesta');
+        setMensaje(m);
+      });
+    },
+    [cambiarEstado],
+  );
+
+  const irAViaje = useCallback(
+    (id: string) => {
+      setFallosSeguidos(0);
+      cerrar();
+      router.push({ pathname: '/viajes/[id]', params: { id, porVoz: '1' } });
+    },
+    [cerrar],
+  );
 
   const procesarTextoReconocido = useCallback(
     (texto: string) => {
-      limpiarSilencio();
       detenerEscucha();
+      setTranscripcion(texto);
 
-      if (!texto || !texto.trim()) {
-        const nuevosFallos = fallosSeguidos + 1;
-        setFallosSeguidos(nuevosFallos);
-        setEstado('no_entendi');
-        const msg = t('voz.comun.no_te_escuche');
-        setMensaje(msg);
-        hablar(msg);
-        return;
-      }
+      if (!texto || !texto.trim()) return fallar(t('voz.comun.no_te_escuche'));
 
-      setEstado('procesando');
+      cambiarEstado('procesando');
       const intencion = interpretar(texto, new Date());
 
-      if (intencion.tipo === 'buscar') {
-        setFallosSeguidos(0);
-        setEstado('respuesta');
-        setMensaje(intencion.textoInterpretado);
-        hablar(intencion.textoInterpretado);
-        if (opciones.onComando) {
-          opciones.onComando(intencion);
-        } else {
+      switch (intencion.tipo) {
+        case 'buscar': {
+          const mio = ++turno.current;
+          setFallosSeguidos(0);
+          cambiarEstado('respuesta');
+          setMensaje(intencion.textoInterpretado);
+          void hablar(intencion.textoInterpretado);
           void obtenerUbicacion(false).then((ubicacion) => {
-            if (ubicacion.tipo === 'ok') {
-              cerrar();
-              router.push({
-                pathname: '/viajes/buscar',
-                params: {
-                  origenLat: String(ubicacion.lat),
-                  origenLng: String(ubicacion.lng),
-                  horaSalida: intencion.hora.toISOString(),
-                  destino: intencion.destino,
-                  porVoz: '1',
-                },
-              });
-            } else {
-              setEstado('no_entendi');
-              const msg = t('voz.buscar.sin_ubicacion');
-              setMensaje(msg);
-              hablar(msg);
-            }
+            if (mio !== turno.current) return;
+            if (ubicacion.tipo !== 'ok')
+              return fallar(t('voz.buscar.sin_ubicacion'));
+            cerrar();
+            router.push({
+              pathname: '/viajes/buscar',
+              params: {
+                origenLat: String(ubicacion.lat),
+                origenLng: String(ubicacion.lng),
+                horaSalida: intencion.hora.toISOString(),
+                destino: intencion.destino,
+                porVoz: '1',
+              },
+            });
           });
+          return;
         }
-      } else if (intencion.tipo === 'reservar') {
-        if (opciones.onComando) {
-          opciones.onComando(intencion);
-        } else {
+        case 'reservar': {
           const lista = resultadosEnPantalla.obtener();
-          if (!lista || lista.length === 0) {
-            const nuevosFallos = fallosSeguidos + 1;
-            setFallosSeguidos(nuevosFallos);
-            setEstado('no_entendi');
-            const msg = t('voz.reservar.sin_resultados');
-            setMensaje(msg);
-            hablar(msg);
-            return;
-          }
-          if (intencion.n < 1 || intencion.n > lista.length) {
-            const nuevosFallos = fallosSeguidos + 1;
-            setFallosSeguidos(nuevosFallos);
-            setEstado('no_entendi');
-            const msg = con('voz.reservar.numero_invalido', {
-              total: lista.length,
-            });
-            setMensaje(msg);
-            hablar(msg);
-            return;
-          }
-          const elegido = lista[intencion.n - 1];
-          setFallosSeguidos(0);
-          setEstado('respuesta');
-          cerrar();
-          router.push({
-            pathname: '/viajes/[id]',
-            params: { id: elegido.id, porVoz: '1' },
-          });
+          if (!lista || lista.length === 0)
+            return fallar(t('voz.reservar.sin_resultados'));
+          if (intencion.n < 1 || intencion.n > lista.length)
+            return fallar(
+              con('voz.reservar.numero_invalido', { total: lista.length }),
+            );
+          return irAViaje(lista[intencion.n - 1].id);
         }
-      } else if (intencion.tipo === 'saldo') {
-        if (opciones.onComando) {
-          opciones.onComando(intencion);
-        } else {
-          setFallosSeguidos(0);
-          setEstado('respuesta');
-          void ejecutarAccionSaldo(hablar).then((m) => {
-            setMensaje(m);
-          });
+        case 'saldo':
+          return responder(ejecutarAccionSaldo(hablar));
+        case 'conductor':
+          return responder(ejecutarAccionConductor(hablar));
+        case 'estado_viaje':
+          return responder(ejecutarAccionEstadoViaje(hablar));
+        case 'ayuda':
+          return responder(ejecutarAccionAyuda(hablar));
+        case 'cancelar':
+          return responder(
+            ejecutarAccionCancelar(intencion.n, hablar).then((r) => r.mensaje),
+          );
+        case 'elegir': {
+          if (cancelablesActivos.obtener().length > 0)
+            return responder(
+              ejecutarAccionCancelar(intencion.n, hablar).then(
+                (r) => r.mensaje,
+              ),
+            );
+          const lista = resultadosEnPantalla.obtener();
+          if (lista && intencion.n >= 1 && intencion.n <= lista.length)
+            return irAViaje(lista[intencion.n - 1].id);
+          return fallar(t('voz.comun.no_entendi'));
         }
-      } else if (intencion.tipo === 'conductor') {
-        if (opciones.onComando) {
-          opciones.onComando(intencion);
-        } else {
-          setFallosSeguidos(0);
-          setEstado('respuesta');
-          void ejecutarAccionConductor(hablar).then((m) => {
-            setMensaje(m);
-          });
-        }
-      } else if (intencion.tipo === 'estado_viaje') {
-        if (opciones.onComando) {
-          opciones.onComando(intencion);
-        } else {
-          setFallosSeguidos(0);
-          setEstado('respuesta');
-          void ejecutarAccionEstadoViaje(hablar).then((m) => {
-            setMensaje(m);
-          });
-        }
-      } else if (intencion.tipo === 'ayuda') {
-        if (opciones.onComando) {
-          opciones.onComando(intencion);
-        } else {
-          setFallosSeguidos(0);
-          setEstado('respuesta');
-          void ejecutarAccionAyuda(hablar).then((m) => {
-            setMensaje(m);
-          });
-        }
-      } else if (intencion.tipo === 'cancelar') {
-        if (opciones.onComando) {
-          opciones.onComando(intencion);
-        } else {
-          setFallosSeguidos(0);
-          setEstado('respuesta');
-          void ejecutarAccionCancelar(intencion.n, hablar).then((res) => {
-            setMensaje(res.mensaje);
-          });
-        }
-      } else if (intencion.tipo === 'elegir') {
-        if (opciones.onComando) {
-          opciones.onComando(intencion);
-        } else {
-          const cancelables = cancelablesActivos.obtener();
-          if (cancelables.length > 0) {
-            setFallosSeguidos(0);
-            setEstado('respuesta');
-            void ejecutarAccionCancelar(intencion.n, hablar).then((res) => {
-              setMensaje(res.mensaje);
-            });
-          } else {
-            const lista = resultadosEnPantalla.obtener();
-            if (
-              lista &&
-              lista.length > 0 &&
-              intencion.n >= 1 &&
-              intencion.n <= lista.length
-            ) {
-              setFallosSeguidos(0);
-              const elegido = lista[intencion.n - 1];
-              cerrar();
-              router.push({
-                pathname: '/viajes/[id]',
-                params: { id: elegido.id, porVoz: '1' },
-              });
-            } else {
-              const nuevosFallos = fallosSeguidos + 1;
-              setFallosSeguidos(nuevosFallos);
-              setEstado('no_entendi');
-              const msg = t('voz.comun.no_entendi');
-              setMensaje(msg);
-              hablar(msg);
-            }
-          }
-        }
-      } else if (intencion.tipo === 'falta') {
-        const nuevosFallos = fallosSeguidos + 1;
-        setFallosSeguidos(nuevosFallos);
-        setEstado('no_entendi');
-        const msg =
-          intencion.dato === 'hora'
-            ? t('voz.buscar.falta_hora')
-            : t('voz.buscar.falta_destino');
-        setMensaje(msg);
-        hablar(msg);
-      } else {
-        const nuevosFallos = fallosSeguidos + 1;
-        setFallosSeguidos(nuevosFallos);
-        setEstado('no_entendi');
-        const msg = t('voz.comun.no_entendi');
-        setMensaje(msg);
-        hablar(msg);
+        case 'falta':
+          return fallar(
+            t(
+              intencion.dato === 'hora'
+                ? 'voz.buscar.falta_hora'
+                : 'voz.buscar.falta_destino',
+            ),
+          );
+        default:
+          return fallar(t('voz.comun.no_entendi'));
       }
     },
-    [cerrar, detenerEscucha, fallosSeguidos, hablar, limpiarSilencio, opciones],
+    [
+      cambiarEstado,
+      cerrar,
+      detenerEscucha,
+      fallar,
+      hablar,
+      irAViaje,
+      responder,
+    ],
   );
 
   const reiniciarSilencio = useCallback(() => {
     limpiarSilencio();
     timerSilencio.current = setTimeout(() => {
-      if (estadoRef.current === 'escuchando') {
+      if (estadoRef.current !== 'escuchando') return;
+      // Si ya se oyó algo, el silencio es el fin de la frase: se procesa en vez de descartarla.
+      if (ultimoTexto.current.trim())
+        procesarTextoReconocido(ultimoTexto.current);
+      else {
         detenerEscucha();
-        const nuevosFallos = fallosSeguidos + 1;
-        setFallosSeguidos(nuevosFallos);
-        setEstado('no_entendi');
-        const msg = t('voz.comun.no_te_escuche');
-        setMensaje(msg);
-        hablar(msg);
+        fallar(t('voz.comun.no_te_escuche'));
       }
     }, SILENCIO_MS);
-  }, [detenerEscucha, fallosSeguidos, hablar, limpiarSilencio]);
+  }, [detenerEscucha, fallar, limpiarSilencio, procesarTextoReconocido]);
 
   const iniciarEscucha = useCallback(async () => {
+    turno.current++;
     try {
       Speech.stop();
     } catch {}
@@ -301,7 +243,7 @@ export function useVoz(opciones: UseVozOpciones = {}) {
           'function' &&
         !ExpoSpeechRecognitionModule.isRecognitionAvailable()
       ) {
-        setEstado('no_disponible');
+        cambiarEstado('no_disponible');
         setMensaje(t('voz.comun.no_disponible'));
         return;
       }
@@ -316,7 +258,7 @@ export function useVoz(opciones: UseVozOpciones = {}) {
         if (!resPermiso.granted) {
           // Solo si Android ya no muestra el diálogo («No volver a preguntar») hay que ir a Ajustes.
           const bloqueado = resPermiso.canAskAgain === false;
-          setEstado(bloqueado ? 'permiso_bloqueado' : 'sin_permiso');
+          cambiarEstado(bloqueado ? 'permiso_bloqueado' : 'sin_permiso');
           setMensaje(
             t(bloqueado ? 'voz.permiso.bloqueado' : 'voz.permiso.microfono'),
           );
@@ -324,9 +266,12 @@ export function useVoz(opciones: UseVozOpciones = {}) {
         }
       }
 
+      ultimoTexto.current = '';
       setTranscripcion('');
       setMensaje(t('voz.panel.te_escucho'));
-      setEstado('escuchando');
+      cambiarEstado('escuchando');
+      // Vibración leve: avisa que ya puede hablar sin mirar la pantalla.
+      Haptics.selectionAsync().catch(() => undefined);
 
       reiniciarSilencio();
 
@@ -335,42 +280,52 @@ export function useVoz(opciones: UseVozOpciones = {}) {
           lang: 'es-BO',
           interimResults: true,
           continuous: false,
+          // El nivel de la voz anima las ondas del micrófono en el panel.
+          volumeChangeEventOptions: { enabled: true, intervalMillis: 120 },
         });
       }
     } catch {
-      setEstado('no_disponible');
+      cambiarEstado('no_disponible');
       setMensaje(t('voz.comun.no_disponible'));
     }
-  }, [reiniciarSilencio]);
+  }, [cambiarEstado, reiniciarSilencio]);
+
+  /** «Listo» mientras escucha: termina la frase ya, sin esperar el silencio. */
+  const terminarEscucha = useCallback(() => {
+    if (estadoRef.current !== 'escuchando') return;
+    procesarTextoReconocido(ultimoTexto.current);
+  }, [procesarTextoReconocido]);
 
   useSpeechRecognitionEvent('result', (event) => {
     if (estadoRef.current !== 'escuchando') return;
     reiniciarSilencio();
     const resultado = event.results?.[0]?.transcript ?? '';
+    ultimoTexto.current = resultado;
     setTranscripcion(resultado);
-    if (event.isFinal) {
-      procesarTextoReconocido(resultado);
-    }
+    if (event.isFinal) procesarTextoReconocido(resultado);
   });
 
   useSpeechRecognitionEvent('error', (event) => {
-    if (event.error === 'aborted') return;
-    limpiarSilencio();
+    if (event.error === 'aborted' || estadoRef.current !== 'escuchando') return;
     detenerEscucha();
-    const nuevosFallos = fallosSeguidos + 1;
-    setFallosSeguidos(nuevosFallos);
-    setEstado('no_entendi');
-    const msg = t('voz.comun.no_entendi');
-    setMensaje(msg);
-    hablar(msg);
+    fallar(
+      t(
+        SIN_VOZ.has(event.error)
+          ? 'voz.comun.no_te_escuche'
+          : 'voz.comun.no_entendi',
+      ),
+    );
   });
 
+  // Si la escucha termina sin resultado final, se procesa lo último oído en vez de quedarse «escuchando».
   useSpeechRecognitionEvent('end', () => {
-    limpiarSilencio();
+    if (estadoRef.current === 'escuchando')
+      procesarTextoReconocido(ultimoTexto.current);
+    else limpiarSilencio();
   });
 
   const reintentar = useCallback(() => {
-    iniciarEscucha();
+    void iniciarEscucha();
   }, [iniciarEscucha]);
 
   useEffect(() => {
@@ -391,6 +346,7 @@ export function useVoz(opciones: UseVozOpciones = {}) {
     escuchando: estado === 'escuchando',
     iniciarEscucha,
     detenerEscucha,
+    terminarEscucha,
     cerrar,
     reintentar,
     hablar,
