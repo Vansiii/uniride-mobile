@@ -490,6 +490,8 @@ export interface EstadoVerificacion {
   estado: EstadoIdentidad;
   verificadoEn: string | null;
   bloqueadoHasta: string | null;
+  /** Verificada sin foto del carnet: debe completarse antes de volver a vincular el teléfono (HU-10). */
+  requiereCarnet?: boolean;
 }
 
 /** Carnet tomado en vivo; solo existe en memoria hasta el envío (dato sensible). */

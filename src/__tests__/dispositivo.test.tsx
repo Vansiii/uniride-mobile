@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import DispositivoPantalla from '@/app/dispositivo';
 import { ProveedorSesion } from '@/contexto/sesion';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import {
   confirmarLlave,
   crearLlave,
@@ -357,6 +357,24 @@ describe('Vinculación de dispositivo', () => {
         expect(confirmar).not.toHaveBeenCalled();
       },
     );
+
+    it('IDENTIDAD_SIN_CARNET al pedir el desafío: lo explica y lleva a registrar el carnet', async () => {
+      await abrir({
+        'GET /dispositivos/mi-dispositivo': d.vinculado,
+        'POST /dispositivos/revinculacion': d.sinCarnet,
+      });
+      fireEvent.press(
+        await screen.findByRole('button', {
+          name: 'Pasar mi cuenta a este teléfono',
+        }),
+      );
+      expect(await screen.findByText(/todavía no la tiene/)).toBeTruthy();
+      fireEvent.press(
+        screen.getByRole('button', { name: 'Registrar mi carnet' }),
+      );
+      expect(router.push).toHaveBeenCalledWith('/identidad');
+      expect(confirmar).not.toHaveBeenCalled();
+    });
 
     it('409 y la consulta del teléfono que quedó también falla: ofrece reintentar, no «Vincular este teléfono»', async () => {
       await abrir({

@@ -129,6 +129,23 @@ describe('Verificación de identidad', () => {
     });
   });
 
+  it('verificada sin carnet: ofrece completar con carnet y prueba de vida', async () => {
+    const { llamadas } = await abrir({
+      'GET /identidad/estado': i.verificadaSinCarnet,
+      'POST /identidad/liveness-sesion': i.sesion,
+      'POST /identidad/verificar': i.exito,
+    });
+    expect(await screen.findByText(/falta la foto de tu carnet/)).toBeTruthy();
+    await hastaPaso3();
+    await presionar('Iniciar prueba de vida');
+    expect(
+      await screen.findByText('Tu identidad está verificada.'),
+    ).toBeTruthy();
+    expect(
+      llamadas.filter((l) => l.ruta === 'POST /identidad/verificar'),
+    ).toHaveLength(1);
+  });
+
   it('sin consentimiento ni número no avanza y avisa qué falta', async () => {
     await abrir({});
     await screen.findByLabelText('Número de carnet');
