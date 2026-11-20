@@ -7,7 +7,9 @@
     "acciones": {
       "volver": "Volver",
       "cerrar": "Cerrar",
-      "reintentar": "Reintentar"
+      "reintentar": "Reintentar",
+      "aceptar": "Aceptar",
+      "cancelar": "Cancelar"
     },
     "estados": {
       "cargando": "Cargando…"
@@ -314,7 +316,9 @@
       "telefono_nuevo": "Tu cuenta está vinculada a otro teléfono. Para usar este, confirma tu identidad.",
       "revinculando": "Vinculando…",
       "rostro_no_coincide": "Tu rostro no coincide con el de tu carnet verificado. No pudimos vincular este teléfono.",
-      "concurrente": "Tu cuenta se estaba pasando a otro teléfono al mismo tiempo. Revisa cuál quedó vinculado y vuelve a intentarlo si hace falta."
+      "concurrente": "Tu cuenta se estaba pasando a otro teléfono al mismo tiempo. Revisa cuál quedó vinculado y vuelve a intentarlo si hace falta.",
+      "sin_carnet": "Para pasar tu cuenta a este teléfono necesitamos comparar tu rostro con la foto de tu carnet, y tu cuenta todavía no la tiene. Regístrala una sola vez y vuelve a intentarlo.",
+      "registrar_carnet": "Registrar mi carnet"
     },
     "autenticacion": {
       "titulo": "Confirma que eres tú",
@@ -347,6 +351,7 @@
       "verificada_desde": "Verificada el {fecha}",
       "bloqueada": "La verificación está bloqueada hasta las {hora}. Podrás intentarlo de nuevo después.",
       "rechazada": "No pudimos verificar tu identidad. Puedes intentarlo de nuevo.",
+      "completar_carnet": "Tu identidad está verificada, pero falta la foto de tu carnet. Regístrala con tu prueba de vida para poder pasar tu cuenta a otro teléfono.",
       "privacidad": "La foto de tu carnet se guarda cifrada y nadie más la ve.",
       "numero_requerido": "Escribe el número de tu carnet.",
       "numero_invalido": "Revisa el número: usa solo letras, números y guiones.",
@@ -515,6 +520,7 @@
       "hora_menos": "15 min antes",
       "hora_mas": "15 min después",
       "hora_ayuda": "En 24 horas, por ejemplo 07:30.",
+      "hora_tocar": "Toca para elegir la hora en el reloj.",
       "hora_invalida": "Escribe la hora en 24 horas, por ejemplo 07:30.",
       "horario_invalido": "Elige una salida con al menos 15 minutos de anticipación y hasta dentro de 7 días.",
       "horario_pronto": "Sale en menos de 15 minutos. Elige una hora a partir de las {hora} y hasta dentro de 7 días.",

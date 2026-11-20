@@ -243,13 +243,26 @@ describe('HU-18 · formulario de búsqueda', () => {
     );
     expect(await screen.findByText('Punto en el mapa')).toBeTruthy();
   });
+  it('el formulario muestra el mapa del origen y tocarlo abre el selector', async () => {
+    await abrir(<Inicio />);
+    expect(
+      screen.getAllByTestId('mapa', { includeHiddenElements: true }),
+    ).toHaveLength(1);
+    await fireEvent.press(
+      screen.getByRole('button', { name: 'Toca para elegir en el mapa' }),
+    );
+    expect(
+      await screen.findByRole('button', { name: 'Usar este punto' }),
+    ).toBeTruthy();
+  });
   it('tocar el mapa deja el pin ahí y buscar usa ese punto', async () => {
     await abrir(<Inicio />);
     await fireEvent.press(
       await screen.findByRole('button', { name: /^Desde/ }),
     );
+    // El primero es la vista previa del formulario; el último, el mapa a pantalla completa.
     await fireEvent(
-      screen.getByTestId('mapa', { includeHiddenElements: true }),
+      screen.getAllByTestId('mapa', { includeHiddenElements: true }).at(-1)!,
       'press',
       {
         nativeEvent: { lngLat: [-63.2, -17.79] },

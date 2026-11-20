@@ -425,6 +425,11 @@ export const dispositivoReal = {
     codigo: 'CONFLICTO_CONCURRENTE',
     mensaje: 'Otra revinculación de tu cuenta terminó al mismo tiempo.',
   }),
+  sinCarnet: ok(409, {
+    codigo: 'IDENTIDAD_SIN_CARNET',
+    mensaje:
+      'Para volver a vincular tu teléfono primero registra la foto de tu carnet en Verificar identidad.',
+  }),
 };
 
 // HU-08: formas según el contrato del backend (DTOs de `identidad`); el motor facial real no se probó.
@@ -438,6 +443,12 @@ export const identidadReal = {
     estado: 'verificada',
     verificadoEn: '2026-11-04T15:00:00.000Z',
     bloqueadoHasta: null,
+  }),
+  verificadaSinCarnet: ok(200, {
+    estado: 'verificada',
+    verificadoEn: '2026-11-04T15:00:00.000Z',
+    bloqueadoHasta: null,
+    requiereCarnet: true,
   }),
   bloqueada: ok(200, {
     estado: 'bloqueada_temporal',

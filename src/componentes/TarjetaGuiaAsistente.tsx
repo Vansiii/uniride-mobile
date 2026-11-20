@@ -100,7 +100,7 @@ export function TarjetaGuiaAsistente({ visible, alCerrar, onNavegar }: Props) {
     >
       <View style={estilos.superposicion}>
         <Pressable style={estilos.fondo} onPress={cerrar} />
-        <View style={estilos.tarjeta} accessibilityRole="dialog">
+        <View style={estilos.tarjeta} role="dialog">
           {/* Cabecera */}
           <View style={estilos.cabecera}>
             <View style={estilos.tituloFila}>

@@ -63,6 +63,8 @@ function textoDe(error: unknown): string {
       );
     case 'CONFLICTO_CONCURRENTE':
       return t('dispositivo.revincular.concurrente');
+    case 'IDENTIDAD_SIN_CARNET':
+      return t('dispositivo.revincular.sin_carnet');
     case 'SERVICIO_NO_DISPONIBLE':
       return t('dispositivo.vinculacion.servicio_no_disponible');
     case 'SIN_CONEXION':
@@ -94,6 +96,8 @@ export default function DispositivoPantalla() {
   const [recienVinculado, setRecienVinculado] = useState(false);
   const [revinculando, setRevinculando] = useState(false);
   const [revinculado, setRevinculado] = useState(false);
+  // Identidad verificada sin foto del carnet: hay que completarla antes de revincular.
+  const [pideCarnet, setPideCarnet] = useState(false);
   // Con la llave anulada o ausente, volver a vincular es lo único que sirve: va abajo como acción principal.
   const pideRevincular = !!motivo && !revinculado;
 
@@ -187,6 +191,9 @@ export default function DispositivoPantalla() {
         // Otra revinculación ganó: se muestra el teléfono que quedó.
         await mostrarElQueQuedo();
       setFalla(textoDe(error));
+      setPideCarnet(
+        error instanceof ErrorApi && error.codigo === 'IDENTIDAD_SIN_CARNET',
+      );
     } finally {
       setRevinculando(false);
     }
@@ -219,6 +226,14 @@ export default function DispositivoPantalla() {
           </Aviso>
         )}
         {falla && <Aviso tono="peligro">{falla}</Aviso>}
+        {pideCarnet && (
+          <Boton
+            icono="verified_user"
+            anchoCompleto
+            etiqueta={t('dispositivo.revincular.registrar_carnet')}
+            alPresionar={() => router.push('/identidad')}
+          />
+        )}
         {consultando ? (
           <View accessibilityLabel={t('comun.estados.cargando')}>
             <Esqueleto alto={120} redondeo={radio.l} />

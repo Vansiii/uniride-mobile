@@ -233,7 +233,8 @@ export default function IdentidadPantalla() {
     }
   };
 
-  const verificada = estado?.estado === 'verificada';
+  // Verificada sin foto del carnet: se completa con el mismo flujo (carnet y prueba de vida).
+  const verificada = estado?.estado === 'verificada' && !estado.requiereCarnet;
   const bloqueada =
     estado?.estado === 'bloqueada_temporal' && Boolean(estado.bloqueadoHasta);
   const formulario = !consultando && !sinConsulta && !verificada && !bloqueada;
@@ -293,6 +294,11 @@ export default function IdentidadPantalla() {
           </Aviso>
         ) : (
           <>
+            {estado?.requiereCarnet && (
+              <Aviso tono="info">
+                {t('identidad.verificacion.completar_carnet')}
+              </Aviso>
+            )}
             {estado?.estado === 'rechazada' && (
               <Aviso tono="peligro">
                 {t('identidad.verificacion.rechazada')}

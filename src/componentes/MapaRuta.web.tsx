@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { abrirHttps } from '@/enlaces';
 import { t } from '@/i18n';
 import { espacio, radio, tipografia } from '@/tema/tokens';
@@ -177,6 +177,51 @@ export function MapaRuta({
       </View>
       <AtribucionMapa />
     </View>
+  );
+}
+
+/** Vista previa fija de un punto (el origen de la búsqueda); tocarla abre el selector. */
+export function MapaPunto({
+  punto,
+  etiqueta,
+  alPresionar,
+}: {
+  punto: Punto;
+  etiqueta: string;
+  alPresionar: () => void;
+}) {
+  const estilos = useEstilos();
+  const [ancho, setAncho] = useState(0);
+  const zoom = ZOOM_MAXIMO - 1;
+  const p = aPixel(punto, zoom);
+  const izquierda = p.x - ancho / 2;
+  const arriba = p.y - ALTO / 2;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={etiqueta}
+      onPress={alPresionar}
+      style={estilos.mapa}
+      onLayout={(e) => setAncho(e.nativeEvent.layout.width)}
+    >
+      <Teselas
+        zoom={zoom}
+        izquierda={izquierda}
+        arriba={arriba}
+        ancho={ancho}
+        alto={ALTO}
+      />
+      {ancho > 0 && (
+        <View
+          style={[
+            estilos.punto,
+            estilos.puntoOrigen,
+            { left: ancho / 2 - 7, top: ALTO / 2 - 7 },
+          ]}
+        />
+      )}
+      <AtribucionMapa />
+    </Pressable>
   );
 }
 
