@@ -266,6 +266,14 @@ export async function cerrarSesion(): Promise<void> {
 
 export const consultarYo = () => solicitar<Usuario>('/yo', 'GET');
 
+/** PB-09: token FCM de este teléfono; el servidor lo borra al cerrar sesión. */
+export const registrarTokenPush = (token: string) =>
+  solicitar<void>('/yo/token-push', 'PUT', { token });
+
+/** PB-09: el servidor encola un aviso de prueba para este teléfono. */
+export const probarPush = () =>
+  solicitar<void>('/yo/token-push/prueba', 'POST');
+
 /** Pide el código al correo de la otra organización; la organización la decide el servidor por el dominio (A-13). */
 export const solicitarOrganizacion = (correo: string) =>
   solicitar<EnvioCodigo>('/membresias', 'POST', { correo });
@@ -531,6 +539,16 @@ export const consultarEstadoIdentidad = () =>
 /** Abre la sesión de Face Liveness que la app ejecutará antes de enviar la verificación. */
 export const crearSesionLiveness = () =>
   solicitar<{ sesionId: string }>('/identidad/liveness-sesion', 'POST');
+
+/** Credenciales temporales (15 min) solo para abrir el video de la prueba de vida en el componente nativo. */
+export const pedirCredencialesLiveness = () =>
+  solicitar<{
+    accessKeyId: string;
+    secretAccessKey: string;
+    sessionToken: string;
+    expiracion: string;
+    region: string;
+  }>('/identidad/liveness-credenciales', 'POST');
 
 export function verificarIdentidad(datos: {
   numeroDocumento: string;

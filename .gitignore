@@ -48,3 +48,6 @@ dist/
 .env
 .env.*
 !.env.example
+
+# PB-09: configuración de Firebase del proyecto propio (ver compilar-android/README.md)
+google-services.json

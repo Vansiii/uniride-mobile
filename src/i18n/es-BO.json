@@ -179,6 +179,14 @@
     },
     "apariencia": {
       "titulo": "Apariencia"
+    },
+    "avisos": {
+      "titulo": "Notificaciones",
+      "detalle": "Toca para enviarte una de prueba",
+      "activas": "Activas",
+      "denegadas": "Desactivadas",
+      "no_disponibles": "No disponibles",
+      "enviada": "Te enviamos una notificación de prueba."
     }
   },
   "inicio": {

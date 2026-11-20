@@ -36,6 +36,14 @@
       ],
       "expo-secure-store",
       [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/android-icon-monochrome.png",
+          "color": "#3447CC",
+          "defaultChannel": "avisos"
+        }
+      ],
+      [
         "expo-location",
         {
           "locationWhenInUsePermission": "UniRide usa tu ubicación para buscar viajes que salgan cerca de ti.",
@@ -66,7 +74,8 @@
           "microphonePermission": "UniRide usa el micrófono para escuchar tus comandos de voz."
         }
       ],
-      "@maplibre/maplibre-react-native"
+      "@maplibre/maplibre-react-native",
+      "./plugins/desugaring"
     ],
     "experiments": {
       "typedRoutes": true,
