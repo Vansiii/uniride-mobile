@@ -1,14 +1,17 @@
 import { Redirect, router } from 'expo-router';
-import type { ComponentProps } from 'react';
+import { useState, type ComponentProps } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { Entra, Toque } from '@/componentes/Animado';
 import { useSesion } from '@/contexto/sesion';
 import { Boton } from '@/componentes/Boton';
+import { BotonAsistente } from '@/componentes/BotonAsistente';
 import { BotonVoz } from '@/componentes/BotonVoz';
 import { BandaMarca } from '@/componentes/Estructura';
 import { FormularioBusqueda } from '@/componentes/FormularioBusqueda';
 import { Icono } from '@/componentes/Icono';
 import { PanelVoz } from '@/componentes/PanelVoz';
+import { TarjetaGuiaAsistente } from '@/componentes/TarjetaGuiaAsistente';
+import { TutorialUniRide } from '@/componentes/TutorialUniRide';
 import { ViajeActivo } from '@/componentes/ViajeActivo';
 import { t } from '@/i18n';
 import { useVoz } from '@/voz/useVoz';
@@ -49,6 +52,8 @@ export default function Inicio() {
   const estilos = useEstilos();
   const { cargando, usuario } = useSesion();
   const voz = useVoz();
+  const [asistenteVisible, setAsistenteVisible] = useState(false);
+  const [tutorialVisible, setTutorialVisible] = useState(false);
   if (cargando) {
     return (
       <View style={estilos.cargando}>
@@ -97,10 +102,16 @@ export default function Inicio() {
                 {organizacion ?? '—'}
               </Text>
             </Toque>
-            <BotonVoz
-              color={colores.sobreMarca}
-              alPresionar={voz.iniciarEscucha}
-            />
+            <View style={estilos.accionesBanda}>
+              <BotonAsistente
+                color={colores.sobreMarca}
+                alPresionar={() => setAsistenteVisible(true)}
+              />
+              <BotonVoz
+                color={colores.sobreMarca}
+                alPresionar={voz.iniciarEscucha}
+              />
+            </View>
           </View>
           <Entra indice={0}>
             <Text style={estilos.saludo} accessibilityRole="header">
@@ -117,6 +128,11 @@ export default function Inicio() {
         <ViajeActivo key={`activo-${usuario.id}`} />
         <FormularioBusqueda key={usuario.id} />
         <Entra indice={3} style={estilos.atajos}>
+          <Atajo
+            icono="school"
+            etiqueta={t('tutorial.atajo')}
+            alPresionar={() => setTutorialVisible(true)}
+          />
           <Atajo
             icono="receipt_long"
             etiqueta={t('inicio.atajo_movimientos')}
@@ -155,6 +171,22 @@ export default function Inicio() {
         alTerminar={voz.terminarEscucha}
         alProbar={voz.procesarTexto}
         alUsarTeclado={voz.cerrar}
+      />
+      <TarjetaGuiaAsistente
+        visible={asistenteVisible}
+        alCerrar={() => setAsistenteVisible(false)}
+        onNavegar={(ruta, params) => {
+          setAsistenteVisible(false);
+          if (ruta === '/tutorial') {
+            setTutorialVisible(true);
+          } else {
+            router.push({ pathname: ruta as any, params });
+          }
+        }}
+      />
+      <TutorialUniRide
+        visible={tutorialVisible}
+        alCerrar={() => setTutorialVisible(false)}
       />
     </View>
   );
@@ -220,6 +252,11 @@ const useEstilos = crearEstilos((colores) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: espacio(2),
+  },
+  accionesBanda: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espacio(1),
   },
   chipOrganizacion: {
     flexShrink: 1,

@@ -24,6 +24,7 @@ interface Props {
 }
 
 const SUGERENCIAS = [
+  'asistente.sugerencia_tutorial',
   'asistente.sugerencia_1',
   'asistente.sugerencia_2',
   'asistente.sugerencia_3',
@@ -147,14 +148,39 @@ export function TarjetaGuiaAsistente({
                   {SUGERENCIAS.map((clave) => (
                     <Pressable
                       key={clave}
-                      style={estilos.chipSugerencia}
+                      style={[
+                        estilos.chipSugerencia,
+                        clave === 'asistente.sugerencia_tutorial' &&
+                          estilos.chipTutorial,
+                      ]}
                       onPress={() => {
+                        if (clave === 'asistente.sugerencia_tutorial') {
+                          ejecutarNavegacion('/tutorial');
+                          return;
+                        }
                         const texto = t(clave);
                         setConsulta(texto);
                         ejecutarConsulta(texto);
                       }}
                     >
-                      <Text style={estilos.textoChip}>{t(clave)}</Text>
+                      <View style={estilos.filaChip}>
+                        {clave === 'asistente.sugerencia_tutorial' && (
+                          <Icono
+                            nombre="school"
+                            color={colores.primario}
+                            tamano={16}
+                          />
+                        )}
+                        <Text
+                          style={[
+                            estilos.textoChip,
+                            clave === 'asistente.sugerencia_tutorial' &&
+                              estilos.textoChipTutorial,
+                          ]}
+                        >
+                          {t(clave)}
+                        </Text>
+                      </View>
                     </Pressable>
                   ))}
                 </View>
@@ -304,6 +330,19 @@ const useEstilos = crearEstilos((colores: Paleta) => ({
     ...tipografia.cuerpo,
     color: colores.texto,
     fontSize: 14,
+  },
+  chipTutorial: {
+    backgroundColor: colores.primarioSuave,
+    borderColor: colores.primario,
+  },
+  filaChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espacio(2),
+  },
+  textoChipTutorial: {
+    color: colores.primarioTexto,
+    fontWeight: '600',
   },
   formulario: {
     flexDirection: 'row',

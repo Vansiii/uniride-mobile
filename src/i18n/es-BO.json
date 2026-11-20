@@ -882,6 +882,7 @@
     "placeholder": "¿En qué te ayudo hoy?",
     "consultar": "Consultar",
     "consultando": "Consultando al asistente…",
+    "sugerencia_tutorial": "¿Cómo funciona UniRide? (Ver tutorial)",
     "sugerencia_1": "¿Cómo funciona el pago?",
     "sugerencia_2": "¿Cómo es el abordaje QR?",
     "sugerencia_3": "¿Cómo publico un viaje?",
@@ -891,6 +892,7 @@
   },
   "tutorial": {
     "boton": "¿Cómo funciona UniRide?",
+    "atajo": "Tutorial",
     "titulo": "Cómo funciona UniRide",
     "paso_1_titulo": "1. Reserva con garantía",
     "paso_1_desc": "Buscas tu viaje y reservas tu asiento. Tu dinero queda protegido en garantía (escrow) hasta que el viaje se complete.",
