@@ -494,6 +494,16 @@ export const consultarEstadoIdentidad = () =>
 export const crearSesionLiveness = () =>
   solicitar<{ sesionId: string }>('/identidad/liveness-sesion', 'POST');
 
+/** Credenciales temporales (15 min) solo para abrir el video de la prueba de vida en el componente nativo. */
+export const pedirCredencialesLiveness = () =>
+  solicitar<{
+    accessKeyId: string;
+    secretAccessKey: string;
+    sessionToken: string;
+    expiracion: string;
+    region: string;
+  }>('/identidad/liveness-credenciales', 'POST');
+
 export function verificarIdentidad(datos: {
   numeroDocumento: string;
   aceptaConsentimiento: boolean;
