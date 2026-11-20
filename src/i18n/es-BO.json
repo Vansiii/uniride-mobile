@@ -882,5 +882,34 @@
     "recibida": "{nombre} te calificó con {n} de 5",
     "boton": "Calificar a {nombre}",
     "elige": "Elige de 1 a 5 estrellas."
+  },
+  "asistente": {
+    "boton_etiqueta": "Abrir asistente de UniRide",
+    "titulo": "Asistente UniRide",
+    "descripcion": "Preguntas frecuentes y atajos rápidos",
+    "placeholder": "¿En qué te ayudo hoy?",
+    "consultar": "Consultar",
+    "consultando": "Consultando al asistente…",
+    "sugerencia_tutorial": "¿Cómo funciona UniRide? (Ver tutorial)",
+    "sugerencia_1": "¿Cómo funciona el pago?",
+    "sugerencia_2": "¿Cómo es el abordaje QR?",
+    "sugerencia_3": "¿Cómo publico un viaje?",
+    "error_consulta": "No pudimos conectar con el asistente. Intenta de nuevo.",
+    "cerrar": "Cerrar asistente",
+    "ir_ahora": "Ir ahí"
+  },
+  "tutorial": {
+    "boton": "¿Cómo funciona UniRide?",
+    "atajo": "Tutorial",
+    "titulo": "Cómo funciona UniRide",
+    "paso_1_titulo": "1. Reserva con garantía",
+    "paso_1_desc": "Buscas tu viaje y reservas tu asiento. Tu dinero queda protegido en garantía (escrow) hasta que el viaje se complete.",
+    "paso_2_titulo": "2. Abordaje seguro",
+    "paso_2_desc": "Al subir al auto, el conductor muestra un código QR y tú lo escaneas. Ambos teléfonos firman el encuentro a menos de 50 metros.",
+    "paso_3_titulo": "3. Pago automático al bajar",
+    "paso_3_desc": "Al llegar a tu destino se valida la bajada y el contrato libera automáticamente el pago al conductor.",
+    "siguiente": "Siguiente",
+    "comenzar": "Entendido",
+    "cerrar": "Cerrar tutorial"
   }
 }

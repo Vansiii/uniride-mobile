@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import * as AlmacenSeguro from 'expo-secure-store';
 import { cabecerasFirma, cabecerasFirmaTrayecto } from '@/dispositivo/firma';
 import type { DialogoFirma, RolTrayecto } from '@/dispositivo/keystore';
@@ -86,25 +87,62 @@ async function leer<T>(respuesta: Response): Promise<T> {
   );
 }
 
+const memoriaWeb = new Map<string, string>();
+
+async function guardarRefresco(valor: string): Promise<void> {
+  if (Platform.OS === 'web') {
+    try {
+      localStorage.setItem(CLAVE_REFRESCO, valor);
+    } catch {
+      memoriaWeb.set(CLAVE_REFRESCO, valor);
+    }
+    return;
+  }
+  await AlmacenSeguro.setItemAsync(CLAVE_REFRESCO, valor);
+}
+
+async function obtenerRefresco(): Promise<string | null> {
+  if (Platform.OS === 'web') {
+    try {
+      return localStorage.getItem(CLAVE_REFRESCO);
+    } catch {
+      return memoriaWeb.get(CLAVE_REFRESCO) ?? null;
+    }
+  }
+  return AlmacenSeguro.getItemAsync(CLAVE_REFRESCO);
+}
+
+async function borrarRefresco(): Promise<void> {
+  if (Platform.OS === 'web') {
+    try {
+      localStorage.removeItem(CLAVE_REFRESCO);
+    } catch {
+      memoriaWeb.delete(CLAVE_REFRESCO);
+    }
+    return;
+  }
+  await AlmacenSeguro.deleteItemAsync(CLAVE_REFRESCO);
+}
+
 async function guardarSesion(r: {
   tokenAcceso: string;
   tokenRefresco: string;
 }): Promise<void> {
   tokenAcceso = r.tokenAcceso;
-  await AlmacenSeguro.setItemAsync(CLAVE_REFRESCO, r.tokenRefresco);
+  await guardarRefresco(r.tokenRefresco);
 }
 
 /** Pide un token de acceso nuevo con el refresco guardado; llamadas simultáneas comparten una sola petición. */
 export function renovarSesion(): Promise<boolean> {
   renovando ??= (async () => {
-    const tokenRefresco = await AlmacenSeguro.getItemAsync(CLAVE_REFRESCO);
+    const tokenRefresco = await obtenerRefresco();
     if (!tokenRefresco) return false;
     const r = await enviar('/autenticacion/refrescar', 'POST', {
       tokenRefresco,
     });
     if (!r.ok) {
       // Refresco rechazado (vencido, revocado o reusado): la sesión local ya no sirve.
-      await AlmacenSeguro.deleteItemAsync(CLAVE_REFRESCO);
+      await borrarRefresco();
       return false;
     }
     await guardarSesion(await r.json());
@@ -214,7 +252,7 @@ export async function restablecerContrasena(
 
 export async function cerrarSesion(): Promise<void> {
   try {
-    const tokenRefresco = await AlmacenSeguro.getItemAsync(CLAVE_REFRESCO);
+    const tokenRefresco = await obtenerRefresco();
     await solicitar<void>('/autenticacion/cerrar-sesion', 'POST', {
       tokenRefresco: tokenRefresco ?? undefined,
     });
@@ -222,7 +260,7 @@ export async function cerrarSesion(): Promise<void> {
     tokenAcceso = null;
     dispositivoId = null;
     viajesEncontrados.clear();
-    await AlmacenSeguro.deleteItemAsync(CLAVE_REFRESCO);
+    await borrarRefresco();
   }
 }
 
@@ -1049,3 +1087,20 @@ export const abordar = (
     cuerpo,
     opciones,
   );
+
+export interface AccionAsistente {
+  ruta: string;
+  params?: Record<string, string>;
+  etiquetaBoton: string;
+}
+
+export interface RespuestaAsistente {
+  modo: 'accion' | 'guia';
+  mensaje: string;
+  accion?: AccionAsistente;
+  pasos?: string[];
+}
+
+/** Consulta al asistente inteligente para navegación o guía estructurada. */
+export const consultarAsistente = (consulta: string) =>
+  solicitar<RespuestaAsistente>('/asistente/consultar', 'POST', { consulta });
