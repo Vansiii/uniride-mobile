@@ -9,7 +9,11 @@ import {
   View,
 } from 'react-native';
 import { router } from 'expo-router';
-import { consultarAsistente, type RespuestaAsistente } from '@/api/cliente';
+import {
+  consultarAsistente,
+  ErrorApi,
+  type RespuestaAsistente,
+} from '@/api/cliente';
 import { Boton } from './Boton';
 import { Icono } from './Icono';
 import { t } from '@/i18n';
@@ -49,18 +53,37 @@ export function TarjetaGuiaAsistente({ visible, alCerrar, onNavegar }: Props) {
     try {
       const res = await consultarAsistente(limpio);
       setRespuesta(res);
-    } catch {
-      setError(t('asistente.error_consulta'));
+    } catch (e) {
+      setError(
+        t(
+          e instanceof ErrorApi && e.codigo === 'LIMITE_ALCANZADO'
+            ? 'asistente.limite_alcanzado'
+            : e instanceof ErrorApi && e.codigo === 'SIN_CONEXION'
+              ? 'comun.errores.sin_conexion'
+              : 'asistente.error_consulta',
+        ),
+      );
     } finally {
       setCargando(false);
     }
+  };
+
+  const reiniciar = () => {
+    setRespuesta(null);
+    setError(null);
+    setConsulta('');
+  };
+
+  const cerrar = () => {
+    reiniciar();
+    alCerrar();
   };
 
   const ejecutarNavegacion = (
     ruta: string,
     params?: Record<string, string>,
   ) => {
-    alCerrar();
+    cerrar();
     if (onNavegar) {
       onNavegar(ruta, params);
     } else {
@@ -73,10 +96,10 @@ export function TarjetaGuiaAsistente({ visible, alCerrar, onNavegar }: Props) {
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={alCerrar}
+      onRequestClose={cerrar}
     >
       <View style={estilos.superposicion}>
-        <Pressable style={estilos.fondo} onPress={alCerrar} />
+        <Pressable style={estilos.fondo} onPress={cerrar} />
         <View style={estilos.tarjeta} accessibilityRole="dialog">
           {/* Cabecera */}
           <View style={estilos.cabecera}>
@@ -87,7 +110,7 @@ export function TarjetaGuiaAsistente({ visible, alCerrar, onNavegar }: Props) {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t('asistente.cerrar')}
-              onPress={alCerrar}
+              onPress={cerrar}
               style={estilos.botonCerrar}
             >
               <Icono
@@ -147,6 +170,15 @@ export function TarjetaGuiaAsistente({ visible, alCerrar, onNavegar }: Props) {
                     />
                   </View>
                 )}
+                <Pressable
+                  accessibilityRole="button"
+                  style={estilos.chipSugerencia}
+                  onPress={reiniciar}
+                >
+                  <Text style={estilos.textoChip}>
+                    {t('asistente.nueva_consulta')}
+                  </Text>
+                </Pressable>
               </View>
             ) : (
               !cargando && (
