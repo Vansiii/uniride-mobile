@@ -26,6 +26,11 @@ let mockParams: Record<string, string> = {};
 let mockRefresco: string | null = 'refresco-de-prueba';
 
 // Inicio monta el formulario de búsqueda, que tiene sus propias pruebas.
+// PB-09: el registro del token push tiene su propia prueba (push.test.ts); aquí se cuentan solo las llamadas de membresías.
+jest.mock('@/servicios/push', () => ({
+  ...jest.requireActual('@/servicios/push'),
+  useAvisosPush: jest.fn(),
+}));
 jest.mock('@/componentes/FormularioBusqueda', () => ({
   FormularioBusqueda: () => null,
 }));

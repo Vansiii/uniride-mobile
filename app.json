@@ -36,6 +36,14 @@
       ],
       "expo-secure-store",
       [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/android-icon-monochrome.png",
+          "color": "#3447CC",
+          "defaultChannel": "avisos"
+        }
+      ],
+      [
         "expo-location",
         {
           "locationWhenInUsePermission": "UniRide usa tu ubicación para buscar viajes que salgan cerca de ti.",

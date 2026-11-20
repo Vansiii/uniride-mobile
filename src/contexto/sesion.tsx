@@ -6,6 +6,7 @@ import {
   useState,
 } from 'react';
 import * as api from '@/api/cliente';
+import { useAvisosPush } from '@/servicios/push';
 
 interface Sesion {
   /** `true` mientras se intenta recuperar la sesión guardada. */
@@ -29,6 +30,8 @@ const Contexto = createContext<Sesion | null>(null);
 export function ProveedorSesion({ children }: { children: ReactNode }) {
   const [cargando, setCargando] = useState(true);
   const [usuario, setUsuario] = useState<api.Usuario | null>(null);
+  // PB-09: con sesión, este teléfono recibe los avisos de la cuenta.
+  useAvisosPush(Boolean(usuario));
 
   useEffect(() => {
     let vigente = true;

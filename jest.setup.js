@@ -67,3 +67,21 @@ jest.mock('expo-speech-recognition', () => ({
   },
   useSpeechRecognitionEvent: jest.fn(),
 }));
+
+// PB-09: notificaciones push (expo-notifications) sin módulo nativo en Jest.
+jest.mock('expo-notifications', () => ({
+  setNotificationHandler: jest.fn(),
+  setNotificationChannelAsync: jest.fn().mockResolvedValue(null),
+  getPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
+  requestPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
+  getDevicePushTokenAsync: jest
+    .fn()
+    .mockResolvedValue({ type: 'android', data: 'token-fcm' }),
+  getLastNotificationResponse: jest.fn().mockReturnValue(null),
+  clearLastNotificationResponse: jest.fn(),
+  addNotificationResponseReceivedListener: jest.fn(() => ({
+    remove: jest.fn(),
+  })),
+  addPushTokenListener: jest.fn(() => ({ remove: jest.fn() })),
+  AndroidImportance: { HIGH: 4 },
+}));
