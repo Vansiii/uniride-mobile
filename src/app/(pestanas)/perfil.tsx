@@ -1,19 +1,23 @@
+import { getPermissionsAsync } from 'expo-notifications';
 import { Redirect, router } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Linking, ScrollView, Text, View } from 'react-native';
 import {
   consultarEstadoIdentidad,
   consultarMiDispositivo,
   consultarMiVehiculo,
+  probarPush,
 } from '@/api/cliente';
 import { Entra } from '@/componentes/Animado';
 import { BotonVoz } from '@/componentes/BotonVoz';
 import { BandaMarca } from '@/componentes/Estructura';
 import { Avatar, FilaAjuste } from '@/componentes/FilaAjuste';
+import { Aviso } from '@/componentes/Mensajes';
 import { PanelVoz } from '@/componentes/PanelVoz';
 import { useSesion } from '@/contexto/sesion';
 import { useAlEnfocar } from '@/hooks/useAlEnfocar';
 import { con, t } from '@/i18n';
+import { activarPush, type EstadoPush } from '@/servicios/push';
 import { useVoz } from '@/voz/useVoz';
 import { espacio, radio, sombraTarjeta, tipografia } from '@/tema/tokens';
 import { crearEstilos, useColores } from '@/tema/useEstilos';
@@ -35,6 +39,9 @@ export default function Perfil() {
     telefono: boolean;
     identidad: boolean;
   } | null>(null);
+  // PB-09: estado de las notificaciones de este teléfono y aviso de la prueba enviada.
+  const [avisos, setAvisos] = useState<EstadoPush | null>(null);
+  const [pruebaEnviada, setPruebaEnviada] = useState(false);
   const hayUsuario = Boolean(usuario);
   const cargar = useCallback(() => {
     if (!hayUsuario) return;
@@ -44,6 +51,11 @@ export default function Perfil() {
       seguro(consultarMiDispositivo),
       seguro(consultarEstadoIdentidad),
     ]).then(([vehiculo, telefono, identidad]) => {
+      void seguro(getPermissionsAsync).then((p) => {
+        if (vigente && p?.status !== 'granted')
+          setAvisos(p?.status === 'denied' ? 'denegadas' : null);
+        else if (vigente) setAvisos('activas');
+      });
       if (vigente)
         setListos({
           vehiculo: Boolean(vehiculo),
@@ -57,6 +69,16 @@ export default function Perfil() {
     };
   }, [hayUsuario]);
   useAlEnfocar(cargar);
+  /** Activa (pide permiso y registra el token) y se manda una de prueba; si Android las bloqueó, abre los ajustes. */
+  const tocarAvisos = async () => {
+    const estado = await activarPush();
+    setAvisos(estado);
+    if (estado === 'denegadas') return void Linking.openSettings();
+    if (estado === 'activas') {
+      await probarPush().catch(() => undefined);
+      setPruebaEnviada(true);
+    }
+  };
   if (cargando) return null;
   if (!usuario) return <Redirect href="/iniciar-sesion" />;
   const organizacion = usuario.membresias.find(
@@ -145,6 +167,21 @@ export default function Perfil() {
           />
           <View style={estilos.separador} />
           <FilaAjuste
+            icono="notifications"
+            titulo={t('perfil.avisos.titulo')}
+            detalle={t('perfil.avisos.detalle')}
+            estado={
+              avisos
+                ? {
+                    texto: t(`perfil.avisos.${avisos}`),
+                    listo: avisos === 'activas',
+                  }
+                : undefined
+            }
+            alPresionar={() => void tocarAvisos()}
+          />
+          <View style={estilos.separador} />
+          <FilaAjuste
             icono="palette"
             titulo={t('perfil.apariencia.titulo')}
             alPresionar={() => router.push('/ajustes-apariencia' as never)}
@@ -156,6 +193,11 @@ export default function Perfil() {
             alPresionar={() => router.push('/ayuda')}
           />
         </View>
+        {pruebaEnviada && (
+          <View style={estilos.aviso}>
+            <Aviso tono="exito">{t('perfil.avisos.enviada')}</Aviso>
+          </View>
+        )}
         <View style={estilos.grupo}>
           <FilaAjuste
             peligro
@@ -215,6 +257,7 @@ const useEstilos = crearEstilos((colores) => ({
     backgroundColor: colores.superficie,
     ...sombraTarjeta,
   },
+  aviso: { marginHorizontal: espacio(4) },
   separador: {
     height: 1,
     marginLeft: espacio(4) + 40 + espacio(3),
