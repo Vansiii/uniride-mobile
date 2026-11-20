@@ -69,4 +69,3 @@ describe('TarjetaGuiaAsistente', () => {
     expect(alCerrar).toHaveBeenCalledTimes(1);
   });
 });
-

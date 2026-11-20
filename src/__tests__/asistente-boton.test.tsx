@@ -15,4 +15,3 @@ describe('BotonAsistente (DESIGN_SYSTEM P10)', () => {
     expect(alPresionar).toHaveBeenCalledTimes(1);
   });
 });
-

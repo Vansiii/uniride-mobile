@@ -1086,4 +1086,3 @@ export interface RespuestaAsistente {
 /** Consulta al asistente inteligente para navegación o guía estructurada. */
 export const consultarAsistente = (consulta: string) =>
   solicitar<RespuestaAsistente>('/asistente/consultar', 'POST', { consulta });
-

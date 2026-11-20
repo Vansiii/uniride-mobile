@@ -30,11 +30,7 @@ const SUGERENCIAS = [
   'asistente.sugerencia_3',
 ];
 
-export function TarjetaGuiaAsistente({
-  visible,
-  alCerrar,
-  onNavegar,
-}: Props) {
+export function TarjetaGuiaAsistente({ visible, alCerrar, onNavegar }: Props) {
   const colores = useColores();
   const estilos = useEstilos();
   const [consulta, setConsulta] = useState('');
@@ -60,7 +56,10 @@ export function TarjetaGuiaAsistente({
     }
   };
 
-  const ejecutarNavegacion = (ruta: string, params?: Record<string, string>) => {
+  const ejecutarNavegacion = (
+    ruta: string,
+    params?: Record<string, string>,
+  ) => {
     alCerrar();
     if (onNavegar) {
       onNavegar(ruta, params);
@@ -91,11 +90,18 @@ export function TarjetaGuiaAsistente({
               onPress={alCerrar}
               style={estilos.botonCerrar}
             >
-              <Icono nombre="close" color={colores.textoSecundario} tamano={20} />
+              <Icono
+                nombre="close"
+                color={colores.textoSecundario}
+                tamano={20}
+              />
             </Pressable>
           </View>
 
-          <ScrollView style={estilos.cuerpo} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            style={estilos.cuerpo}
+            keyboardShouldPersistTaps="handled"
+          >
             {cargando && (
               <View style={estilos.filaCargando}>
                 <ActivityIndicator color={colores.primario} size="small" />
@@ -127,7 +133,10 @@ export function TarjetaGuiaAsistente({
                 {respuesta.accion && (
                   <View style={estilos.contenedorAccion}>
                     <Boton
-                      etiqueta={respuesta.accion.etiquetaBoton || t('asistente.ir_ahora')}
+                      etiqueta={
+                        respuesta.accion.etiquetaBoton ||
+                        t('asistente.ir_ahora')
+                      }
                       alPresionar={() =>
                         ejecutarNavegacion(
                           respuesta.accion!.ruta,

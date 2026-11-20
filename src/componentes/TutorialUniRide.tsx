@@ -70,7 +70,11 @@ export function TutorialUniRide({ visible, alCerrar }: Props) {
               onPress={cerrarTutorial}
               style={estilos.botonCerrar}
             >
-              <Icono nombre="close" color={colores.textoSecundario} tamano={20} />
+              <Icono
+                nombre="close"
+                color={colores.textoSecundario}
+                tamano={20}
+              />
             </Pressable>
           </View>
 
