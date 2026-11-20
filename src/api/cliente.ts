@@ -1031,3 +1031,21 @@ export const abordar = (
     cuerpo,
     opciones,
   );
+
+export interface AccionAsistente {
+  ruta: string;
+  params?: Record<string, string>;
+  etiquetaBoton: string;
+}
+
+export interface RespuestaAsistente {
+  modo: 'accion' | 'guia';
+  mensaje: string;
+  accion?: AccionAsistente;
+  pasos?: string[];
+}
+
+/** Consulta al asistente inteligente para navegación o guía estructurada. */
+export const consultarAsistente = (consulta: string) =>
+  solicitar<RespuestaAsistente>('/asistente/consultar', 'POST', { consulta });
+
