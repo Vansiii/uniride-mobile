@@ -60,7 +60,7 @@ export function TutorialUniRide({ visible, alCerrar }: Props) {
     >
       <View style={estilos.superposicion}>
         <Pressable style={estilos.fondo} onPress={cerrarTutorial} />
-        <View style={estilos.tarjeta} accessibilityRole="dialog">
+        <View style={estilos.tarjeta} role="dialog">
           {/* Cabecera */}
           <View style={estilos.cabecera}>
             <Text style={estilos.titulo}>{t('tutorial.titulo')}</Text>

@@ -25,7 +25,7 @@ import {
   Vehiculo,
 } from '@/api/cliente';
 import { Entra } from '@/componentes/Animado';
-import { AjusteHora } from '@/componentes/AjusteHora';
+import { CampoHora } from '@/componentes/CampoHora';
 import { Boton, BotonIcono } from '@/componentes/Boton';
 import { Campo } from '@/componentes/Campo';
 import { BandaMarca, ZonaAccion } from '@/componentes/Estructura';
@@ -56,7 +56,6 @@ import {
 } from '@/tema/tokens';
 import {
   ANTICIPACION_MAXIMA_DIAS,
-  escribirHora,
   leerSalida,
   medianoche,
   salidaPorOmision,
@@ -683,22 +682,11 @@ function Contenido() {
             }}
           />
           <View onLayout={(e) => ubicar('hora', e)}>
-            <Campo
+            <CampoHora
               refEntrada={entradaHora}
-              etiqueta={t('viajes.publicar.hora')}
-              ayuda={t('viajes.publicar.hora_ayuda')}
-              keyboardType="number-pad"
-              maxLength={5}
-              value={hora}
-              onChangeText={(v) => {
-                setSalida((s) => ({ ...s, hora: escribirHora(v) }));
-                setErrores((e) => ({ ...e, hora: undefined }));
-              }}
-              error={errores.hora}
-            />
-            <AjusteHora
               fecha={fecha}
               hora={hora}
+              error={errores.hora}
               alCambiar={(h) => {
                 setSalida((x) => ({ ...x, hora: h }));
                 setErrores((e) => ({ ...e, hora: undefined }));

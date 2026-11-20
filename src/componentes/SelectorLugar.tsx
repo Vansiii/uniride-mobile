@@ -10,6 +10,7 @@ import { Toque } from '@/componentes/Animado';
 import { Boton } from '@/componentes/Boton';
 import { Campo } from '@/componentes/Campo';
 import { Icono } from '@/componentes/Icono';
+import { MapaPunto } from '@/componentes/MapaRuta';
 import { t } from '@/i18n';
 import { SelectorMapa } from '@/componentes/SelectorMapa';
 import {
@@ -145,6 +146,11 @@ export function SelectorLugar({
             {error}
           </Text>
         )}
+        <MapaPunto
+          punto={lugar ?? CENTRO_POR_OMISION}
+          etiqueta={t('viajes.mapa.elegir_en_mapa')}
+          alPresionar={() => setEnMapa(true)}
+        />
         {mapa}
       </View>
     );

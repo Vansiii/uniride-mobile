@@ -4,8 +4,7 @@ import { Linking, Text, View } from 'react-native';
 import { consultarSaldo, Saldo } from '@/api/cliente';
 import { Entra, Esqueleto, Toque, useConteo } from '@/componentes/Animado';
 import { Boton } from '@/componentes/Boton';
-import { AjusteHora } from '@/componentes/AjusteHora';
-import { Campo } from '@/componentes/Campo';
+import { CampoHora } from '@/componentes/CampoHora';
 import { Icono } from '@/componentes/Icono';
 import { Aviso } from '@/componentes/Mensajes';
 import { SelectorFecha } from '@/componentes/SelectorFecha';
@@ -22,7 +21,6 @@ import {
   sombraElevada,
 } from '@/tema/tokens';
 import {
-  escribirHora,
   leerSalida,
   medianoche,
   salidaPorOmision,
@@ -198,25 +196,15 @@ export function FormularioBusqueda() {
           fecha={fecha}
           alElegir={(f) => setSalida((s) => ({ ...s, fecha: f }))}
         />
-        <Campo
-          etiqueta={t('viajes.publicar.hora')}
+        <CampoHora
+          fecha={fecha}
+          hora={hora}
           ayuda={
             salida
               ? con('viajes.buscar.ventana', ventanaDe(salida.getTime()))
-              : t('viajes.publicar.hora_ayuda')
+              : undefined
           }
-          keyboardType="number-pad"
-          maxLength={5}
-          value={hora}
-          onChangeText={(v) => {
-            setSalida((s) => ({ ...s, hora: escribirHora(v) }));
-            setErrorHora(undefined);
-          }}
           error={errorHora}
-        />
-        <AjusteHora
-          fecha={fecha}
-          hora={hora}
           alCambiar={(h) => {
             setSalida((x) => ({ ...x, hora: h }));
             setErrorHora(undefined);

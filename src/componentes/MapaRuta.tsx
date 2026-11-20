@@ -263,6 +263,57 @@ export function MapaRuta({
   );
 }
 
+/** Vista previa fija de un punto (el origen de la búsqueda); tocarla abre el selector a pantalla completa. */
+export function MapaPunto({
+  punto,
+  etiqueta,
+  alPresionar,
+}: {
+  punto: Punto;
+  etiqueta: string;
+  alPresionar: () => void;
+}) {
+  const estilos = useEstilos();
+  return (
+    <View style={estilos.mapa}>
+      <View
+        style={StyleSheet.absoluteFill}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        <Map
+          style={StyleSheet.absoluteFill}
+          mapStyle={ESTILOS.calles}
+          androidView="texture"
+          dragPan={false}
+          touchZoom={false}
+          touchRotate={false}
+          touchPitch={false}
+          logo={false}
+          attribution={false}
+          compass={false}
+        >
+          <Camera
+            center={[punto.lng, punto.lat]}
+            zoom={ZOOM_MAXIMO - 1}
+            duration={0}
+          />
+          <Marker lngLat={[punto.lng, punto.lat]}>
+            <PuntoOrigen />
+          </Marker>
+        </Map>
+      </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={etiqueta}
+        onPress={alPresionar}
+        style={StyleSheet.absoluteFill}
+      />
+      <AtribucionMapa />
+    </View>
+  );
+}
+
 const useEstilos = crearEstilos((colores) => ({
   mapa: {
     height: ALTO,
